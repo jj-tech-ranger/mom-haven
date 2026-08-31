@@ -1,221 +1,55 @@
-import React, { useState } from 'react';
-import {
-  ArrowLeft,
-  PhoneCall,
-  AlertOctagon,
-  ShieldCheck,
-  ChevronRight,
-  User,
-  Baby,
-  Building,
-  HeartHandshake,
-  Activity,
-} from 'lucide-react';
-import Button from '../Button';
+import React, { useEffect, useState } from 'react';
+import { ArrowLeft, PhoneCall, ShieldCheck, ChevronRight, User, Baby, Heart, WifiOff, Building2 } from 'lucide-react';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { auth, db } from '../../lib/firebase';
 
-interface EmergencyEntryProps {
-  isOpen: boolean;
-  onClose: () => void;
-  savedFacilityName?: string;
-  savedFacilityPhone?: string;
-  nextOfKinName?: string;
-  nextOfKinPhone?: string;
-}
+interface EmergencyEntryProps { isOpen: boolean; onClose: () => void; savedFacilityName?: string; savedFacilityPhone?: string; nextOfKinName?: string; nextOfKinPhone?: string; }
+type Target = 'me' | 'newborn' | 'child';
 
-export const EmergencyEntry: React.FC<EmergencyEntryProps> = ({
-  isOpen,
-  onClose,
-  savedFacilityName = "Kariokor Health Centre / Pumwani Hospital",
-  savedFacilityPhone = "+254 722 000 000",
-  nextOfKinName = "Next of Kin / Partner",
-  nextOfKinPhone = "+254 712 345 678",
-}) => {
-  const [selectedTarget, setSelectedTarget] = useState<'mother' | 'baby' | null>(null);
+type Contact = { name: string; phone: string; label: string };
+
+const MOTHER_SIGNS = ['Vaginal bleeding', 'Severe headache', 'Blurred vision', 'Convulsions', 'Severe abdominal pain', 'Reduced baby movement', 'Fever'];
+const CHILD_SIGNS = ['Difficulty breathing', 'Convulsions', 'Unconscious or unusually sleepy', 'Unable to feed', 'Fever', 'Severe vomiting', 'Blue or very pale skin'];
+
+export const EmergencyEntry: React.FC<EmergencyEntryProps> = ({ isOpen, onClose }) => {
+  const [step, setStep] = useState<'home' | 'target' | 'signs' | 'action' | 'guidance'>('home');
+  const [target, setTarget] = useState<Target | null>(null);
+  const [selectedSigns, setSelectedSigns] = useState<string[]>([]);
+  const [facility, setFacility] = useState<Contact | null>(null);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setStep('home'); setTarget(null); setSelectedSigns([]);
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    setLoadingContacts(true);
+    Promise.all([
+      getDocs(query(collection(db, 'savedEmergencyFacilities'), where('userId', '==', uid))),
+      getDocs(query(collection(db, 'emergencyContacts'), where('userId', '==', uid))),
+    ]).then(([facilitySnapshot, contactSnapshot]) => {
+      const saved = facilitySnapshot.docs[0]?.data();
+      setFacility(saved ? { name: saved.facilityName, phone: saved.phone, label: 'Saved emergency facility' } : null);
+      setContacts(contactSnapshot.docs.map((d) => { const c = d.data(); return { name: c.name, phone: c.phone, label: c.relationship || 'Emergency contact' }; }).filter((c) => c.name && c.phone));
+    }).catch((error) => console.error('Could not load emergency contacts:', error)).finally(() => setLoadingContacts(false));
+  }, [isOpen]);
 
   if (!isOpen) return null;
+  const signs = target === 'me' ? MOTHER_SIGNS : CHILD_SIGNS;
+  const callNumber = (phone: string) => { window.location.href = `tel:${phone.replace(/\s+/g, '')}`; };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm">
-      {/* Container */}
-      <div className="w-full max-w-[420px] h-full sm:h-auto sm:max-h-[90vh] bg-white sm:rounded-[28px] overflow-y-auto flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
-        {/* Full-bleed Urgent Header */}
-        <div className="bg-[#E11D3C] text-white p-5 pt-6 sm:rounded-t-[28px] relative">
-          <div className="flex items-center justify-between mb-3">
-            <button
-              onClick={onClose}
-              className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors cursor-pointer"
-              aria-label="Back"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-            <div className="flex items-center gap-1.5 bg-black/25 px-2.5 py-1 rounded-pill text-[10px] font-display font-bold uppercase tracking-wider">
-              <span>M-TODAY-006</span>
-              <span>·</span>
-              <span>Deterministic Mode</span>
-            </div>
-          </div>
+  const toggleSign = (sign: string) => setSelectedSigns((current) => current.includes(sign) ? current.filter((item) => item !== sign) : [...current, sign]);
 
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-white text-[#E11D3C] flex items-center justify-center font-display font-black text-2xl shadow-lg shrink-0">
-              !
-            </div>
-            <div>
-              <h1 className="font-display font-black text-2xl tracking-tight leading-tight">
-                Emergency & Danger Signs
-              </h1>
-              <p className="font-body text-xs text-white/90 mt-0.5">
-                Immediate protocol · No AI chat · Offline ready
-              </p>
-            </div>
-          </div>
-        </div>
+  const header = (title: string, subtitle?: string) => <div className="bg-[#E11D3C] text-white p-5 pt-6"><div className="flex items-center justify-between mb-4"><button onClick={() => step === 'home' ? onClose() : setStep(step === 'target' ? 'home' : step === 'signs' ? 'target' : step === 'action' ? 'signs' : 'action')} className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center" aria-label="Back"><ArrowLeft className="w-5 h-5" /></button><span className="bg-black/20 px-3 py-1.5 rounded-pill text-[10px] font-display font-bold tracking-wider">EMERGENCY</span></div><h1 className="font-display font-black text-2xl leading-tight">{title}</h1>{subtitle && <p className="font-body text-xs text-white/90 mt-1">{subtitle}</p>}<div className="inline-flex items-center gap-1.5 mt-3 bg-white/15 rounded-pill px-2.5 py-1.5 text-[10px] font-body"><WifiOff className="w-3.5 h-3.5" /> Works offline</div></div>;
 
-        {/* Body Content */}
-        <div className="p-5 space-y-5 flex-1">
-          {/* Step 1: Who Needs Help? */}
-          <div>
-            <p className="font-body text-[11px] font-semibold uppercase tracking-wide text-ink-600 mb-2">
-              Who needs immediate help?
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setSelectedTarget('mother')}
-                className={`p-4 rounded-card border text-left transition-all cursor-pointer ${
-                  selectedTarget === 'mother'
-                    ? 'bg-status-urgent-bg border-status-urgent ring-2 ring-status-urgent shadow-card-1'
-                    : 'bg-white border-border-hairline hover:bg-lavender-50'
-                }`}
-              >
-                <div className="w-10 h-10 rounded-full bg-status-urgent/10 text-status-urgent flex items-center justify-center mb-2">
-                  <User className="w-5 h-5" />
-                </div>
-                <p className="font-display font-bold text-sm text-ink-900">
-                  Mother / Pregnancy
-                </p>
-                <p className="font-body text-[11px] text-ink-600 mt-0.5">
-                  Bleeding, severe headache, reduced fetal movement
-                </p>
-              </button>
+  const body = () => {
+    if (step === 'home') return <><div className="p-5 space-y-4"><div className="rounded-[20px] bg-[#E11D3C] p-5 text-white"><p className="font-body text-[11px] uppercase tracking-wider text-white/75">Immediate care</p><h2 className="font-display font-black text-3xl mt-1">If you feel this is an emergency, act now.</h2><p className="font-body text-sm text-white/90 mt-2">This pathway does not use HavenChat or require an internet connection.</p></div><button onClick={() => setStep('target')} className="w-full min-h-14 rounded-pill bg-[#E11D3C] text-white font-display font-bold text-base flex items-center justify-center gap-2">Continue <ChevronRight className="w-5 h-5" /></button><button onClick={() => callNumber('1199')} className="w-full min-h-14 rounded-pill bg-white border-[1.5px] border-[#E11D3C] text-[#E11D3C] font-display font-bold flex items-center justify-center gap-2"><PhoneCall className="w-5 h-5" /> Call emergency dispatch</button></div></>;
+    if (step === 'target') return <><div className="p-5 space-y-3"><h2 className="font-display font-bold text-2xl text-ink-900">Who needs help?</h2><p className="font-body text-sm text-ink-600">Choose one person so we can show the right danger signs.</p>{([['me','Me',User],['newborn','My newborn',Baby],['child','My child',Heart]] as const).map(([value,label,Icon]) => <button key={value} onClick={() => { setTarget(value); setSelectedSigns([]); setStep('signs'); }} className="w-full min-h-16 p-4 rounded-[20px] bg-white border border-border-hairline shadow-card-1 flex items-center gap-3 text-left"><div className="w-11 h-11 rounded-2xl bg-[#FDE8EC] text-[#E11D3C] flex items-center justify-center"><Icon className="w-5 h-5" /></div><span className="flex-1 font-display font-bold text-base text-ink-900">{label}</span><ChevronRight className="w-5 h-5 text-ink-400" /></button>)}</div></>;
+    if (step === 'signs') return <><div className="p-5 space-y-3"><h2 className="font-display font-bold text-2xl text-ink-900">Do you have any of these signs?</h2><div className="space-y-2">{signs.map((sign) => <label key={sign} className="w-full min-h-14 p-3.5 rounded-[18px] bg-white border border-border-hairline flex items-center gap-3 cursor-pointer"><input type="checkbox" checked={selectedSigns.includes(sign)} onChange={() => toggleSign(sign)} className="w-6 h-6 accent-[#E11D3C]" /><span className="font-display font-bold text-sm text-ink-900">{sign}</span></label>)}</div><button onClick={() => setStep('action')} className="w-full min-h-14 rounded-pill bg-[#E11D3C] text-white font-display font-bold disabled:opacity-50" disabled={!selectedSigns.length}>I see this sign — Get action</button><button onClick={() => { setSelectedSigns([]); setStep('home'); }} className="w-full py-3 text-[#E11D3C] font-display font-bold">None of these</button></div></>;
+    if (step === 'action') return <><div className="p-5 space-y-4"><div className="rounded-[20px] bg-[#FDE8EC] border border-[#E11D3C]/25 p-5"><p className="font-display font-black text-xl text-[#A9122B]">Please get urgent care now.</p><p className="font-body text-sm text-ink-700 mt-2">Selected: {selectedSigns.join(', ')}. Do not wait for Haven or an internet connection.</p></div><button onClick={() => facility ? callNumber(facility.phone) : callNumber('1199')} className="w-full min-h-16 rounded-pill bg-[#E11D3C] text-white font-display font-black text-lg flex items-center justify-center gap-2"><PhoneCall className="w-6 h-6" /> {facility ? 'Call facility / Go now' : 'Call emergency dispatch'}</button><button onClick={() => setStep('guidance')} className="w-full min-h-14 rounded-pill bg-white border-[1.5px] border-[#E11D3C] text-[#E11D3C] font-display font-bold">View facility guidance</button></div></>;
+    return <><div className="p-5 space-y-4"><div className="rounded-[20px] bg-white border border-border-hairline p-5 shadow-card-1"><div className="flex items-center gap-2 text-[#E11D3C]"><Building2 className="w-5 h-5" /><h2 className="font-display font-bold text-lg">Contact / Facility Guidance</h2></div>{loadingContacts ? <p className="font-body text-sm text-ink-600 mt-3">Checking your saved emergency contacts…</p> : facility ? <div className="mt-4 p-4 rounded-2xl bg-lavender-50"><p className="font-display font-bold text-ink-900">{facility.name}</p><p className="font-body text-xs text-ink-600 mt-1">{facility.label}</p><button onClick={() => callNumber(facility.phone)} className="mt-3 w-full min-h-12 rounded-pill bg-[#E11D3C] text-white font-display font-bold">Call facility</button></div> : <p className="font-body text-sm text-ink-600 mt-3">No emergency facility is saved for this account yet. Use emergency dispatch or save a facility in your profile.</p>}{contacts.length > 0 && <div className="mt-4 space-y-2">{contacts.map((contact) => <button key={`${contact.name}-${contact.phone}`} onClick={() => callNumber(contact.phone)} className="w-full p-3 rounded-2xl bg-white border border-border-hairline flex items-center justify-between"><span className="text-left"><b className="font-display text-sm text-ink-900">{contact.name}</b><span className="block font-body text-xs text-ink-600">{contact.label}</span></span><PhoneCall className="w-5 h-5 text-[#E11D3C]" /></button>)}</div>}</div><div className="rounded-[18px] bg-[#FDE8EC] p-4"><p className="font-body text-sm text-[#7D1022]">If symptoms are severe or worsening, go to the nearest appropriate emergency service now. This guidance is deterministic and remains available offline.</p></div><button onClick={onClose} className="w-full py-3 rounded-pill bg-white border-[1.5px] border-[#E11D3C] text-[#E11D3C] font-display font-bold">Close</button></div></>;
+  };
 
-              <button
-                onClick={() => setSelectedTarget('baby')}
-                className={`p-4 rounded-card border text-left transition-all cursor-pointer ${
-                  selectedTarget === 'baby'
-                    ? 'bg-status-urgent-bg border-status-urgent ring-2 ring-status-urgent shadow-card-1'
-                    : 'bg-white border-border-hairline hover:bg-lavender-50'
-                }`}
-              >
-                <div className="w-10 h-10 rounded-full bg-status-urgent/10 text-status-urgent flex items-center justify-center mb-2">
-                  <Baby className="w-5 h-5" />
-                </div>
-                <p className="font-display font-bold text-sm text-ink-900">
-                  Baby / Child
-                </p>
-                <p className="font-body text-[11px] text-ink-600 mt-0.5">
-                  Fever, fast breathing, lethargy, poor feeding
-                </p>
-              </button>
-            </div>
-          </div>
-
-          {/* Primary Action Button */}
-          <div>
-            <Button
-              variant="emergency"
-              disabled={!selectedTarget}
-              onClick={() => {
-                // In full triage pathway this progresses to symptom checklist
-              }}
-              className="w-full py-3.5 flex items-center justify-center gap-2"
-            >
-              <span>Continue to Danger Signs Checklist</span>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-
-          {/* Speed Dial Section */}
-          <div className="pt-2 border-t border-border-hairline space-y-2.5">
-            <p className="font-body text-[11px] font-semibold uppercase tracking-wide text-ink-600">
-              Direct Speed Dial
-            </p>
-
-            {/* National Ambulance 1199 */}
-            <a
-              href="tel:1199"
-              className="p-3.5 rounded-card bg-status-urgent-bg border border-status-urgent/30 flex items-center justify-between text-ink-900 hover:bg-status-urgent-bg/80 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-status-urgent text-white flex items-center justify-center">
-                  <PhoneCall className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="font-display font-bold text-sm text-status-urgent">
-                    National Ambulance (Kenya Red Cross)
-                  </p>
-                  <p className="font-body text-xs text-ink-600">
-                    Toll-free emergency dispatch: 1199 / 999
-                  </p>
-                </div>
-              </div>
-              <span className="font-display font-bold text-xs bg-status-urgent text-white px-2.5 py-1 rounded-pill">
-                1199
-              </span>
-            </a>
-
-            {/* Saved Facility */}
-            <a
-              href={`tel:${savedFacilityPhone.replace(/\s+/g, '')}`}
-              className="p-3.5 rounded-card bg-white border border-border-hairline shadow-card-1 flex items-center justify-between text-ink-900 hover:bg-lavender-50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-lavender-100 text-haven-deep flex items-center justify-center">
-                  <Building className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="font-display font-bold text-sm text-ink-900">
-                    {savedFacilityName}
-                  </p>
-                  <p className="font-body text-xs text-ink-600">
-                    Primary Maternal Maternity Ward
-                  </p>
-                </div>
-              </div>
-              <span className="font-display font-bold text-xs text-haven-deep underline">
-                Call
-              </span>
-            </a>
-
-            {/* Partner / Next of Kin */}
-            <a
-              href={`tel:${nextOfKinPhone.replace(/\s+/g, '')}`}
-              className="p-3.5 rounded-card bg-white border border-border-hairline shadow-card-1 flex items-center justify-between text-ink-900 hover:bg-lavender-50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-lavender-100 text-haven-deep flex items-center justify-center">
-                  <HeartHandshake className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="font-display font-bold text-sm text-ink-900">
-                    {nextOfKinName}
-                  </p>
-                  <p className="font-body text-xs text-ink-600">
-                    Registered Emergency Contact
-                  </p>
-                </div>
-              </div>
-              <span className="font-display font-bold text-xs text-haven-deep underline">
-                Call
-              </span>
-            </a>
-          </div>
-
-          {/* Offline Safe Guarantee */}
-          <div className="bg-lavender-100/60 rounded-card p-3 border border-border-hairline flex items-center gap-2 text-xs text-ink-600">
-            <ShieldCheck className="w-4 h-4 text-status-normal shrink-0" />
-            <span>Emergency numbers and triage guides work fully offline without internet.</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/70"><div className="w-full max-w-[420px] h-full sm:h-auto sm:max-h-[90vh] bg-lavender-50 sm:rounded-[28px] overflow-y-auto flex flex-col shadow-2xl">{step === 'home' ? header('Emergency', 'Immediate choices · no AI required') : header(step === 'target' ? 'Who needs help?' : step === 'signs' ? 'Danger signs' : step === 'action' ? 'Get help now' : 'Contact / Facility Guidance')}{body()}<div className="px-5 pb-5 flex items-center justify-center gap-2 text-[10px] text-ink-500"><ShieldCheck className="w-3.5 h-3.5 text-status-normal" /> Deterministic emergency pathway</div></div></div>;
 };
