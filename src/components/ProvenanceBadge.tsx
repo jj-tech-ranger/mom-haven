@@ -1,86 +1,34 @@
 import React from 'react';
-import { Clock, CheckCircle2 } from 'lucide-react';
+import { CheckCircle, Clock } from 'lucide-react';
 import { Provenance } from '../types';
 
-interface ProvenanceBadgeProps {
-  provenance?: Provenance | null;
-  compact?: boolean;
-  className?: string;
-  showCaption?: boolean;
-}
+interface ProvenanceBadgeProps { provenance?: Provenance | null; compact?: boolean; className?: string; showCaption?: boolean; }
 
-export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
-  provenance,
-  compact = false,
-  className = '',
-  showCaption = true,
-}) => {
-  const isVerified = provenance?.status === 'VERIFIED';
-
-  if (isVerified) {
-    const verifiedDetails = provenance?.verifiedBy
-      ? `Reviewed by ${provenance.verifiedBy}${
-          provenance.verifiedAt
-            ? `, ${new Date(provenance.verifiedAt).toLocaleDateString('en-KE', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-              })}`
-            : ''
-        }`
-      : 'Reviewed by Clinician';
-
-    return (
-      <div className={`inline-flex flex-col gap-1 ${className}`}>
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill bg-status-normal-bg border border-status-normal text-status-normal text-xs font-medium">
-          <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="font-display font-semibold tracking-wide">Verified</span>
-        </div>
-        {!compact && showCaption && (
-          <span className="text-[11px] text-status-normal px-1 font-body leading-tight">
-            {verifiedDetails}
-          </span>
-        )}
-      </div>
-    );
-  }
-
-  // Reported status (default)
-  return (
-    <div className={`inline-flex flex-col gap-1 ${className}`}>
-      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill bg-lavender-100 border border-border-hairline text-haven-deep text-xs font-medium">
-        <Clock className="w-3.5 h-3.5 text-haven-orchid flex-shrink-0" />
-        <span className="font-display font-semibold tracking-wide">Reported</span>
-      </div>
-      {!compact && showCaption && (
-        <span className="text-[11px] text-ink-600 px-1 font-body leading-tight">
-          Entered by you · not yet verified by a clinician
-        </span>
-      )}
-    </div>
-  );
+const formatDate = (value: unknown) => {
+  if (!value) return 'date not recorded';
+  const date = typeof value === 'object' && value !== null && 'toDate' in value && typeof (value as {toDate?:unknown}).toDate === 'function'
+    ? (value as {toDate:()=>Date}).toDate()
+    : new Date(String(value));
+  if (Number.isNaN(date.getTime())) return 'date not recorded';
+  return date.toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' });
 };
 
-export const ProvenanceCaption: React.FC<{ provenance?: Provenance | null; className?: string }> = ({
-  provenance,
-  className = '',
-}) => {
+export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({ provenance, compact = false, className = '', showCaption = true }) => {
   const isVerified = provenance?.status === 'VERIFIED';
-  return (
-    <p className={`font-body text-[12px] text-ink-600 mt-1 ${className}`}>
-      {isVerified
-        ? `Reviewed by ${provenance?.verifiedBy || 'a clinician'}${
-            provenance?.verifiedAt
-              ? `, ${new Date(provenance.verifiedAt).toLocaleDateString('en-KE', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                })}`
-              : ''
-          }`
-        : 'Entered by you · not yet verified by a clinician'}
-    </p>
-  );
+  const verifiedName = (provenance as (Provenance & { verifiedByName?: string }) | null | undefined)?.verifiedByName || provenance?.verifiedBy || 'a clinician';
+  return <div className={`inline-flex flex-col gap-1 ${className}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-body font-semibold text-[12px] ${compact?'px-2.5 py-1':''}`} style={{background:isVerified?'var(--status-normal-bg)':'var(--status-info-bg)',color:isVerified?'var(--status-normal)':'var(--status-info)'}}>
+      {isVerified?<CheckCircle className="w-[13px] h-[13px]"/>:<Clock className="w-[13px] h-[13px]"/>}
+      {isVerified?'Verified':'Reported'}
+    </span>
+    {!compact && showCaption && <ProvenanceCaption provenance={provenance}/>} 
+  </div>;
+};
+
+export const ProvenanceCaption: React.FC<{provenance?:Provenance|null;className?:string}> = ({provenance,className=''}) => {
+  const isVerified=provenance?.status==='VERIFIED';
+  const verifiedName=(provenance as (Provenance & {verifiedByName?:string}) | null | undefined)?.verifiedByName || provenance?.verifiedBy || 'a clinician';
+  return <p className={`font-body text-[12px] text-ink-600 mt-1 ${className}`}>{isVerified?`Reviewed by ${verifiedName}, ${formatDate(provenance?.verifiedAt)}`:'Entered by you · not yet verified by a clinician'}</p>;
 };
 
 export default ProvenanceBadge;
