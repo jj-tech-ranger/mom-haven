@@ -1,0 +1,105 @@
+name: Phase 2 Mother Layout Finalization
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: "!contains(github.event.head_commit.message, 'Phase 2 MotherLayout finalization')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch MotherLayout
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/components/MotherLayout.tsx'); s=p.read_text()
+          replacements=[
+          ("""  const [partnerRel, setPartnerRel] = useState<PartnerRelationshipDoc | null>({
+    id: 'partner_1',
+    motherId: user.uid,
+    partnerId: 'p_user_1',
+    partnerName: 'Brian Kipchoge',
+    partnerPhone: '+254 722 000 111',
+    status: 'active',
+    sharedSections: ['birth_plan', 'milestones', 'appointments'],
+    createdAt: '2026-02-01',
+  });""","""  const [partnerRel, setPartnerRel] = useState<PartnerRelationshipDoc | null>(null);"""),
+          ("""  useEffect(() => {
+    if (!activePregnancy?.id) return;
+    const q = collection(db, 'pregnancies', activePregnancy.id, 'ancEncounters');""","""  useEffect(() => {
+    if (!activePregnancy?.id) {
+      setAncEncounters([]);
+      return;
+    }
+    const q = collection(db, 'pregnancies', activePregnancy.id, 'ancEncounters');"""),
+          ("""        if (list.length > 0) {
+          setAncEncounters(list.sort((a, b) => (a.visitNumber || 0) - (b.visitNumber || 0)));
+        }""","""        setAncEncounters(list.sort((a, b) => (a.visitNumber || 0) - (b.visitNumber || 0)));"""),
+          ("""      (snapshot) => {
+        if (!snapshot.empty) {
+          const docData = snapshot.docs[0];
+          setBirthPlan({ id: docData.id, ...(docData.data() as Omit<BirthPlanDoc, 'id'>) });
+        }
+      },""","""      (snapshot) => {
+        if (snapshot.empty) {
+          setBirthPlan(null);
+          return;
+        }
+        const docData = snapshot.docs[0];
+        setBirthPlan({ id: docData.id, ...(docData.data() as Omit<BirthPlanDoc, 'id'>) });
+      },"""),
+          ("""  const handleSaveAncVisit = async (visitData: Omit<AncEncounterDoc, 'id'>) => {
+    if (!user?.uid) return;
+    if (activePregnancy?.id) {
+      await addDoc(collection(db, 'pregnancies', activePregnancy.id, 'ancEncounters'), visitData);
+    }
+  };""","""  const handleSaveAncVisit = async (visitData: Omit<AncEncounterDoc, 'id'>) => {
+    if (!user?.uid || !activePregnancy?.id) return;
+    await addDoc(collection(db, 'pregnancies', activePregnancy.id, 'ancEncounters'), visitData);
+  };"""),
+          ("""                <PregnancyTimeline
+                  currentWeek={activePregnancy?.gestationalAgeWeeks || 24}
+                  onBack={() => setJourneySubView('overview')}
+                  onSelectMilestone={() => setJourneySubView('anc_overview')}
+                />""","""                <PregnancyTimeline
+                  pregnancy={activePregnancy}
+                  onBack={() => setJourneySubView('pregnancy_overview')}
+                  onSelectMilestone={(milestone) => {
+                    if (milestone.ancContactNumber) setJourneySubView('anc_overview');
+                  }}
+                />"""),
+          ("""                <RecordsHome
+                  pregnancyCount={pregnancies.length || 6}
+                  childCount={14}
+                  immunizationCount={8}
+                  growthCount={5}""","""                <RecordsHome
+                  pregnancyCount={pregnancies.length}
+                  childCount={childrenList.length}
+                  immunizationCount={0}
+                  growthCount={0}"""),
+          ("""        savedFacilityName={motherProfile?.facilityName || 'Kariokor Health Centre / Pumwani Hospital'}
+        nextOfKinName={motherProfile?.nextOfKinName || 'Partner / Next of Kin'}
+        nextOfKinPhone={motherProfile?.nextOfKinPhone || '+254 712 345 678'}""","""        savedFacilityName={motherProfile?.facilityName || ''}
+        nextOfKinName={motherProfile?.nextOfKinName || ''}
+        nextOfKinPhone={motherProfile?.nextOfKinPhone || ''}"""),
+          ("""        partnerName={motherProfile?.nextOfKinName || 'Brian Kipchoge'}
+        isPartnerConnected={true}""","""        partnerName={partnerRel?.partnerName || ''}
+        isPartnerConnected={!!partnerRel}"""),
+          ("""      facilityName: data.facilityName || 'Kariokor Health Centre',""","""      facilityName: data.facilityName || null,"""),
+          ]
+          for old,new in replacements:
+            if old not in s: raise SystemExit('Expected MotherLayout text not found: '+old[:80])
+            s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+          npm install
+          npm run lint
+          npm run build
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/components/MotherLayout.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Phase 2 MotherLayout finalization: remove demo data and wire real pregnancy state'
+          git push
