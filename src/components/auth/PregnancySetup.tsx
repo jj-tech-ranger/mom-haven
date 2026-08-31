@@ -1,260 +1,60 @@
 import React, { useState } from 'react';
-import { Calendar, ArrowLeft, ArrowRight, Info, ShieldCheck, Sparkles, HelpCircle } from 'lucide-react';
+import { Calendar, ArrowLeft, ArrowRight, Info, ShieldCheck } from 'lucide-react';
 import Button from '../Button';
 import { HavenRibbon } from '../HavenRibbon';
 
-interface PregnancySetupProps {
-  onBack: () => void;
-  onContinue: (data: { method: 'LMP' | 'EDD'; date: string; calculatedEDD: string; calculatedWeeks: number }) => void;
-  onSkip: () => void;
-}
+interface PregnancySetupProps { onBack: () => void; onContinue: (data: { method: 'LMP' | 'EDD'; date: string; calculatedEDD: string; calculatedWeeks: number }) => void; onSkip: () => void; }
 
-export const PregnancySetup: React.FC<PregnancySetupProps> = ({
-  onBack,
-  onContinue,
-  onSkip,
-}) => {
-  // Toggle between Last Menstrual Period (LMP) and Expected Due Date (EDD)
+export const PregnancySetup: React.FC<PregnancySetupProps> = ({ onBack, onContinue, onSkip }) => {
   const [method, setMethod] = useState<'LMP' | 'EDD'>('LMP');
   const [selectedDate, setSelectedDate] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Helper calculations based on Kenyan MOH Naegele's rule
-  const calculatePregnancyDetails = () => {
+  const details = (() => {
     if (!selectedDate) return null;
-    const inputDate = new Date(selectedDate);
-    if (isNaN(inputDate.getTime())) return null;
-
+    const input = new Date(`${selectedDate}T00:00:00`);
+    if (Number.isNaN(input.getTime())) return null;
+    const lmp = new Date(input);
+    if (method === 'EDD') lmp.setDate(lmp.getDate() - 280);
+    const edd = new Date(lmp);
+    edd.setDate(edd.getDate() + 280);
     const today = new Date();
+    const days = Math.floor((today.getTime() - lmp.getTime()) / 86400000);
+    const weeks = Math.max(0, Math.floor(days / 7));
+    return { edd: edd.toISOString().slice(0, 10), weeks, days: Math.max(0, days % 7), lmp: lmp.toISOString().slice(0, 10) };
+  })();
 
-    if (method === 'LMP') {
-      // EDD = LMP + 280 days (40 weeks)
-      const edd = new Date(inputDate);
-      edd.setDate(edd.getDate() + 280);
-
-      // Gestational age in weeks
-      const diffTime = today.getTime() - inputDate.getTime();
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      const gestationalWeeks = Math.max(0, Math.floor(diffDays / 7));
-      const gestationalDays = Math.max(0, diffDays % 7);
-
-      return {
-        edd: edd.toISOString().split('T')[0],
-        formattedEDD: edd.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-        weeks: gestationalWeeks,
-        days: gestationalDays,
-        trimester: gestationalWeeks < 13 ? 1 : gestationalWeeks < 27 ? 2 : 3,
-      };
-    } else {
-      // EDD is entered directly
-      const edd = inputDate;
-      const lmp = new Date(edd);
-      lmp.setDate(lmp.getDate() - 280);
-
-      const diffTime = today.getTime() - lmp.getTime();
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      const gestationalWeeks = Math.max(0, Math.floor(diffDays / 7));
-      const gestationalDays = Math.max(0, diffDays % 7);
-
-      return {
-        edd: edd.toISOString().split('T')[0],
-        formattedEDD: edd.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-        weeks: gestationalWeeks,
-        days: gestationalDays,
-        trimester: gestationalWeeks < 13 ? 1 : gestationalWeeks < 27 ? 2 : 3,
-      };
-    }
-  };
-
-  const details = calculatePregnancyDetails();
-
-  const handleContinue = (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDate) {
-      setError('Please select a date to calculate your pregnancy timeline.');
-      return;
-    }
-    if (!details) {
-      setError('Please provide a valid date.');
-      return;
-    }
-    onContinue({
-      method,
-      date: selectedDate,
-      calculatedEDD: details.edd,
-      calculatedWeeks: details.weeks,
-    });
+    if (!details) return setError('Please choose a valid date to continue.');
+    onContinue({ method, date: selectedDate, calculatedEDD: details.edd, calculatedWeeks: details.weeks });
   };
 
   return (
-    <div className="min-h-[780px] w-full max-w-[420px] mx-auto rounded-[36px] overflow-hidden shadow-card-2 flex flex-col justify-between p-6 bg-lavender-50 text-ink-900 border border-border-hairline">
-      {/* Top App Bar with screen code and back chevron */}
-      <div>
-        <div className="flex items-center justify-between pt-2 pb-2">
-          <button
-            type="button"
-            onClick={onBack}
-            className="w-10 h-10 rounded-full bg-white border border-border-hairline flex items-center justify-center text-haven-deep hover:bg-lavender-100 transition-colors cursor-pointer"
-            aria-label="Back to profile setup"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <span className="text-xs font-display font-bold text-haven-orchid tracking-wider uppercase">
-            M-AUTH-007
-          </span>
+    <main className="min-h-[760px] w-full max-w-[430px] mx-auto rounded-[32px] overflow-hidden bg-[#F7F3FC] text-[#241451] border border-[#E5DFF0] shadow-[0_24px_70px_rgba(51,23,138,0.14)]">
+      <div className="px-6 pt-6"><button type="button" onClick={onBack} aria-label="Back to profile setup" className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E5DFF0] bg-white text-[#33178A] shadow-sm"><ArrowLeft className="h-5 w-5" /></button></div>
+      <div className="px-6 pt-5"><HavenRibbon progress={50} currentStep={1} totalSteps={2} label="Pregnancy setup" sublabel="Step 1 of 2" showMarkerTooltip={false} /></div>
+      <div className="px-6 pt-5"><p className="font-body text-xs font-semibold uppercase tracking-[0.14em] text-[#9167C2]">Your pregnancy</p><h1 className="mt-1 font-display text-[30px] font-bold leading-tight">When is baby expected?</h1><p className="mt-2 font-body text-sm leading-6 text-[#6D6380]">Use either your last period date or a due date from your clinician. We only need one.</p></div>
+
+      <div className="mx-4 mt-6 rounded-[24px] border border-[#E5DFF0] bg-white p-5 shadow-[0_8px_24px_rgba(51,23,138,0.07)]">
+        <div className="flex rounded-[28px] bg-[#EEE7F8] p-1">
+          {(['LMP', 'EDD'] as const).map(option => <button key={option} type="button" onClick={() => { setMethod(option); setSelectedDate(''); setError(null); }} className={`flex-1 rounded-[24px] px-3 py-2.5 font-display text-xs font-bold transition-colors ${method === option ? 'bg-[#33178A] text-white shadow-sm' : 'text-[#6D6380]'}`}>{option === 'LMP' ? 'Last period' : 'Due date'}</button>)}
         </div>
+        <p className="mt-3 font-body text-xs leading-5 text-[#6D6380]">Not sure of your due date? Use your last period date instead.</p>
 
-        {/* Haven Ribbon Progress (Step 1 of 2 in onboarding journey) */}
-        <div className="my-2">
-          <HavenRibbon
-            progress={50}
-            currentStep={1}
-            totalSteps={2}
-            label="Pregnancy Setup"
-            sublabel="Step 1 of 2"
-            showMarkerTooltip={false}
-          />
-        </div>
+        <form onSubmit={submit} className="mt-5">
+          <label htmlFor="pregnancy-date" className="mb-1.5 block font-display text-xs font-bold">{method === 'LMP' ? 'First day of your last period' : 'Your estimated due date'}</label>
+          <div className="relative"><Calendar className="absolute left-3.5 top-3.5 h-4 w-4 text-[#A79CBC]" /><input id="pregnancy-date" type="date" value={selectedDate} onChange={e => { setSelectedDate(e.target.value); setError(null); }} className="w-full rounded-[14px] border border-[#E5DFF0] bg-[#F7F3FC] py-3 pl-10 pr-3.5 text-sm outline-none focus:border-[#9167C2]" /></div>
+          {error && <p className="mt-1.5 text-xs text-[#C4283C]">{error}</p>}
 
-        {/* Header Title */}
-        <div className="mt-1 mb-4">
-          <h1 className="font-display font-bold text-2xl sm:text-3xl text-haven-deep tracking-tight">
-            When is baby expected?
-          </h1>
-          <p className="font-body text-sm text-ink-600 mt-1 leading-relaxed">
-            Enter your Last Menstrual Period (LMP) or your Doctor's Estimated Due Date (EDD).
-          </p>
-        </div>
+          <div className="mt-5 rounded-[18px] bg-[#F7F3FC] p-4"><div className="flex items-center gap-2 font-display text-xs font-bold text-[#33178A]"><Info className="h-4 w-4 text-[#9167C2]" />How we work it out</div><p className="mt-1.5 font-body text-xs leading-5 text-[#6D6380]">We use a standard 280-day pregnancy calculation to anchor your timeline. Your clinician’s dates remain the clinical source of truth.</p></div>
 
-        {/* LMP / EDD Segmented Toggle */}
-        <div className="bg-lavender-100 p-1 rounded-pill flex items-center mb-4 border border-border-hairline">
-          <button
-            type="button"
-            onClick={() => {
-              setMethod('LMP');
-              setSelectedDate('');
-              setError(null);
-            }}
-            className={`flex-1 py-2 px-3 rounded-pill text-xs font-display font-bold transition-all cursor-pointer ${
-              method === 'LMP'
-                ? 'bg-haven-deep text-white shadow-card-1'
-                : 'text-ink-600 hover:text-haven-deep'
-            }`}
-          >
-            Last Period (LMP)
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMethod('EDD');
-              setSelectedDate('');
-              setError(null);
-            }}
-            className={`flex-1 py-2 px-3 rounded-pill text-xs font-display font-bold transition-all cursor-pointer ${
-              method === 'EDD'
-                ? 'bg-haven-deep text-white shadow-card-1'
-                : 'text-ink-600 hover:text-haven-deep'
-            }`}
-          >
-            Due Date (EDD)
-          </button>
-        </div>
-
-        {/* Date Input Form */}
-        <form onSubmit={handleContinue} className="space-y-4">
-          <div>
-            <label className="block text-xs font-display font-bold text-ink-900 mb-1.5">
-              {method === 'LMP'
-                ? 'First day of your last period (LMP)'
-                : 'Estimated Due Date from Ultrasound/Doctor (EDD)'}
-            </label>
-            <div className="relative">
-              <Calendar className="w-4 h-4 absolute left-3.5 top-3.5 text-ink-400" />
-              <input
-                type="date"
-                required
-                value={selectedDate}
-                onChange={(e) => {
-                  setSelectedDate(e.target.value);
-                  setError(null);
-                }}
-                className="w-full pl-10 pr-3.5 py-3 bg-white rounded-input border border-border-hairline text-sm text-ink-900 focus:outline-none focus:border-haven-orchid transition-colors"
-              />
-            </div>
-            {error && <p className="text-xs text-status-urgent mt-1">{error}</p>}
-          </div>
-
-          {/* Plain English Explainer Card */}
-          <div className="p-3.5 rounded-card bg-white border border-border-hairline shadow-card-1 space-y-2">
-            <div className="flex items-center gap-2 text-haven-deep text-xs font-display font-bold">
-              <Info className="w-4 h-4 text-haven-orchid shrink-0" />
-              <span>How this is calculated (MOH 216)</span>
-            </div>
-            <p className="text-xs text-ink-600 font-body leading-relaxed">
-              {method === 'LMP'
-                ? "We add 280 days (40 weeks) from the first day of your last period following standard clinical guidelines in the Kenya Mother & Child Health handbook."
-                : "Your ultrasound or clinical provider calculates your EDD directly. We use this date to anchor your weekly milestones and ANC visit schedule."}
-            </p>
-          </div>
-
-          {/* Dynamic Calculated Milestone Preview */}
-          {details && (
-            <div className="p-4 rounded-card bg-white border-2 border-haven-orchid/40 shadow-card-2 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-display font-bold text-haven-orchid uppercase tracking-wider">
-                  Estimated Timeline
-                </span>
-                <span className="text-xs font-display font-bold bg-lavender-100 text-haven-deep px-2 py-0.5 rounded-pill">
-                  Trimester {details.trimester}
-                </span>
-              </div>
-              <div className="flex items-baseline justify-between pt-1">
-                <div>
-                  <p className="text-xs text-ink-400 font-body">Estimated Due Date:</p>
-                  <p className="text-base font-display font-bold text-haven-deep">
-                    {details.formattedEDD}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-ink-400 font-body">Current Stage:</p>
-                  <p className="text-base font-display font-bold text-haven-orchid">
-                    {details.weeks} weeks {details.days > 0 ? `+ ${details.days}d` : ''}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Primary Action Button */}
-          <div className="pt-2">
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={!selectedDate}
-              className="flex items-center justify-center gap-2"
-            >
-              <span>Continue</span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </div>
+          {details && <div className="mt-4 flex items-center justify-between rounded-[18px] border border-[#E5DFF0] bg-white p-4"><div><p className="font-body text-[11px] text-[#6D6380]">Estimated due date</p><p className="font-display text-base font-bold text-[#33178A]">{new Date(`${details.edd}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p></div><div className="text-right"><p className="font-body text-[11px] text-[#6D6380]">Current stage</p><p className="font-display text-base font-bold text-[#9167C2] tabular-nums">{details.weeks}w {details.days}d</p></div></div>}
+          <Button type="submit" variant="primary" disabled={!selectedDate} className="mt-5 flex items-center justify-center gap-2">Continue <ArrowRight className="h-4 w-4" /></Button>
         </form>
       </div>
 
-      {/* Footer secondary action */}
-      <div className="pt-4 pb-1 text-center space-y-3">
-        <button
-          type="button"
-          onClick={onSkip}
-          className="text-xs text-ink-600 hover:text-haven-deep font-display font-semibold transition-colors cursor-pointer"
-        >
-          I'll add this later &rarr;
-        </button>
-
-        <div className="flex items-center justify-center gap-1.5 text-[11px] text-ink-400">
-          <ShieldCheck className="w-3.5 h-3.5 text-haven-orchid" />
-          <span>Calculations run locally and safely on your device</span>
-        </div>
-      </div>
-    </div>
+      <div className="px-6 pb-6 pt-5 text-center"><button type="button" onClick={onSkip} className="font-display text-sm font-semibold text-[#33178A] hover:underline">I’ll add this later</button><div className="mt-4 flex items-center justify-center gap-2 font-body text-[11px] text-[#6D6380]"><ShieldCheck className="h-4 w-4 text-[#9167C2]" />You can update this later.</div></div>
+    </main>
   );
 };
