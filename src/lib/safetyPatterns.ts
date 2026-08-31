@@ -30,7 +30,7 @@ export const DANGER_SIGNS: DangerSign[] = [
   // temperature thresholds remain functionally implemented but are flagged in the
   // clinical decision register as awaiting formal clinical review; Phase 9 Admin must
   // track that governance status rather than silently treating them as approved.
-  { id: 'newborn-feeding', label: 'Not feeding well', icon: 'heart-crack', category: 'newborn', matchPatterns: ['baby won\'t feed', 'baby will not feed', 'baby is not feeding', 'not feeding well', 'unable to feed', 'unable to suckle'] },
+  { id: 'newborn-feeding', label: 'Not feeding well', icon: 'heart-crack', category: 'newborn', matchPatterns: ["baby won't feed", 'baby will not feed', 'baby is not feeding', 'not feeding well', 'unable to feed', 'unable to suckle'] },
   { id: 'newborn-breathing', label: 'Difficult or fast breathing', icon: 'wind', category: 'newborn', matchPatterns: ['fast or difficult breathing', 'difficult breathing', 'baby is breathing fast', 'very fast breathing', 'grunting', 'chest pulling in'] },
   { id: 'newborn-temperature', label: 'Feels hot or unusually cold', icon: 'thermometer', category: 'newborn', matchPatterns: ['baby feels very hot', 'baby feels hot', 'baby feels unusually cold', 'baby feels cold', 'very high temperature', 'very low temperature'] },
   { id: 'newborn-less-active', label: 'Becomes less active', icon: 'shield-alert', category: 'newborn', matchPatterns: ['becomes less active', 'less active', 'very sleepy', 'floppy', 'difficult to wake', 'unconscious'] },
@@ -51,12 +51,23 @@ export const DANGER_SIGNS: DangerSign[] = [
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-export const DANGER_SIGN_PATTERNS: RegExp[] = DANGER_SIGNS
-  .flatMap((sign) => sign.matchPatterns)
-  .map((pattern) => new RegExp(`\\b${escapeRegExp(pattern).replace(/\\s+/g, '\\s+')}\\b`, 'i'));
+// Phase 5 coverage that is intentionally broader than the checklist labels. These
+// phrases remain in the same canonical module so Layer 1 does not regress when the
+// human-facing Emergency checklist is intentionally concise.
+const ADDITIONAL_PHYSICAL_DANGER_PATTERNS: RegExp[] = [
+  /\bblurred vision\b/i,
+  /\bcan't breathe\b/i,
+  /\bnot breathing\b/i,
+  /\bfast or difficult breathing\b/i,
+];
+
+export const DANGER_SIGN_PATTERNS: RegExp[] = [
+  ...DANGER_SIGNS.flatMap((sign) => sign.matchPatterns).map((pattern) => new RegExp(`\\b${escapeRegExp(pattern).replace(/\\s+/g, '\\s+')}\\b`, 'i')),
+  ...ADDITIONAL_PHYSICAL_DANGER_PATTERNS,
+];
 
 export const SELF_HARM_OR_VIOLENCE_PATTERNS: RegExp[] = [
-  ...DANGER_SIGNS.filter((sign) => sign.category === 'selfharm').flatMap((sign) => sign.matchPatterns).map((pattern) => new RegExp(`\\b${escapeRegExp(pattern).replace(/\\s+/g, '\\s+')}\\b`, 'i'))),
+  ...DANGER_SIGNS.filter((sign) => sign.category === 'selfharm').flatMap((sign) => sign.matchPatterns).map((pattern) => new RegExp(`\\b${escapeRegExp(pattern).replace(/\\s+/g, '\\s+')}\\b`, 'i')),
   /\b(?:being|been) (?:hit|beaten|hurt|assaulted)\b/i,
   /\b(?:partner|husband|someone) (?:hits|hit|beats|beat|hurts|hurt) me\b/i,
   /\bdomestic violence\b/i,
@@ -80,7 +91,4 @@ export function matchesPositivePregnancyTestContext(message: string): boolean {
   return POSITIVE_TEST_CONTEXT.test(message.replace(/\s+/g, ' ').trim());
 }
 
-// Kept for consumers that want a type-only icon registry without storing React
-// components in the canonical data file. The Emergency UI maps these stable names
-// to Lucide icons locally.
 export type DangerSignIcon = ComponentType<{ className?: string }>;
