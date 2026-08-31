@@ -1,0 +1,146 @@
+name: Finalize Phase 2
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  finalize:
+    if: "!contains(github.event.head_commit.message, 'Phase 2 finalization')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply Phase 2 corrections
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p=Path(path); s=p.read_text()
+              if old not in s:
+                  raise SystemExit(f'Expected text not found in {path}: {old[:120]}')
+              p.write_text(s.replace(old,new,1))
+
+          replace('src/components/MotherLayout.tsx', """  const [partnerRel, setPartnerRel] = useState<PartnerRelationshipDoc | null>({
+    id: 'partner_1',
+    motherId: user.uid,
+    partnerId: 'p_user_1',
+    partnerName: 'Brian Kipchoge',
+    partnerPhone: '+254 722 000 111',
+    status: 'active',
+    sharedSections: ['birth_plan', 'milestones', 'appointments'],
+    createdAt: '2026-02-01',
+  });""", """  const [partnerRel, setPartnerRel] = useState<PartnerRelationshipDoc | null>(null);""")
+
+          replace('src/components/MotherLayout.tsx', """  useEffect(() => {
+    if (!activePregnancy?.id) return;
+    const q = collection(db, 'pregnancies', activePregnancy.id, 'ancEncounters');""", """  useEffect(() => {
+    if (!activePregnancy?.id) {
+      setAncEncounters([]);
+      return;
+    }
+    const q = collection(db, 'pregnancies', activePregnancy.id, 'ancEncounters');""")
+          replace('src/components/MotherLayout.tsx', """        if (list.length > 0) {
+          setAncEncounters(list.sort((a, b) => (a.visitNumber || 0) - (b.visitNumber || 0)));
+        }""", """        setAncEncounters(list.sort((a, b) => (a.visitNumber || 0) - (b.visitNumber || 0)));""")
+          replace('src/components/MotherLayout.tsx', """      (snapshot) => {
+        if (!snapshot.empty) {
+          const docData = snapshot.docs[0];
+          setBirthPlan({ id: docData.id, ...(docData.data() as Omit<BirthPlanDoc, 'id'>) });
+        }
+      },""", """      (snapshot) => {
+        if (snapshot.empty) {
+          setBirthPlan(null);
+          return;
+        }
+        const docData = snapshot.docs[0];
+        setBirthPlan({ id: docData.id, ...(docData.data() as Omit<BirthPlanDoc, 'id'>) });
+      },""")
+
+          replace('src/components/MotherLayout.tsx', """  const handleSaveAncVisit = async (visitData: Omit<AncEncounterDoc, 'id'>) => {
+    if (!user?.uid) return;
+    if (activePregnancy?.id) {
+      await addDoc(collection(db, 'pregnancies', activePregnancy.id, 'ancEncounters'), visitData);
+    }
+  };""", """  const handleSaveAncVisit = async (visitData: Omit<AncEncounterDoc, 'id'>) => {
+    if (!user?.uid || !activePregnancy?.id) return;
+    await addDoc(collection(db, 'pregnancies', activePregnancy.id, 'ancEncounters'), {
+      ...visitData,
+      provenance: {
+        status: 'REPORTED',
+        enteredBy: user.uid,
+        enteredAt: serverTimestamp(),
+        verifiedBy: null,
+        verifiedAt: null,
+      },
+    });
+  };""")
+
+          replace('src/components/MotherLayout.tsx', """                <PregnancyTimeline
+                  currentWeek={activePregnancy?.gestationalAgeWeeks || 24}
+                  onBack={() => setJourneySubView('overview')}
+                  onSelectMilestone={() => setJourneySubView('anc_overview')}
+                />""", """                <PregnancyTimeline
+                  pregnancy={activePregnancy}
+                  onBack={() => setJourneySubView('pregnancy_overview')}
+                  onSelectMilestone={(milestone) => {
+                    if (milestone.ancContactNumber) setJourneySubView('anc_overview');
+                    if (milestone.id === 'childbirth') setIsBirthOutcomeOpen(true);
+                  }}
+                />""")
+
+          replace('src/components/MotherLayout.tsx', """                <RecordsHome
+                  pregnancyCount={pregnancies.length || 6}
+                  childCount={14}
+                  immunizationCount={8}
+                  growthCount={5}""", """                <RecordsHome
+                  pregnancyCount={pregnancies.length}
+                  childCount={childrenList.length}
+                  immunizationCount={0}
+                  growthCount={0}""")
+          replace('src/components/MotherLayout.tsx', """        savedFacilityName={motherProfile?.facilityName || 'Kariokor Health Centre / Pumwani Hospital'}
+        nextOfKinName={motherProfile?.nextOfKinName || 'Partner / Next of Kin'}
+        nextOfKinPhone={motherProfile?.nextOfKinPhone || '+254 712 345 678'}""", """        savedFacilityName={motherProfile?.facilityName || ''}
+        nextOfKinName={motherProfile?.nextOfKinName || ''}
+        nextOfKinPhone={motherProfile?.nextOfKinPhone || ''}""")
+          replace('src/components/MotherLayout.tsx', """        partnerName={motherProfile?.nextOfKinName || 'Brian Kipchoge'}
+        isPartnerConnected={true}""", """        partnerName={partnerRel?.partnerName || ''}
+        isPartnerConnected={!!partnerRel}""")
+          replace('src/components/MotherLayout.tsx', """      facilityName: data.facilityName || 'Kariokor Health Centre',""", """      facilityName: data.facilityName || null,""")
+
+          p=Path('src/components/mother/PregnancyOverview.tsx'); s=p.read_text()
+          if 'onOpenHealthHistory,onOpenBirthPlan})=>' not in s:
+              raise SystemExit('PregnancyOverview callback signature not found')
+          s=s.replace('onOpenHealthHistory,onOpenBirthPlan})=>','onOpenHealthHistory,onOpenBirthPlan,onOpenBirthOutcome})=>',1)
+          old='''<button onClick={onOpenBirthPlan} className="w-full py-3 rounded-pill bg-white border-[1.5px] border-haven-deep text-haven-deep font-display font-bold"><ShieldCheck className="inline w-4 h-4 mr-2"/>{birthPlan?.id?'View birth plan':'View birth plan'}</button></div>'''
+          new='''<button onClick={onOpenBirthPlan} className="w-full py-3 rounded-pill bg-white border-[1.5px] border-haven-deep text-haven-deep font-display font-bold"><ShieldCheck className="inline w-4 h-4 mr-2"/>View birth plan</button><button onClick={onOpenBirthOutcome} className="w-full py-3 rounded-pill bg-white border-[1.5px] border-haven-orchid text-haven-deep font-display font-bold">Record childbirth</button></div>'''
+          if old not in s: raise SystemExit('PregnancyOverview action block not found')
+          p.write_text(s.replace(old,new,1))
+
+          p=Path('src/components/mother/BirthOutcomeModal.tsx'); s=p.read_text()
+          s=s.replace("const [dateOfBirth, setDateOfBirth] = useState(new Date().toISOString().split('T')[0]);", "const [dateOfBirth, setDateOfBirth] = useState('');")
+          s=s.replace("const [sex, setSex] = useState<'girl' | 'boy'>('girl');", "const [sex, setSex] = useState<'girl' | 'boy' | ''>('');")
+          s=s.replace("const [birthWeightGrams, setBirthWeightGrams] = useState<string>('3400');", "const [birthWeightGrams, setBirthWeightGrams] = useState<string>('');")
+          s=s.replace("const [birthLengthCm, setBirthLengthCm] = useState<string>('50');", "const [birthLengthCm, setBirthLengthCm] = useState<string>('');")
+          s=s.replace("const [deliveryType, setDeliveryType] = useState('Spontaneous Vaginal Delivery (SVD)');", "const [deliveryType, setDeliveryType] = useState('');")
+          s=s.replace("const [placeOfBirth, setPlaceOfBirth] = useState('Pumwani Maternity Hospital');", "const [placeOfBirth, setPlaceOfBirth] = useState('');")
+          s=s.replace("if (!dateOfBirth) return;", "if (!dateOfBirth || !sex || !deliveryType || !placeOfBirth.trim()) return;")
+          s=s.replace('<option value="Spontaneous Vaginal Delivery (SVD)">Vaginal delivery (SVD)</option>', '<option value="">Select mode</option><option value="Spontaneous Vaginal Delivery (SVD)">Vaginal delivery (SVD)</option>')
+          s=s.replace('placeholder="3400"','placeholder="Enter grams"').replace('placeholder="50"','placeholder="Enter cm"')
+          p.write_text(s)
+
+          # Use the shared provenance contract at the Firestore write boundary; preview remains intentionally local.
+          PY
+      - name: Validate and commit
+        shell: bash
+        run: |
+          npm install
+          npm run lint
+          npm run build
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/MotherLayout.tsx src/components/mother/PregnancyOverview.tsx src/components/mother/PregnancyTimeline.tsx src/components/mother/BirthOutcomeModal.tsx src/components/mother/AddAncVisit.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "Phase 2 finalization: remove demo data and complete pregnancy flows"
+          git push
