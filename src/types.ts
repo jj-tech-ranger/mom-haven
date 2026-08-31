@@ -1,7 +1,4 @@
-/**
- * MomHaven canonical Firestore data model.
- * Clinical structure follows the Kenya MOH Mother & Child Health Handbook (MOH 216).
- */
+/** Canonical MomHaven Firestore data model. */
 export type UserRole = 'MOTHER' | 'PARTNER' | 'CLINICIAN' | 'ADMIN';
 export type AppViewRole = 'mother' | 'partner' | 'clinician' | 'admin';
 export type ProvenanceStatus = 'REPORTED' | 'VERIFIED';
@@ -16,10 +13,11 @@ export interface ChildDoc { id:string; motherId:string; name:string|null; dateOf
 export type NewbornFeedingStatus='well'|'poorly'|'unable'; export type NewbornHivStatus='exposed'|'reactive'|'non_reactive'|'unknown';
 export interface NewbornRecordDoc { id:string; childId:string; date:string; birthWeightGrams?:number; birthLengthCm?:number; headCircumferenceCm?:number; feedingStatus?:NewbornFeedingStatus; hivStatus?:NewbornHivStatus; tbScreened?:boolean; apgarScore1Min?:number; apgarScore5Min?:number; eyeProphylaxisGiven:boolean; vitaminKGiven:boolean; bcgGiven:boolean; opv0Given:boolean; provenance:Provenance; }
 export interface PostnatalEncounterDoc { id:string; childId:string; visit:'48h'|'1-2w'|'4-6w'|'4-6mo'; date:string; motherFindings:string; babyFindings:string; provenance:Provenance; }
-export interface ImmunizationRecordDoc { id:string; childId:string; vaccine:string; dose:string; dateGiven?:string; minimumEligibleDate:string; scheduledDate:string; recommendedActionDate:string; status:'given'|'due'|'upcoming'|'missed'; provenance:Provenance; }
+export interface ImmunizationRecordDoc { id:string; childId:string; vaccine:string; dose:string; dateGiven?:string; site?:string; minimumEligibleDate:string; scheduledDate:string; recommendedActionDate:string; status:'given'|'due'|'upcoming'|'missed'; provenance:Provenance; }
 export interface GrowthMeasurementDoc { id:string; childId:string; date:string; weightKg:number; heightCm:number; headCircumferenceCm?:number; provenance:Provenance; }
 export interface MuacMeasurementDoc { id:string; childId:string; date:string; cm:number; band:'SAM'|'MAM'|'AT_RISK'|'NORMAL'; provenance:Provenance; }
-export interface NutritionRecordDoc { id:string; childId:string; date:string; feedingType:'Exclusive Breastfeeding'|'Complementary'|'Replacement'; vitaminADose?:string; dewormingDose?:string; notes?:string; provenance:Provenance; }
+export type NutritionRecordType='vitaminA'|'mnp'|'deworming'|'note';
+export interface NutritionRecordDoc { id:string; childId:string; date:string; type:NutritionRecordType; notes?:string; provenance:Provenance; }
 export interface DevelopmentRecordDoc { id:string; childId:string; date:string; milestoneTitle:string; ageCategory:string; achieved:boolean; notes?:string; provenance:Provenance; }
 export interface PartnerRelationshipDoc { id:string; motherId:string; partnerId:string; partnerName?:string; partnerPhone?:string; sharedSections?:string[]; status:'pending'|'active'|'revoked'; createdAt:string; revokedAt?:string|null; }
 export interface FacilityDoc { id:string; name:string; kmhflCode:string; county:string; subcounty:string; contactPhone:string; level?:string; ambulanceAvailable?:boolean; maternityWardAvailable?:boolean; }
