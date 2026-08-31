@@ -27,16 +27,15 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
   onOpenReminderDetail,
   onOpenAskHaven,
 }) => {
-  const week = pregnancy?.lmp
-    ? Math.floor((Date.now() - new Date(pregnancy.lmp).getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1
+  const activePregnancy = pregnancy?.status === 'active' ? pregnancy : null;
+  const week = activePregnancy?.lmp
+    ? Math.floor((Date.now() - new Date(activePregnancy.lmp).getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1
     : null;
   const unreadCount = notifications.filter((n) => !n.read).length;
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const progress = week ? Math.min(100, Math.max(0, (week / 40) * 100)) : 0;
 
-  // Today priorities are intentionally limited to genuinely actionable reminders:
-  // anything due today or already overdue. Future reminders stay out of this dashboard.
   const todayKey = new Date().toISOString().slice(0, 10);
   const todayReminders = reminders === null
     ? null
@@ -72,7 +71,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
       </header>
 
       <main className="px-5">
-        {pregnancy ? (
+        {activePregnancy ? (
           <section className="rounded-card p-[18px] text-white mb-5 shadow-card-2 overflow-hidden" style={{ background: 'var(--grad-haven)' }}>
             <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-white/70">Your pregnancy</p>
             <p className="font-display font-bold text-[28px] leading-tight mt-1">Week {week}</p>
@@ -87,10 +86,18 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                 <circle cx={10 + (progress / 100) * 380} cy={25 + Math.sin((progress / 100) * Math.PI * 2) * 7} r="2.5" fill="#33178A" />
               </svg>
             </div>
-            <div className="flex justify-between font-body text-[11px] text-white/75 mt-1"><span>Week 1</span><span>Week 40 · EDD {formatEddDisplay(pregnancy.edd)}</span></div>
+            <div className="flex justify-between font-body text-[11px] text-white/75 mt-1"><span>Week 1</span><span>Week 40 · EDD {formatEddDisplay(activePregnancy.edd)}</span></div>
           </section>
         ) : (
-          <div className="mb-5"><EmptyState icon={Sparkles} title="Nothing tracked yet" message="Add a pregnancy or a child to see your journey here." actionLabel="Add pregnancy or child" onAction={onOpenContextSelector} /></div>
+          <div className="mb-5">
+            <EmptyState
+              icon={Baby}
+              title="Your next chapter starts here"
+              message="Your pregnancy is complete. Your child's health journey will appear here as you add their records."
+              actionLabel="Open my journey"
+              onAction={onOpenContextSelector}
+            />
+          </div>
         )}
 
         <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-600 mb-2 px-0.5">Today's priorities</p>
