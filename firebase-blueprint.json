@@ -1,0 +1,118 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Base authenticated user record",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["MOTHER", "PARTNER", "CLINICIAN", "ADMIN"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid", "email", "role", "createdAt"]
+    },
+    "MotherProfile": {
+      "title": "MotherProfile",
+      "description": "MOH 216 maternal health profile",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "fullName": { "type": "string" },
+        "phone": { "type": "string" },
+        "dateOfBirth": { "type": "string" },
+        "county": { "type": "string" },
+        "subCounty": { "type": "string" },
+        "bloodGroup": { "type": "string" },
+        "rhesus": { "type": "string" },
+        "gravida": { "type": "number" },
+        "para": { "type": "number" },
+        "preExistingConditions": { "type": "array" }
+      },
+      "required": ["uid"]
+    },
+    "Pregnancy": {
+      "title": "Pregnancy",
+      "description": "Maternal pregnancy record conforming to MOH 216",
+      "type": "object",
+      "properties": {
+        "motherId": { "type": "string" },
+        "lmp": { "type": "string" },
+        "edd": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "completed"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["motherId", "edd", "status"]
+    },
+    "Child": {
+      "title": "Child",
+      "description": "Child health record under mother care",
+      "type": "object",
+      "properties": {
+        "motherId": { "type": "string" },
+        "name": { "type": "string" },
+        "dateOfBirth": { "type": "string" },
+        "sex": { "type": "string", "enum": ["boy", "girl"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["motherId", "name", "dateOfBirth", "sex"]
+    },
+    "Reminder": {
+      "title": "Reminder",
+      "description": "Maternal reminder or appointment schedule",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "detail": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "urgency": { "type": "string", "enum": ["urgent", "normal", "info"] },
+        "category": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "title", "completed"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User notification item",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "read": { "type": "boolean" },
+        "category": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["userId", "title", "read"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User account documents"
+    },
+    "/motherProfiles/{uid}": {
+      "schema": { "$ref": "#/entities/MotherProfile" },
+      "description": "Mother profile records"
+    },
+    "/pregnancies/{pregnancyId}": {
+      "schema": { "$ref": "#/entities/Pregnancy" },
+      "description": "Active and past pregnancy records"
+    },
+    "/children/{childId}": {
+      "schema": { "$ref": "#/entities/Child" },
+      "description": "Children records"
+    },
+    "/reminders/{reminderId}": {
+      "schema": { "$ref": "#/entities/Reminder" },
+      "description": "Reminders and priorities"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "User notifications"
+    }
+  }
+}
