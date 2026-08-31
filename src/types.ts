@@ -27,7 +27,7 @@ export interface ClinicianPrivateNoteDoc { id:string; clinicianId:string; mother
 export interface ReminderDoc { id:string; userId:string; title:string; detail?:string; dueDate:string; urgency?:'urgent'|'normal'|'info'; category:'ANC'|'Immunization'|'PNC'|'Medication'|'Milestone'|'SelfCare'; type?:'anc'|'supplement'|'development'|'immunization'|'general'; completed:boolean; facility?:string; dosage?:string; clinicalGuidance?:string; relatedRecordId?:string; createdAt:string; }
 export interface NotificationDoc { id:string; userId:string; title:string; message:string; category:'ANC'|'Immunization'|'Medication'|'Guidance'|'System'; read:boolean; timestamp:string; reminderId?:string; urgency?:'urgent'|'normal'|'info'; }
 export interface EmergencyContactDoc { id:string; userId:string; name:string; relationship:string; phone:string; role:'partner'|'driver'|'doctor'|'facility'|'other'; }
-export interface SavedEmergencyFacilityDoc { id:string; userId:string; facilityId:string; facilityName:string; phone:string; notes?:string; }
+export interface SavedEmergencyFacilityDoc { id:string; userId:string; facilityId:string; facilityName:string; phone:string; mapsUrl?:string; notes?:string; }
 export interface AuditEventDoc { id:string; actorId:string; actorRole:UserRole; action:string; objectType:string; objectId:string; timestamp:string; facilityId?:string; }
 export interface HavenSessionDoc { id:string; userId:string; createdAt:string; }
 export interface HavenMessageDoc { id:string; sessionId:string; role:'user'|'assistant'; text:string; createdAt:string; }
