@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Check, Clock, Calendar, Stethoscope, Heart } from 'lucide-react';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { auth, db } from '../../lib/firebase';
+import { db } from '../../lib/firebase';
 import { AncEncounterDoc, BirthPlanLogistics, PregnancyDoc } from '../../types';
 
 interface PregnancyTimelineProps {
   pregnancy?: PregnancyDoc | null;
+  currentWeek?: number;
   onBack?: () => void;
   onSelectMilestone?: (milestone: TimelineItem) => void;
 }
@@ -70,7 +71,7 @@ export const PregnancyTimeline: React.FC<PregnancyTimelineProps> = ({ pregnancy,
     <main className="p-4 max-w-[420px] mx-auto">
       <section className="bg-white rounded-[20px] border border-border-hairline shadow-card-1 p-5 relative overflow-hidden">
         <div className="flex items-center justify-between pb-4 border-b border-border-hairline mb-5"><div><h2 className="font-display font-bold text-base text-ink-900">Your pregnancy journey</h2><p className="font-body text-xs text-ink-600 mt-0.5">Milestones are derived from your pregnancy record and recorded ANC visits.</p></div><div className="w-10 h-10 rounded-full bg-lavender-100 flex items-center justify-center"><Heart className="w-5 h-5 text-haven-orchid"/></div></div>
-        <div className="relative"><svg className="absolute left-[18px] top-2 bottom-2 h-[calc(100%-16px)] w-10" viewBox="0 0 48 720" preserveAspectRatio="none"><path d="M24 0 C38 90 10 180 24 270 C38 360 10 450 24 540 C38 620 18 680 24 720" stroke="#E5DFF0" strokeWidth="8" fill="none" strokeLinecap="round"/><path d="M24 0 C38 90 10 180 24 270 C38 360 10 450 24 540 C38 620 18 680 24 720" stroke="url(#pregnancyRibbon)" strokeWidth="8" fill="none" strokeLinecap="round"/></svg>
+        <div className="relative"><svg className="absolute left-[18px] top-2 bottom-2 h-[calc(100%-16px)] w-10" viewBox="0 0 48 720" preserveAspectRatio="none"><defs><linearGradient id="pregnancyRibbon" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#33178A"/><stop offset="1" stopColor="#9167C2"/></linearGradient></defs><path d="M24 0 C38 90 10 180 24 270 C38 360 10 450 24 540 C38 620 18 680 24 720" stroke="#E5DFF0" strokeWidth="8" fill="none" strokeLinecap="round"/><path d="M24 0 C38 90 10 180 24 270 C38 360 10 450 24 540 C38 620 18 680 24 720" stroke="url(#pregnancyRibbon)" strokeWidth="8" fill="none" strokeLinecap="round"/></svg>
           <div className="relative z-10 space-y-5">{items.map(i=>{const s=status(i);return <button key={i.id} onClick={()=>onSelectMilestone?.(i)} className={`w-full text-left flex items-start gap-4 p-2 rounded-2xl ${s==='current'?'bg-lavender-50 border border-haven-orchid/30':''}`}><div className="w-8 flex-shrink-0 flex justify-center">{s==='completed'?<span className="w-8 h-8 rounded-full bg-haven-deep text-white flex items-center justify-center"><Check className="w-4 h-4 stroke-[3]"/></span>:s==='current'?<span className="w-9 h-9 rounded-full border-2 border-haven-orchid bg-white flex items-center justify-center"><span className="w-4 h-4 rounded-full bg-haven-orchid"/></span>:<span className="w-8 h-8 rounded-full border-2 border-[#D8CEE8] bg-white"/>}</div><div className="flex-1"><div className="flex items-center gap-2 flex-wrap"><span className={`font-display font-bold text-sm ${s==='upcoming'?'text-ink-600':'text-ink-900'}`}>{i.title}</span>{s==='current'&&<span className="px-2 py-0.5 rounded-pill bg-haven-orchid text-white text-[10px] font-display font-bold">Now</span>}{i.ancContactNumber&&<span className="px-2 py-0.5 rounded-pill bg-lavender-100 text-haven-deep text-[10px] font-display font-bold"><Stethoscope className="inline w-3 h-3 mr-1"/>ANC {i.ancContactNumber}</span>}</div><p className="font-body text-xs text-ink-600 mt-1">{i.description}</p><span className="inline-flex items-center gap-1 mt-1.5 text-[10px] text-ink-600"><Calendar className="w-3 h-3"/>Week {i.week}</span>{s==='upcoming'&&<span className="ml-3 inline-flex items-center gap-1 text-[10px] text-ink-600"><Clock className="w-3 h-3"/>Upcoming</span>}</div></button>})}</div>
         </div>
       </section>
