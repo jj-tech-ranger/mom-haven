@@ -19,7 +19,7 @@ export interface MuacMeasurementDoc { id:string; childId:string; date:string; cm
 export type NutritionRecordType='vitaminA'|'mnp'|'deworming'|'note';
 export interface NutritionRecordDoc { id:string; childId:string; date:string; type:NutritionRecordType; notes?:string; provenance:Provenance; }
 export interface DevelopmentRecordDoc { id:string; childId:string; date:string; milestoneTitle:string; ageCategory:string; achieved:boolean; notes?:string; provenance:Provenance; }
-export interface PartnerRelationshipDoc { id:string; motherId:string; partnerId:string; partnerName?:string; partnerPhone?:string; sharedSections?:string[]; status:'pending'|'active'|'revoked'; createdAt:string; revokedAt?:string|null; }
+export interface PartnerRelationshipDoc { id:string; motherId:string; partnerId:string|null; partnerName?:string; partnerPhone?:string; sharedSections?:string[]; code?:string; status:'pending'|'active'|'revoked'; createdAt:string; revokedAt?:string|null; }
 export interface FacilityDoc { id:string; name:string; kmhflCode:string; county:string; subcounty:string; contactPhone:string; level?:string; ambulanceAvailable?:boolean; maternityWardAvailable?:boolean; }
 export interface ClinicianDoc { uid:string; licenseNumber:string; cadre:string; facilityId:string; facilityName?:string; verificationStatus:'pending'|'approved'|'rejected'; }
 export interface ClinicianAccessSessionDoc { id:string; motherId:string; clinicianId:string; shareCode:string; createdAt:string; expiresAt:string; status:'active'|'expired'|'revoked'; revokedAt?:string|null; }
