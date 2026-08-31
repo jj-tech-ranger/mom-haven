@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Shield, Heart, Baby, Syringe, Scale, ChevronRight, FileText } from 'lucide-react';
 import { collection, collectionGroup, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { auth, db } from '../../lib/firebase';
 import EmptyState from '../EmptyState';
 
 type CategoryKey = 'pregnancy' | 'child' | 'immunization' | 'growth';
@@ -9,98 +9,88 @@ type CategoryData = { count: number; verified: number };
 type Categories = Record<CategoryKey, CategoryData | null> | null;
 
 interface RecordsHomeProps {
-  userId: string;
+  pregnancyCount?: number;
+  pregnancyVerified?: number;
+  childCount?: number;
+  childVerified?: number;
+  immunizationCount?: number;
+  immunizationVerified?: number;
+  growthCount?: number;
+  growthVerified?: number;
   onOpenPregnancyRecords: () => void;
   onOpenChildRecords: () => void;
   onOpenImmunizationRecords: () => void;
   onOpenGrowthRecords: () => void;
+  onOpenExportManager: () => void;
 }
 
 const CATEGORY_ICONS = { pregnancy: Heart, child: Baby, immunization: Syringe, growth: Scale };
 
 export const RecordsHome: React.FC<RecordsHomeProps> = ({
-  userId,
   onOpenPregnancyRecords,
   onOpenChildRecords,
   onOpenImmunizationRecords,
   onOpenGrowthRecords,
 }) => {
   const [categories, setCategories] = useState<Categories>(null);
+  const userId = auth.currentUser?.uid;
 
   useEffect(() => {
-    if (!userId) return;
-    const pending: Record<CategoryKey, CategoryData | null> = {
-      pregnancy: null,
-      child: null,
-      immunization: null,
-      growth: null,
-    };
-    setCategories({ ...pending });
+    if (!userId) {
+      setCategories({ pregnancy: { count: 0, verified: 0 }, child: { count: 0, verified: 0 }, immunization: { count: 0, verified: 0 }, growth: { count: 0, verified: 0 } });
+      return;
+    }
 
-    const update = (key: CategoryKey, docs: Array<{ provenance?: { status?: string } }>) => {
-      setCategories((current) => ({
-        ...(current ?? pending),
-        [key]: {
-          count: docs.length,
-          verified: docs.filter((d) => d.provenance?.status === 'VERIFIED').length,
-        },
-      }));
+    const state: Record<CategoryKey, CategoryData | null> = { pregnancy: null, child: null, immunization: null, growth: null };
+    setCategories({ ...state });
+
+    const setCategory = (key: CategoryKey, docs: Array<{ provenance?: { status?: string } }>) => {
+      state[key] = {
+        count: docs.length,
+        verified: docs.filter((d) => d.provenance?.status === 'VERIFIED').length,
+      };
+      setCategories({ ...state });
     };
 
-    const pregnancyQuery = query(collection(db, 'pregnancies'), where('motherId', '==', userId));
-    const childQuery = query(collection(db, 'children'), where('motherId', '==', userId));
-    const pregnancyUnsub = onSnapshot(pregnancyQuery, (snapshot) => {
-      update('pregnancy', snapshot.docs.map((d) => d.data() as { provenance?: { status?: string } }));
-    }, () => update('pregnancy', []));
-    const childUnsub = onSnapshot(childQuery, (snapshot) => {
-      update('child', snapshot.docs.map((d) => d.data() as { provenance?: { status?: string } }));
-    }, () => update('child', []));
+    const pregnancyUnsub = onSnapshot(
+      query(collection(db, 'pregnancies'), where('motherId', '==', userId)),
+      (snapshot) => setCategory('pregnancy', snapshot.docs.map((d) => d.data() as { provenance?: { status?: string } })),
+      () => setCategory('pregnancy', [])
+    );
 
-    const immunizationUnsub = onSnapshot(collectionGroup(db, 'immunizationRecords'), (snapshot) => {
-      const docs = snapshot.docs.filter((d) => (d.data() as { motherId?: string }).motherId === userId || true);
-      // Child subcollections do not consistently carry motherId, so the parent-child ownership
-      // check is performed by matching the known child IDs below once children are loaded.
-      void docs;
-    });
+    const childIds = new Set<string>();
+    const childUnsub = onSnapshot(
+      query(collection(db, 'children'), where('motherId', '==', userId)),
+      (snapshot) => {
+        childIds.clear();
+        snapshot.docs.forEach((d) => childIds.add(d.id));
+        setCategory('child', snapshot.docs.map((d) => d.data() as { provenance?: { status?: string } }));
+      },
+      () => setCategory('child', [])
+    );
 
-    let childIds: string[] = [];
-    let immunizationSnapshot: Array<{ childId?: string; provenance?: { status?: string } }> = [];
-    let growthSnapshot: Array<{ childId?: string; provenance?: { status?: string } }> = [];
+    const immunizationUnsub = onSnapshot(
+      collectionGroup(db, 'immunizationRecords'),
+      (snapshot) => {
+        const docs = snapshot.docs.filter((d) => childIds.has(d.ref.parent.parent?.id || '')).map((d) => ({ ...d.data(), childId: d.ref.parent.parent?.id }));
+        setCategory('immunization', docs as Array<{ provenance?: { status?: string } }>);
+      },
+      () => setCategory('immunization', [])
+    );
 
-    const refreshChildSubcollections = () => {
-      update('immunization', immunizationSnapshot.filter((d) => !!d.childId && childIds.includes(d.childId)));
-      update('growth', growthSnapshot.filter((d) => !!d.childId && childIds.includes(d.childId)));
-    };
+    const growthUnsub = onSnapshot(
+      collectionGroup(db, 'growthMeasurements'),
+      (snapshot) => {
+        const docs = snapshot.docs.filter((d) => childIds.has(d.ref.parent.parent?.id || '')).map((d) => ({ ...d.data(), childId: d.ref.parent.parent?.id }));
+        setCategory('growth', docs as Array<{ provenance?: { status?: string } }>);
+      },
+      () => setCategory('growth', [])
+    );
 
-    const childDataUnsub = onSnapshot(childQuery, (snapshot) => {
-      childIds = snapshot.docs.map((d) => d.id);
-      update('child', snapshot.docs.map((d) => d.data() as { provenance?: { status?: string } }));
-      refreshChildSubcollections();
-    });
-    const realImmunizationUnsub = onSnapshot(collectionGroup(db, 'immunizationRecords'), (snapshot) => {
-      immunizationSnapshot = snapshot.docs.map((d) => ({ ...(d.data() as object), childId: d.data().childId || d.ref.parent.parent?.id }));
-      refreshChildSubcollections();
-    }, () => update('immunization', []));
-    const growthUnsub = onSnapshot(collectionGroup(db, 'growthMeasurements'), (snapshot) => {
-      growthSnapshot = snapshot.docs.map((d) => ({ ...(d.data() as object), childId: d.data().childId || d.ref.parent.parent?.id }));
-      refreshChildSubcollections();
-    }, () => update('growth', []));
-
-    return () => {
-      pregnancyUnsub();
-      childUnsub();
-      childDataUnsub();
-      immunizationUnsub();
-      realImmunizationUnsub();
-      growthUnsub();
-    };
+    return () => { pregnancyUnsub(); childUnsub(); immunizationUnsub(); growthUnsub(); };
   }, [userId]);
 
-  const hasAnyRecords = useMemo(
-    () => categories !== null && Object.values(categories).some((c) => c !== null && c.count > 0),
-    [categories]
-  );
-
+  const hasAnyRecords = useMemo(() => categories !== null && Object.values(categories).some((c) => c && c.count > 0), [categories]);
   const openCategory: Record<CategoryKey, () => void> = {
     pregnancy: onOpenPregnancyRecords,
     child: onOpenChildRecords,
@@ -117,17 +107,9 @@ export const RecordsHome: React.FC<RecordsHomeProps> = ({
       </div>
 
       {categories === null ? (
-        <div className="space-y-3" aria-label="Loading records">
-          {[1, 2, 3, 4].map((i) => <div key={i} className="h-[68px] rounded-card bg-lavender-100 animate-pulse" />)}
-        </div>
+        <div className="space-y-3" aria-label="Loading records">{[1, 2, 3, 4].map((i) => <div key={i} className="h-[68px] rounded-card bg-lavender-100 animate-pulse" />)}</div>
       ) : !hasAnyRecords ? (
-        <EmptyState
-          icon={FileText}
-          title="No records yet"
-          message="Once you add a pregnancy or a child, your records will appear here."
-          actionLabel="Add pregnancy or child"
-          onAction={onOpenPregnancyRecords}
-        />
+        <EmptyState icon={FileText} title="No records yet" message="Once you add a pregnancy or a child, your records will appear here." actionLabel="Add pregnancy or child" onAction={onOpenPregnancyRecords} />
       ) : (
         <>
           <p className="font-body text-[11px] font-semibold uppercase tracking-wide text-ink-600 mb-2 px-0.5">Categories</p>
@@ -138,14 +120,10 @@ export const RecordsHome: React.FC<RecordsHomeProps> = ({
               const Icon = CATEGORY_ICONS[key];
               return (
                 <button key={key} onClick={openCategory[key]} className="w-full text-left bg-white rounded-card p-[16px] shadow-card-1 flex items-center gap-3.5 border border-border-hairline">
-                  <div className="w-[46px] h-[46px] rounded-[14px] bg-lavender-100 flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-5 h-5 text-haven-deep" strokeWidth={2} />
-                  </div>
+                  <div className="w-[46px] h-[46px] rounded-[14px] bg-lavender-100 flex items-center justify-center flex-shrink-0"><Icon className="w-5 h-5 text-haven-deep" strokeWidth={2} /></div>
                   <div className="flex-1">
                     <p className="font-display font-bold text-[14px] text-ink-900 capitalize">{key}</p>
-                    <p className="font-body text-[12px] text-ink-600">
-                      {data.count === 0 ? 'No records yet' : `${data.count} record${data.count === 1 ? '' : 's'} · ${data.verified} verified`}
-                    </p>
+                    <p className="font-body text-[12px] text-ink-600">{data.count === 0 ? 'No records yet' : `${data.count} record${data.count === 1 ? '' : 's'} · ${data.verified} verified`}</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-ink-400" />
                 </button>
