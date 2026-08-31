@@ -3,7 +3,7 @@ service cloud.firestore {
  match /databases/{database}/documents {
   function signed(){return request.auth!=null;}
   function owner(uid){return signed()&&request.auth.uid==uid;}
-  function activePartner(motherId){return signed()&&exists(/databases/$(database)/documents/partnerRelationships/$(motherId+'_'.concat(request.auth.uid)))&&get(/databases/$(database)/documents/partnerRelationships/$(motherId+'_'.concat(request.auth.uid))).data.status=='active';}
+  function activePartner(motherId){return signed()&&exists(/databases/$(database)/documents/partnerRelationships/$(motherId + '_' + request.auth.uid))&&get(/databases/$(database)/documents/partnerRelationships/$(motherId + '_' + request.auth.uid)).data.status=='active';}
   match /users/{uid}{allow read,write:if owner(uid);}
   match /motherProfiles/{uid}{allow read,write:if owner(uid);}
   match /pregnancies/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.motherId==request.auth.uid)||(resource!=null&&resource.data.motherId==request.auth.uid));match /{sub=**}{allow read,write:if signed()&&get(/databases/$(database)/documents/pregnancies/$(id)).data.motherId==request.auth.uid;}}
@@ -11,7 +11,7 @@ service cloud.firestore {
   match /birthPlans/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.motherId==request.auth.uid)||(resource!=null&&resource.data.motherId==request.auth.uid));}
   match /reminders/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.userId==request.auth.uid)||(resource!=null&&resource.data.userId==request.auth.uid));}
   match /notifications/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.userId==request.auth.uid)||(resource!=null&&resource.data.userId==request.auth.uid));}
-  match /emergencyContacts/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.userId==request.auth.uid)||(resource!=null&&resource.data.userId==request.auth.uid));}
+  match /emergencyContacts/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.userId==request.auth.uid)||(resource!=null&&request.resource.data.userId==request.auth.uid));}
   match /savedEmergencyFacilities/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.userId==request.auth.uid)||(resource!=null&&resource.data.userId==request.auth.uid));}
   match /partnerConnections/{id}{allow read:if signed();allow create:if signed()&&request.resource.data.motherId==request.auth.uid;allow update:if signed()&&(resource.data.motherId==request.auth.uid||resource.data.usedBy==request.auth.uid);}
   match /partnerRelationships/{id}{allow read,write:if signed()&&(resource.data.motherId==request.auth.uid||resource.data.partnerId==request.auth.uid||(resource==null&&request.resource.data.partnerId==request.auth.uid));}
