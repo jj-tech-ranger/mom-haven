@@ -35,6 +35,13 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const progress = week ? Math.min(100, Math.max(0, (week / 40) * 100)) : 0;
 
+  // Today priorities are intentionally limited to genuinely actionable reminders:
+  // anything due today or already overdue. Future reminders stay out of this dashboard.
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayReminders = reminders === null
+    ? null
+    : reminders.filter((r) => r.dueDate && r.dueDate.slice(0, 10) <= todayKey);
+
   const accentColor = (urgency?: string) => urgency === 'urgent' ? 'var(--status-urgent)' : urgency === 'normal' ? 'var(--status-normal)' : 'var(--haven-orchid)';
   const accentBg = (urgency?: string) => urgency === 'urgent' ? 'var(--status-urgent-bg)' : urgency === 'normal' ? 'var(--status-normal-bg)' : 'var(--lavender-100)';
   const iconFor = (category?: string, urgency?: string) => {
@@ -87,13 +94,13 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
         )}
 
         <p className="font-body text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-600 mb-2 px-0.5">Today's priorities</p>
-        {reminders === null ? (
+        {todayReminders === null ? (
           <div className="h-20 rounded-card bg-lavender-100 animate-pulse" aria-label="Loading today's priorities" />
-        ) : reminders.length === 0 ? (
+        ) : todayReminders.length === 0 ? (
           <EmptyState icon={Leaf} title="Nothing urgent today" message="Once you have an appointment or reminder, it will show up here." />
         ) : (
           <div className="space-y-3">
-            {reminders.map((r) => (
+            {todayReminders.map((r) => (
               <button key={r.id} onClick={() => onOpenReminderDetail(r)} className="w-full text-left bg-white rounded-card p-4 shadow-card-1 border border-border-hairline border-l-4 flex items-center gap-3 group" style={{ borderLeftColor: accentColor(r.urgency) }}>
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: accentBg(r.urgency) }}>{iconFor(r.category, r.urgency)}</div>
                 <div className="flex-1 min-w-0"><p className="font-body font-semibold text-[14px] text-ink-900 truncate">{r.title}</p><p className="font-body text-[12px] text-ink-600 mt-0.5 truncate">{r.detail}</p></div>
