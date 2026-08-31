@@ -1,11 +1,12 @@
 import React from 'react';
 import { Bell, Sparkles, ChevronRight, Leaf, Calendar, Baby, ChevronDown } from 'lucide-react';
 import EmptyState from '../EmptyState';
-import { PregnancyDoc, ReminderDoc, UserDoc, NotificationDoc } from '../../types';
+import { PregnancyDoc, ReminderDoc, UserDoc, MotherProfileDoc, NotificationDoc } from '../../types';
 import { weekFact, formatEddDisplay } from '../../data/pregnancyWeeks';
 
 interface TodayDashboardProps {
   mother: UserDoc | { displayName: string; email?: string; uid?: string };
+  motherProfile?: MotherProfileDoc | null;
   pregnancy: PregnancyDoc | null;
   reminders: ReminderDoc[] | null;
   notifications?: NotificationDoc[];
