@@ -16,15 +16,15 @@ export interface PostnatalEncounterDoc { id:string; childId:string; visit:'48h'|
 export interface ImmunizationRecordDoc { id:string; childId:string; vaccine:string; dose:string; dateGiven?:string; site?:string; minimumEligibleDate:string; scheduledDate:string; recommendedActionDate:string; status:'given'|'due'|'upcoming'|'missed'; provenance:Provenance; }
 export interface GrowthMeasurementDoc { id:string; childId:string; date:string; weightKg:number; heightCm:number; headCircumferenceCm?:number; provenance:Provenance; }
 export interface MuacMeasurementDoc { id:string; childId:string; date:string; cm:number; band:'SAM'|'MAM'|'AT_RISK'|'NORMAL'; provenance:Provenance; }
-export type NutritionRecordType='vitaminA'|'mnp'|'deworming'|'note';
 export interface NutritionRecordDoc { id:string; childId:string; date:string; type:NutritionRecordType; notes?:string; provenance:Provenance; }
+export type NutritionRecordType='vitaminA'|'mnp'|'deworming'|'note';
 export interface DevelopmentRecordDoc { id:string; childId:string; date:string; milestoneTitle:string; ageCategory:string; achieved:boolean; notes?:string; provenance:Provenance; }
 export interface PartnerRelationshipDoc { id:string; motherId:string; partnerId:string|null; partnerName?:string; partnerPhone?:string; sharedSections?:string[]; code?:string; status:'pending'|'active'|'revoked'; createdAt:string; revokedAt?:string|null; }
 export interface FacilityDoc { id:string; name:string; kmhflCode:string; county:string; subcounty:string; contactPhone:string; level?:string; ambulanceAvailable?:boolean; maternityWardAvailable?:boolean; }
 export interface ClinicianDoc { uid:string; licenseNumber:string; cadre:string; facilityId:string; facilityName?:string; verificationStatus:'pending'|'approved'|'rejected'; }
 export interface ClinicianAccessSessionDoc { id:string; motherId:string; clinicianId:string|null; shareCode:string; createdAt:string; expiresAt:string; status:'active'|'expired'|'revoked'; revokedAt?:string|null; }
 export interface ClinicianPrivateNoteDoc { id:string; clinicianId:string; motherId:string; childId?:string; text:string; createdAt:string; }
-export interface ReminderDoc { id:string; userId:string; title:string; detail?:string; dueDate:string; urgency?:'urgent'|'normal'|'info'; category:'ANC'|'Immunization'|'PNC'|'Medication'|'Milestone'|'SelfCare'; type?:'anc'|'supplement'|'development'|'immunization'|'general'; completed:boolean; facility?:string; dosage?:string; clinicalGuidance?:string; relatedRecordId?:string; createdAt:string; }
+export interface ReminderDoc { id:string; userId:string; title:string; detail?:string; dueDate:string; urgency?:'urgent'|'normal'|'info'; category:'ANC'|'Immunization'|'PNC'|'Medication'|'Milestone'|'SelfCare'; type?:'anc'|'supplement'|'development'|'immunization'|'general'; completed:boolean; facility?:string; dosage?:string; clinicalGuidance?:string; relatedRecordId?:string; sharedWithPartner?:boolean; createdAt:string; }
 export interface NotificationDoc { id:string; userId:string; title:string; message:string; category:'ANC'|'Immunization'|'Medication'|'Guidance'|'System'; read:boolean; timestamp:string; reminderId?:string; urgency?:'urgent'|'normal'|'info'; }
 export interface EmergencyContactDoc { id:string; userId:string; name:string; relationship:string; phone:string; role:'partner'|'driver'|'doctor'|'facility'|'other'; }
 export interface SavedEmergencyFacilityDoc { id:string; userId:string; facilityId:string; facilityName:string; phone:string; mapsUrl?:string; notes?:string; }
