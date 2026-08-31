@@ -1,8 +1,8 @@
-name: Phase 6 checks
+name: MomHaven checks
 
 on:
   push:
-    branches: ['phase-6-emergency-offline']
+    branches: ['main']
   pull_request:
     branches: ['main']
 
