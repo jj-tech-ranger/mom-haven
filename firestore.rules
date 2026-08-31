@@ -12,9 +12,9 @@ service cloud.firestore {
   match /reminders/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.userId==request.auth.uid)||(resource!=null&&resource.data.userId==request.auth.uid));}
   match /notifications/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.userId==request.auth.uid)||(resource!=null&&resource.data.userId==request.auth.uid));}
   match /emergencyContacts/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.userId==request.auth.uid)||(resource!=null&&resource.data.userId==request.auth.uid));}
-  match /savedEmergencyFacilities/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.userId==request.auth.uid)||(resource!=null&&request.resource.data.userId==request.auth.uid));}
+  match /savedEmergencyFacilities/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.userId==request.auth.uid)||(resource!=null&&resource.data.userId==request.auth.uid));}
   match /partnerConnections/{id}{allow read:if signed();allow create:if signed()&&request.resource.data.motherId==request.auth.uid;allow update:if signed()&&(resource.data.motherId==request.auth.uid||resource.data.usedBy==request.auth.uid);}
-  match /partnerRelationships/{id}{allow read,write:if signed()&&(resource.data.motherId==request.auth.uid||resource.data.partnerId==request.auth.uid||(resource==null&&request.resource.data.partnerId==request.auth.uid));}
+  match /partnerRelationships/{id}{allow read:if signed()&&((resource.data.motherId==request.auth.uid)||(resource.data.partnerId==request.auth.uid));allow create:if signed()&&request.resource.data.motherId==request.auth.uid&&request.resource.data.partnerId==null&&request.resource.data.status=='pending';allow update:if signed()&&(resource.data.motherId==request.auth.uid||resource.data.partnerId==request.auth.uid);}
   match /partnerShares/{motherId}{allow read:if owner(motherId)||activePartner(motherId);allow create:if owner(motherId);allow update:if owner(motherId)||(activePartner(motherId)&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['partnerLogistics','updatedAt']));}
   match /{document=**}{allow read,write:if false;}
  }
