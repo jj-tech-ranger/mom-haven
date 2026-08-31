@@ -1,133 +1,30 @@
-import React, { useState } from 'react';
-import { X, Sparkles, Send, MessageCircle, HelpCircle, ShieldCheck } from 'lucide-react';
+import React,{useEffect,useMemo,useState} from 'react';
+import {addDoc,collection,doc,getDocs,onSnapshot,orderBy,query,serverTimestamp,where} from 'firebase/firestore';
+import {AlertTriangle,ArrowLeft,CheckCircle2,Clock,MessageCircle,Send,ShieldCheck,Sparkles,X} from 'lucide-react';
+import {auth,db} from '../../lib/firebase';
+import {HavenMessageDoc,HavenSessionDoc} from '../../types';
 
-interface AskHavenSheetProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSendToChat: (query: string) => void;
-}
+interface Props{isOpen:boolean;onClose:()=>void;onSendToChat:(query:string)=>void}
+const grad='linear-gradient(135deg,#33178A 0%,#9167C2 100%)';
+const assistant='bg-[#EEE7F8] text-[#241451]';
+const userBubble='text-white';
+const dangerTerms=['severe bleeding','heavy bleeding','convulsion','seizure','fainting','severe abdominal pain','difficulty breathing','not breathing','unconscious'];
 
-export const AskHavenSheet: React.FC<AskHavenSheetProps> = ({
-  isOpen,
-  onClose,
-  onSendToChat,
-}) => {
-  const [query, setQuery] = useState('');
-
-  if (!isOpen) return null;
-
-  const suggestedQuestions = [
-    "What should I pack in my maternity bag for Pumwani?",
-    "Is mild swelling in my feet normal around week 24?",
-    "When should I take my iron tablet with meals?",
-  ];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-    onSendToChat(query.trim());
-    setQuery('');
-    onClose();
-  };
-
-  const handleChipClick = (q: string) => {
-    onSendToChat(q);
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      {/* Dimmed Backdrop */}
-      <div
-        className="fixed inset-0 bg-[#241451]/60 backdrop-blur-xs transition-opacity"
-        onClick={onClose}
-      />
-
-      {/* Bottom Sheet Container */}
-      <div className="relative w-full max-w-[420px] bg-white rounded-t-[24px] sm:rounded-[24px] shadow-card-3 border border-border-hairline p-5 max-h-[90vh] overflow-y-auto flex flex-col z-10 animate-in slide-in-from-bottom duration-250">
-        {/* Drag handle */}
-        <div className="w-12 h-1.5 bg-[#E5DFF0] rounded-full mx-auto mb-4" />
-
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-border-hairline">
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-white"
-              style={{ background: 'var(--grad-haven)' }}
-            >
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="font-display font-bold text-lg text-ink-900 leading-tight">
-                  Ask Haven
-                </h2>
-                <span className="text-[10px] font-display font-bold text-haven-orchid uppercase bg-lavender-100 px-2 py-0.5 rounded-pill">
-                  M-TODAY-005
-                </span>
-              </div>
-              <p className="font-body text-xs text-ink-600">
-                Supportive guidance from the Kenya MCH Handbook
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-lavender-100 flex items-center justify-center text-ink-600 hover:text-ink-900 transition-colors cursor-pointer"
-            aria-label="Close"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Suggested Question Chips */}
-        <div className="py-4 space-y-2">
-          <p className="font-body text-[11px] font-semibold uppercase tracking-wide text-ink-600">
-            Suggested questions
-          </p>
-          <div className="flex flex-col gap-2">
-            {suggestedQuestions.map((q, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleChipClick(q)}
-                className="text-left p-3 rounded-card bg-lavender-50 border border-border-hairline hover:bg-lavender-100 hover:border-haven-orchid text-xs text-ink-900 font-body transition-all flex items-center justify-between gap-2 group cursor-pointer"
-              >
-                <span>{q}</span>
-                <Sparkles className="w-3.5 h-3.5 text-haven-orchid shrink-0 opacity-60 group-hover:opacity-100 transition-opacity" />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Input Form */}
-        <form onSubmit={handleSubmit} className="pt-2 space-y-3">
-          <div className="relative">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ask anything about today's symptoms, diet, visits..."
-              className="w-full pl-4 pr-12 py-3 bg-lavender-50 rounded-pill border border-border-hairline text-xs sm:text-sm text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-haven-orchid focus:bg-white transition-all"
-            />
-            <button
-              type="submit"
-              disabled={!query.trim()}
-              className="absolute right-1.5 top-1.5 w-9 h-9 rounded-full text-white flex items-center justify-center transition-opacity disabled:opacity-40 cursor-pointer"
-              style={{ background: 'var(--grad-haven)' }}
-              aria-label="Send"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Clinical Non-replacement notice */}
-          <div className="flex items-center justify-center gap-1.5 text-[11px] text-ink-400 text-center pt-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-haven-orchid shrink-0" />
-            <span>Haven provides educational support and never replaces your clinician.</span>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+export const AskHavenSheet:React.FC<Props>=({isOpen,onClose,onSendToChat})=>{
+ const [view,setView]=useState<'home'|'session'|'suggested'|'safety'|'privacy'>('home');
+ const [sessions,setSessions]=useState<Array<HavenSessionDoc&{lastText?:string}>>([]);
+ const [messages,setMessages]=useState<HavenMessageDoc[]>([]);
+ const [sessionId,setSessionId]=useState<string|null>(null);
+ const [input,setInput]=useState('');
+ const [sensitive,setSensitive]=useState(false);
+ const [week,setWeek]=useState<number|null>(null);
+ useEffect(()=>{if(!isOpen)return;const uid=auth.currentUser?.uid;if(!uid)return;let un=()=>{};getDocs(query(collection(db,'pregnancies'),where('motherId','==',uid),where('status','==','active'))).then(s=>{const p=s.docs[0]?.data();if(p?.lmp){const l=new Date(p.lmp);setWeek(Math.floor((Date.now()-l.getTime())/86400000/7)+1)}});un=onSnapshot(query(collection(db,'havenSessions'),where('userId','==',uid)),s=>setSessions(s.docs.map(d=>({id:d.id,...d.data()} as HavenSessionDoc)).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)))));return()=>un()},[isOpen]);
+ useEffect(()=>{if(!sessionId)return;return onSnapshot(query(collection(db,'havenSessions',sessionId,'messages'),orderBy('createdAt','asc')),s=>setMessages(s.docs.map(d=>({id:d.id,...d.data()} as HavenMessageDoc))))},[sessionId]);
+ if(!isOpen)return null;
+ const suggested=['What symptoms should I watch for today?','How can I prepare for my next visit?','What should I pack for birth?','What does my pregnancy week mean?'];
+ const start=async(q?:string)=>{const uid=auth.currentUser?.uid;if(!uid)return;const r=await addDoc(collection(db,'havenSessions'),{userId:uid,createdAt:serverTimestamp()});setSessionId(r.id);setMessages([]);setView('session');if(q)await send(q,r.id)};
+ const send=async(text=input.trim(),sid=sessionId)=>{if(!text||!sid||!auth.currentUser)return;setInput('');const lower=text.toLowerCase();if(dangerTerms.some(t=>lower.includes(t))){setSensitive(false);setView('safety');return}if(/sex|abuse|violence|rape|assault|self harm|suicide/i.test(lower)){setSensitive(true);return}await addDoc(collection(db,'havenSessions',sid,'messages'),{role:'user',text,createdAt:serverTimestamp()});const context=week?`You are currently around pregnancy week ${week}. `:'';const reply=`I can help you understand this. ${context}I can share general, plain-English information and help you think about what to ask your clinician. I cannot diagnose or prescribe. If you have severe or rapidly worsening symptoms, use Emergency rather than waiting for a chat response.`;await addDoc(collection(db,'havenSessions',sid,'messages'),{role:'assistant',text:reply,createdAt:serverTimestamp()})};
+ const content=view==='home'?<><header className="flex items-center justify-between"><div className="flex items-center gap-3"><div className="h-11 w-11 rounded-full flex items-center justify-center text-white" style={{background:grad}}><Sparkles className="h-5 w-5"/></div><div><h2 className="font-display text-xl font-bold">Haven</h2><p className="text-xs text-[#6D6380]">A warm place to ask questions</p></div></div><button onClick={onClose} className="h-9 w-9 rounded-full bg-[#EEE7F8] flex items-center justify-center"><X className="h-4 w-4"/></button></header><div className="rounded-[20px] p-5 text-white" style={{background:grad}}><p className="font-display text-xl font-bold">Hi, Mama{week?` · Week ${week}`:''}</p><p className="mt-1 text-sm text-white/85">I can help you understand your records and prepare questions for your care team.</p></div><button onClick={()=>start()} className="w-full rounded-[28px] px-5 py-4 font-display font-bold text-white" style={{background:grad}}>Start new conversation</button><div><div className="mb-2 flex items-center justify-between"><p className="text-[11px] font-bold uppercase tracking-wide text-[#6D6380]">Suggested questions</p><button onClick={()=>setView('suggested')} className="text-xs font-bold text-[#33178A]">See all</button></div><div className="flex flex-wrap gap-2">{suggested.slice(0,3).map(q=><button key={q} onClick={()=>start(q)} className="rounded-full border border-[#E5DFF0] bg-white px-3 py-2 text-xs text-[#241451]">{q}</button>)}</div></div><div><p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#6D6380]">Past sessions</p>{sessions.length? <div className="space-y-2">{sessions.map(s=><button key={s.id} onClick={()=>{setSessionId(s.id);setView('session')}} className="w-full rounded-[18px] border border-[#E5DFF0] bg-white p-4 text-left flex items-center gap-3"><MessageCircle className="h-5 w-5 text-[#9167C2]"/><span className="flex-1"><b className="font-display">Conversation</b><span className="block text-xs text-[#6D6380]">{s.createdAt&&String(s.createdAt).slice(0,10)}</span></span><ArrowLeft className="h-4 w-4 rotate-180"/></button>)}</div>:<div className="rounded-[18px] border border-dashed border-[#E5DFF0] p-5 text-center text-sm text-[#6D6380]">No conversations yet.</div>}</div></>:view==='suggested'?<><Header title="Suggested questions" back={()=>setView('home')} onClose={onClose}/><div className="space-y-2">{suggested.map(q=><button key={q} onClick={()=>start(q)} className="w-full rounded-[18px] border border-[#E5DFF0] bg-white p-4 text-left font-body text-sm">{q}</button>)}</div><button onClick={()=>setView('session')} className="w-full rounded-[28px] border-[1.5px] border-[#33178A] py-3.5 font-display font-bold text-[#33178A]">Write my own</button></>:view==='privacy'?<><Header title="Before you continue" back={()=>setView('session')} onClose={onClose}/><div className="rounded-[20px] bg-white p-5"><ShieldCheck className="h-7 w-7 text-[#33178A]"/><h2 className="mt-3 font-display text-xl font-bold">This is a sensitive topic</h2><p className="mt-2 text-sm leading-6 text-[#6D6380]">Please confirm you want to send this sensitive message to Haven. You can choose not to send it.</p></div><button onClick={()=>{setSensitive(false);send(input)}} className="w-full rounded-[28px] py-3.5 font-display font-bold text-white" style={{background:grad}}>Continue</button><button onClick={()=>{setSensitive(false);setInput('')}} className="w-full rounded-[28px] border-[1.5px] border-[#33178A] py-3.5 font-display font-bold text-[#33178A]">Don’t send this</button></>:view==='safety'?<><Header title="Clinical safety" back={()=>setView('session')} onClose={onClose}/><div className="rounded-[22px] bg-red-50 border border-red-200 p-5"><AlertTriangle className="h-7 w-7 text-[#E11D3C]"/><h2 className="mt-3 font-display text-2xl font-bold text-[#241451]">Please get urgent care</h2><p className="mt-2 text-sm leading-6 text-[#6D6380]">Haven cannot safely handle severe symptoms in chat. Please use the deterministic Emergency pathway now.</p></div><button onClick={onClose} className="w-full rounded-[28px] py-4 font-display font-bold text-white bg-[#E11D3C]">Go to Emergency</button><button className="w-full rounded-[28px] border-[1.5px] border-[#33178A] py-3.5 font-display font-bold text-[#33178A]">Find a facility</button></>:<><Header title="Haven" back={()=>setView('home')} onClose={onClose}/><div className="flex items-center gap-2 text-xs text-[#1E8F5F]"><CheckCircle2 className="h-4 w-4"/>Grounded in your records</div><div className="space-y-3">{messages.map(m=><div key={m.id} className={m.role==='assistant'?'flex items-end gap-2':'flex justify-end'}>{m.role==='assistant'&&<div className="h-7 w-7 rounded-full flex items-center justify-center text-white" style={{background:grad}}><Sparkles className="h-3.5 w-3.5"/></div>}<div className={'max-w-[82%] rounded-[20px] px-4 py-3 text-sm leading-5 '+(m.role==='assistant'?assistant:userBubble)} style={m.role==='user'?{background:grad}:undefined}>{m.text}</div></div>)}</div><div className="flex flex-wrap gap-2">{suggested.slice(0,2).map(q=><button key={q} onClick={()=>send(q)} className="rounded-full border border-[#E5DFF0] bg-white px-3 py-2 text-xs">{q}</button>)}</div><div className="flex gap-2 rounded-[24px] border border-[#E5DFF0] bg-white p-2"><input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')send()}} placeholder="Message Haven…" className="min-w-0 flex-1 bg-transparent px-3 text-sm outline-none"/><button onClick={()=>{if(/sex|abuse|violence|rape|assault|self harm|suicide/i.test(input))setView('privacy');else send()}} className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-white" style={{background:grad}}><Send className="h-4 w-4"/></button></div><div className="rounded-[16px] bg-red-50 px-3 py-2 text-xs text-[#8F2433] flex gap-2"><Clock className="h-4 w-4"/>For severe symptoms, go to Emergency instead of waiting for chat.</div></>;
+ return <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"><button className="absolute inset-0 bg-[#241451]/60" onClick={onClose}/><section className="relative z-10 w-full max-w-[430px] max-h-[92vh] overflow-y-auto rounded-t-[24px] sm:rounded-[24px] bg-[#F7F3FC] p-5 shadow-2xl"><div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#E5DFF0]"/>{content}</section></div>
 };
+function Header({title,back,onClose}:{title:string;back:()=>void;onClose:()=>void}){return <div className="mb-4 flex items-center justify-between"><div className="flex items-center gap-2"><button onClick={back} className="h-9 w-9 rounded-full bg-white border border-[#E5DFF0] flex items-center justify-center"><ArrowLeft className="h-4 w-4"/></button><h2 className="font-display text-lg font-bold">{title}</h2></div><button onClick={onClose} className="h-9 w-9 rounded-full bg-white border border-[#E5DFF0] flex items-center justify-center"><X className="h-4 w-4"/></button></div>}
