@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, AlertCircle, Sparkles, Loader2, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, ShieldCheck } from 'lucide-react';
 import Button from '../Button';
 
 interface CreateAccountScreenProps {
@@ -11,293 +11,88 @@ interface CreateAccountScreenProps {
   googleLoading?: boolean;
 }
 
-export const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
-  onBack,
-  onSignIn,
-  onGoogleSignIn,
-  onEmailSignUp,
-  googleLoading = false,
-}) => {
+export const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({ onBack, onSignIn, onGoogleSignIn, onEmailSignUp, googleLoading = false }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [touched, setTouched] = useState({ email: false, password: false, confirm: false });
 
-  // Field validation touched states
-  const [emailTouched, setEmailTouched] = useState(false);
-  const [passTouched, setPassTouched] = useState(false);
-  const [confirmTouched, setConfirmTouched] = useState(false);
+  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const validPassword = password.length >= 8;
+  const validConfirm = confirmPassword.length > 0 && confirmPassword === password;
 
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-  const isPassValid = password.length >= 8;
-  const isConfirmValid = confirmPassword === password && confirmPassword.length > 0;
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setEmailTouched(true);
-    setPassTouched(true);
-    setConfirmTouched(true);
+    setTouched({ email: true, password: true, confirm: true });
     setErrorMessage(null);
-
-    if (!isEmailValid) {
-      setErrorMessage('Please enter a valid email address.');
-      return;
-    }
-    if (!isPassValid) {
-      setErrorMessage('Password must be at least 8 characters long (weak password error).');
-      return;
-    }
-    if (!isConfirmValid) {
-      setErrorMessage('Passwords do not match. Please ensure both fields are identical.');
-      return;
-    }
-    if (!agreeTerms) {
-      setErrorMessage('Please accept the Terms of Service & Privacy Policy to proceed.');
-      return;
-    }
-
+    if (!validEmail) return setErrorMessage('Please enter a valid email address.');
+    if (!validPassword) return setErrorMessage('Password must be at least 8 characters.');
+    if (!validConfirm) return setErrorMessage('Passwords do not match.');
+    if (!agreeTerms) return setErrorMessage('Please accept the Terms & Privacy Policy to continue.');
     setLoading(true);
     try {
       await onEmailSignUp(email.trim(), password, '');
     } catch (err: any) {
-      console.error('Sign-up error:', err);
       const code = err?.code || '';
-      if (code === 'auth/email-already-in-use') {
-        setErrorMessage('This email address is already taken. Please sign in or use another email.');
-      } else if (code === 'auth/weak-password') {
-        setErrorMessage('Weak password error: Please choose a stronger password with at least 8 characters.');
-      } else {
-        setErrorMessage(err?.message || 'Account creation failed. Please try again.');
-      }
-    } finally {
-      setLoading(false);
-    }
+      if (code === 'auth/email-already-in-use') setErrorMessage('This email is already in use. Try signing in instead.');
+      else if (code === 'auth/weak-password') setErrorMessage('That password is too weak. Please choose a stronger password.');
+      else setErrorMessage(err?.message || 'We could not create your account. Please try again.');
+    } finally { setLoading(false); }
   };
 
+  const fieldClass = (invalid: boolean) => `w-full rounded-[14px] border bg-[#F7F3FC] py-3 text-sm text-[#241451] outline-none transition-colors ${invalid ? 'border-[#E11D3C]' : 'border-[#E5DFF0] focus:border-[#9167C2]'}`;
+
   return (
-    <div className="min-h-[780px] w-full max-w-[420px] mx-auto rounded-[36px] overflow-hidden shadow-card-2 flex flex-col justify-between p-6 bg-[#F7F3FC] text-[#241451] border border-[#E5DFF0]">
-      {/* Top App Bar with back chevron */}
-      <div>
-        <div className="flex items-center justify-between pt-2 pb-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="w-10 h-10 rounded-full bg-white border border-[#E5DFF0] flex items-center justify-center text-[#33178A] hover:bg-[#EAE3F7] transition-colors cursor-pointer"
-            aria-label="Back to welcome"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <span className="text-xs font-display font-bold text-[#9167C2] tracking-wider uppercase">
-            M-AUTH-003
-          </span>
-        </div>
-
-        {/* Hero Card Accent (135° Gradient on Hero Blocks only) */}
-        <div className="rounded-[20px] p-4 mb-4 text-white shadow-card-1 border border-white/20"
-          style={{
-            background: 'linear-gradient(135deg, #33178A 0%, #5B2CA0 60%, #9167C2 100%)',
-          }}
-        >
-          <h1 className="font-display font-bold text-2xl text-white tracking-tight">
-            Create account
-          </h1>
-          <p className="font-body text-xs text-white/85 mt-1 leading-relaxed">
-            Begin your maternal &amp; child health journey with Kenya MCH handbook standards.
-          </p>
-        </div>
-
-        {/* Important Error Banner (Weak-password / Email-taken) */}
-        {errorMessage && (
-          <div className="mb-3.5 p-3 rounded-[20px] bg-[#FFF1F2] border border-[#E11D3C] text-[#E11D3C] text-xs flex items-start gap-2.5 shadow-sm">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <span className="leading-snug font-medium">{errorMessage}</span>
-          </div>
-        )}
-
-        {/* Card Form */}
-        <div className="bg-white rounded-[20px] p-4 sm:p-5 border border-[#E5DFF0] shadow-card-1 space-y-3.5">
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div>
-              <label className="block text-xs font-display font-bold text-[#241451] mb-1">
-                Email address
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-[#6D6380]" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (errorMessage) setErrorMessage(null);
-                  }}
-                  onBlur={() => setEmailTouched(true)}
-                  placeholder="you@example.com"
-                  className={`w-full pl-10 pr-3.5 py-2.5 bg-[#F7F3FC] rounded-input border text-sm text-[#241451] focus:outline-none transition-colors ${
-                    emailTouched && !isEmailValid
-                      ? 'border-[#E11D3C] focus:border-[#E11D3C]'
-                      : 'border-[#E5DFF0] focus:border-[#9167C2]'
-                  }`}
-                />
-              </div>
-              {emailTouched && !isEmailValid && (
-                <p className="text-[11px] text-[#E11D3C] mt-0.5">Please enter a valid email address.</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-display font-bold text-[#241451] mb-1">
-                Password (min. 8 characters)
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-[#6D6380]" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (errorMessage) setErrorMessage(null);
-                  }}
-                  onBlur={() => setPassTouched(true)}
-                  placeholder="••••••••"
-                  className={`w-full pl-10 pr-11 py-2.5 bg-[#F7F3FC] rounded-input border text-sm text-[#241451] focus:outline-none transition-colors ${
-                    passTouched && !isPassValid
-                      ? 'border-[#E11D3C] focus:border-[#E11D3C]'
-                      : 'border-[#E5DFF0] focus:border-[#9167C2]'
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-2.5 text-[#6D6380] hover:text-[#241451] cursor-pointer"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {passTouched && !isPassValid && (
-                <p className="text-[11px] text-[#E11D3C] mt-0.5">Password must be at least 8 characters.</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-display font-bold text-[#241451] mb-1">
-                Confirm password
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-[#6D6380]" />
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => {
-                    setConfirmPassword(e.target.value);
-                    if (errorMessage) setErrorMessage(null);
-                  }}
-                  onBlur={() => setConfirmTouched(true)}
-                  placeholder="••••••••"
-                  className={`w-full pl-10 pr-11 py-2.5 bg-[#F7F3FC] rounded-input border text-sm text-[#241451] focus:outline-none transition-colors ${
-                    confirmTouched && !isConfirmValid
-                      ? 'border-[#E11D3C] focus:border-[#E11D3C]'
-                      : 'border-[#E5DFF0] focus:border-[#9167C2]'
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3.5 top-2.5 text-[#6D6380] hover:text-[#241451] cursor-pointer"
-                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {confirmTouched && !isConfirmValid && (
-                <p className="text-[11px] text-[#E11D3C] mt-0.5">Passwords do not match.</p>
-              )}
-            </div>
-
-            {/* Terms checkbox */}
-            <label className="flex items-start gap-2 pt-1 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={agreeTerms}
-                onChange={(e) => setAgreeTerms(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-[#E5DFF0] text-[#33178A] focus:ring-[#9167C2]"
-              />
-              <span className="text-xs text-[#6D6380] leading-snug font-body">
-                I agree to the <span className="text-[#33178A] font-semibold underline">Terms &amp; Privacy Policy</span>.
-              </span>
-            </label>
-
-            {/* Primary Action Button */}
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={loading || googleLoading}
-              className="mt-2"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Creating account...</span>
-                </span>
-              ) : (
-                'Create account'
-              )}
-            </Button>
-          </form>
-
-          <div className="flex items-center gap-3 my-2">
-            <div className="flex-1 h-px bg-[#E5DFF0]" />
-            <span className="text-[11px] text-[#6D6380] font-body">or</span>
-            <div className="flex-1 h-px bg-[#E5DFF0]" />
-          </div>
-
-          {/* Secondary Action: Continue with Google */}
-          <button
-            type="button"
-            onClick={onGoogleSignIn}
-            disabled={loading || googleLoading}
-            className="w-full py-3 px-4 rounded-pill bg-white border-[1.5px] border-[#33178A] text-[#33178A] font-display font-semibold text-sm hover:bg-[#EAE3F7] active:scale-[0.98] flex items-center justify-center gap-2.5 transition-all shadow-sm cursor-pointer disabled:opacity-50"
-          >
-            {googleLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-[#33178A]" />
-                <span>Connecting to Google...</span>
-              </span>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 text-[#9167C2]" />
-                <span>Continue with Google</span>
-              </>
-            )}
-          </button>
+    <main className="min-h-[760px] w-full max-w-[430px] mx-auto rounded-[32px] overflow-hidden bg-[#F7F3FC] text-[#241451] border border-[#E5DFF0] shadow-[0_24px_70px_rgba(51,23,138,0.14)]">
+      <div className="px-6 pt-6 pb-6">
+        <button type="button" onClick={onBack} aria-label="Back to welcome" className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E5DFF0] bg-white text-[#33178A] shadow-sm"><ArrowLeft className="h-5 w-5" /></button>
+        <div className="mt-7">
+          <p className="font-body text-xs font-semibold uppercase tracking-[0.14em] text-[#9167C2]">Your space, your journey</p>
+          <h1 className="mt-1 font-display text-[32px] font-bold leading-tight">Create your account</h1>
+          <p className="mt-2 font-body text-sm leading-6 text-[#6D6380]">A private place to keep your MomHaven journey together.</p>
         </div>
       </div>
 
-      {/* Bottom Footer: Sign in instead */}
-      <div className="pt-3 pb-1 text-center">
-        <p className="text-sm font-body text-[#6D6380]">
-          Already have an account?{' '}
-          <button
-            type="button"
-            onClick={onSignIn}
-            className="text-[#33178A] font-display font-bold hover:underline cursor-pointer ml-1"
-          >
-            Sign in instead
-          </button>
-        </p>
+      <div className="mx-4 rounded-[24px] border border-[#E5DFF0] bg-white p-5 shadow-[0_8px_24px_rgba(51,23,138,0.07)]">
+        {errorMessage && <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-[16px] border border-[#E11D3C]/40 bg-[#FCE7EA] p-3.5 text-xs leading-5 text-[#C4283C]"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /><span>{errorMessage}</span></div>}
 
-        <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-[#6D6380]">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#9167C2]" />
-          <span>Compliant with Kenya Data Protection Act 2019</span>
-        </div>
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label htmlFor="create-email" className="mb-1.5 block font-display text-xs font-bold">Email address</label>
+            <div className="relative"><Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-[#A79CBC]" /><input id="create-email" type="email" value={email} onChange={e => { setEmail(e.target.value); setErrorMessage(null); }} onBlur={() => setTouched(t => ({ ...t, email: true }))} placeholder="you@example.com" autoComplete="email" className={`${fieldClass(touched.email && !validEmail)} pl-10 pr-3.5`} /></div>
+            {touched.email && !validEmail && <p className="mt-1 text-[11px] text-[#C4283C]">Enter a valid email address.</p>}
+          </div>
+
+          <div>
+            <label htmlFor="create-password" className="mb-1.5 block font-display text-xs font-bold">Password</label>
+            <div className="relative"><Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-[#A79CBC]" /><input id="create-password" type={showPassword ? 'text' : 'password'} value={password} onChange={e => { setPassword(e.target.value); setErrorMessage(null); }} onBlur={() => setTouched(t => ({ ...t, password: true }))} placeholder="At least 8 characters" autoComplete="new-password" className={`${fieldClass(touched.password && !validPassword)} pl-10 pr-11`} /><button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-3.5 top-3 text-[#6D6380]">{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div>
+            <p className={`mt-1 text-[11px] ${touched.password && !validPassword ? 'text-[#C4283C]' : 'text-[#6D6380]'}`}>Use 8 or more characters.</p>
+          </div>
+
+          <div>
+            <label htmlFor="create-confirm" className="mb-1.5 block font-display text-xs font-bold">Confirm password</label>
+            <div className="relative"><Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-[#A79CBC]" /><input id="create-confirm" type={showConfirm ? 'text' : 'password'} value={confirmPassword} onChange={e => { setConfirmPassword(e.target.value); setErrorMessage(null); }} onBlur={() => setTouched(t => ({ ...t, confirm: true }))} placeholder="Repeat your password" autoComplete="new-password" className={`${fieldClass(touched.confirm && !validConfirm)} pl-10 pr-11`} /><button type="button" onClick={() => setShowConfirm(v => !v)} aria-label={showConfirm ? 'Hide password' : 'Show password'} className="absolute right-3.5 top-3 text-[#6D6380]">{showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div>
+            {touched.confirm && !validConfirm && <p className="mt-1 text-[11px] text-[#C4283C]">Passwords do not match.</p>}
+          </div>
+
+          <label className="flex cursor-pointer items-start gap-3 rounded-[14px] bg-[#F7F3FC] p-3">
+            <input type="checkbox" checked={agreeTerms} onChange={e => setAgreeTerms(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#33178A]" />
+            <span className="font-body text-xs leading-5 text-[#6D6380]">I agree to the <span className="font-semibold text-[#33178A] underline underline-offset-2">Terms &amp; Privacy Policy</span>.</span>
+          </label>
+
+          <Button type="submit" variant="primary" disabled={loading || googleLoading}>{loading ? <span className="flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Creating account…</span> : 'Create account'}</Button>
+        </form>
+
+        <div className="my-5 flex items-center gap-3"><span className="h-px flex-1 bg-[#E5DFF0]" /><span className="font-body text-[11px] text-[#A79CBC]">or</span><span className="h-px flex-1 bg-[#E5DFF0]" /></div>
+        <button type="button" onClick={onGoogleSignIn} disabled={loading || googleLoading} className="flex w-full items-center justify-center gap-3 rounded-[28px] border-[1.5px] border-[#33178A] bg-white px-5 py-3.5 font-display text-sm font-semibold text-[#33178A] hover:bg-[#F7F3FC] disabled:opacity-60"><span className="flex h-5 w-5 items-center justify-center rounded-full border border-[#E5DFF0] text-xs font-bold">G</span>{googleLoading ? 'Connecting…' : 'Continue with Google'}</button>
       </div>
-    </div>
+
+      <div className="px-6 pb-7 pt-6 text-center"><p className="font-body text-sm text-[#6D6380]">Already have an account? <button type="button" onClick={onSignIn} className="font-display font-bold text-[#33178A] hover:underline">Sign in</button></p><div className="mt-5 flex items-center justify-center gap-2 font-body text-[11px] text-[#6D6380]"><ShieldCheck className="h-4 w-4 text-[#9167C2]" />Your health information stays private and yours.</div></div>
+    </main>
   );
 };
