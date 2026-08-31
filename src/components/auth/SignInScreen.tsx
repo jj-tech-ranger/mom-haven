@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, AlertCircle, Sparkles, Loader2, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, ShieldCheck } from 'lucide-react';
 import Button from '../Button';
 
 interface SignInScreenProps {
@@ -12,21 +12,12 @@ interface SignInScreenProps {
   googleLoading?: boolean;
 }
 
-export const SignInScreen: React.FC<SignInScreenProps> = ({
-  onBack,
-  onCreateAccount,
-  onForgotPassword,
-  onGoogleSignIn,
-  onEmailSignIn,
-  googleLoading = false,
-}) => {
+export const SignInScreen: React.FC<SignInScreenProps> = ({ onBack, onCreateAccount, onForgotPassword, onGoogleSignIn, onEmailSignIn, googleLoading = false }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Field validation states
   const [emailTouched, setEmailTouched] = useState(false);
   const [passTouched, setPassTouched] = useState(false);
 
@@ -38,214 +29,84 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
     setEmailTouched(true);
     setPassTouched(true);
     setErrorMessage(null);
-
-    if (!isEmailValid) {
-      setErrorMessage('Please enter a valid email address.');
-      return;
-    }
-    if (!isPassValid) {
-      setErrorMessage('Password must be at least 8 characters long.');
-      return;
-    }
-
+    if (!isEmailValid) return setErrorMessage('Please enter a valid email address.');
+    if (!isPassValid) return setErrorMessage('Password must be at least 8 characters.');
     setLoading(true);
     try {
       await onEmailSignIn(email.trim(), password);
     } catch (err: any) {
-      console.error('Sign-in error:', err);
       const code = err?.code || '';
-      if (code === 'auth/invalid-credential' || code === 'auth/user-not-found' || code === 'auth/wrong-password') {
-        setErrorMessage('Invalid credentials. Please check your email and password or reset your password.');
+      if (['auth/invalid-credential', 'auth/user-not-found', 'auth/wrong-password'].includes(code)) {
+        setErrorMessage('The email or password is not correct. Please try again or reset your password.');
       } else if (code === 'auth/too-many-requests') {
-        setErrorMessage('Too many unsuccessful sign-in attempts. Please wait a moment or reset your password.');
+        setErrorMessage('Too many unsuccessful attempts. Please wait a moment or reset your password.');
       } else {
-        setErrorMessage(err?.message || 'Sign in failed. Please check your network connection and try again.');
+        setErrorMessage(err?.message || 'Sign in failed. Please check your connection and try again.');
       }
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-[780px] w-full max-w-[420px] mx-auto rounded-[36px] overflow-hidden shadow-card-2 flex flex-col justify-between p-6 bg-[#F7F3FC] text-[#241451] border border-[#E5DFF0]">
-      {/* Top App Bar: Back Chevron + Title */}
-      <div>
-        <div className="flex items-center justify-between pt-2 pb-4">
-          <button
-            type="button"
-            onClick={onBack}
-            className="w-10 h-10 rounded-full bg-white border border-[#E5DFF0] flex items-center justify-center text-[#33178A] hover:bg-[#EAE3F7] transition-colors cursor-pointer"
-            aria-label="Back to welcome"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <span className="text-xs font-display font-bold text-[#9167C2] tracking-wider uppercase">
-            M-AUTH-002
-          </span>
+    <main className="min-h-[760px] w-full max-w-[430px] mx-auto rounded-[32px] overflow-hidden bg-[#F7F3FC] text-[#241451] border border-[#E5DFF0] shadow-[0_24px_70px_rgba(51,23,138,0.14)]">
+      <div className="px-6 pt-6 pb-7">
+        <button type="button" onClick={onBack} aria-label="Back to welcome" className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E5DFF0] bg-white text-[#33178A] shadow-sm hover:bg-[#F7F3FC]">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <div className="mt-7">
+          <p className="font-body text-xs font-semibold uppercase tracking-[0.14em] text-[#9167C2]">Welcome back</p>
+          <h1 className="mt-1 font-display text-[32px] font-bold leading-tight text-[#241451]">Sign in to MomHaven</h1>
+          <p className="mt-2 max-w-[330px] font-body text-sm leading-6 text-[#6D6380]">Pick up where you left off in your mother and baby journey.</p>
         </div>
+      </div>
 
-        {/* Hero Card Accent (135° Gradient on Hero Blocks only) */}
-        <div className="rounded-[20px] p-5 mb-5 text-white shadow-card-1 border border-white/20"
-          style={{
-            background: 'linear-gradient(135deg, #33178A 0%, #5B2CA0 60%, #9167C2 100%)',
-          }}
-        >
-          <h1 className="font-display font-bold text-2xl text-white tracking-tight">
-            Welcome back, Mama
-          </h1>
-          <p className="font-body text-xs text-white/85 mt-1 leading-relaxed">
-            Sign in to access your maternal health records and care journey.
-          </p>
-        </div>
-
-        {/* Error Banner for Invalid Credentials */}
+      <div className="mx-4 rounded-[24px] border border-[#E5DFF0] bg-white p-5 shadow-[0_8px_24px_rgba(51,23,138,0.07)]">
         {errorMessage && (
-          <div className="mb-4 p-3.5 rounded-[20px] bg-[#FFF1F2] border border-[#E11D3C] text-[#E11D3C] text-xs flex items-start gap-2.5 shadow-sm">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <span className="leading-snug font-medium">{errorMessage}</span>
+          <div role="alert" className="mb-4 flex items-start gap-2.5 rounded-[16px] border border-[#E11D3C]/40 bg-[#FCE7EA] p-3.5 text-xs leading-5 text-[#C4283C]">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* Form Container Card */}
-        <div className="bg-white rounded-[20px] p-5 border border-[#E5DFF0] shadow-card-1">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-display font-bold text-[#241451] mb-1.5">
-                Email address
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-[#6D6380]" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (errorMessage) setErrorMessage(null);
-                  }}
-                  onBlur={() => setEmailTouched(true)}
-                  placeholder="you@example.com"
-                  className={`w-full pl-10 pr-3.5 py-3 bg-[#F7F3FC] rounded-input border text-sm text-[#241451] focus:outline-none transition-colors ${
-                    emailTouched && !isEmailValid
-                      ? 'border-[#E11D3C] focus:border-[#E11D3C]'
-                      : 'border-[#E5DFF0] focus:border-[#9167C2]'
-                  }`}
-                />
-              </div>
-              {emailTouched && !isEmailValid && (
-                <p className="text-[11px] text-[#E11D3C] mt-1">Please provide a valid email address.</p>
-              )}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="signin-email" className="mb-1.5 block font-display text-xs font-bold text-[#241451]">Email address</label>
+            <div className="relative">
+              <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-[#A79CBC]" />
+              <input id="signin-email" type="email" value={email} onChange={e => { setEmail(e.target.value); setErrorMessage(null); }} onBlur={() => setEmailTouched(true)} placeholder="you@example.com" autoComplete="email" className={`w-full rounded-[14px] border bg-[#F7F3FC] py-3 pl-10 pr-3.5 text-sm outline-none transition-colors ${emailTouched && !isEmailValid ? 'border-[#E11D3C]' : 'border-[#E5DFF0] focus:border-[#9167C2]'}`} />
             </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-display font-bold text-[#241451]">
-                  Password
-                </label>
-                <button
-                  type="button"
-                  onClick={onForgotPassword}
-                  className="text-xs text-[#33178A] font-display font-semibold hover:underline cursor-pointer"
-                >
-                  Forgot password?
-                </button>
-              </div>
-              <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-[#6D6380]" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (errorMessage) setErrorMessage(null);
-                  }}
-                  onBlur={() => setPassTouched(true)}
-                  placeholder="••••••••"
-                  className={`w-full pl-10 pr-11 py-3 bg-[#F7F3FC] rounded-input border text-sm text-[#241451] focus:outline-none transition-colors ${
-                    passTouched && !isPassValid
-                      ? 'border-[#E11D3C] focus:border-[#E11D3C]'
-                      : 'border-[#E5DFF0] focus:border-[#9167C2]'
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3 text-[#6D6380] hover:text-[#241451] cursor-pointer"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {passTouched && !isPassValid && (
-                <p className="text-[11px] text-[#E11D3C] mt-1">Password must be at least 8 characters.</p>
-              )}
-            </div>
-
-            {/* Primary Full-pill Gradient Button */}
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={loading || googleLoading}
-              className="mt-3"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Signing in...</span>
-                </span>
-              ) : (
-                'Sign in'
-              )}
-            </Button>
-          </form>
-
-          <div className="flex items-center gap-3 my-4">
-            <div className="flex-1 h-px bg-[#E5DFF0]" />
-            <span className="text-[11px] text-[#6D6380] font-body">or</span>
-            <div className="flex-1 h-px bg-[#E5DFF0]" />
+            {emailTouched && !isEmailValid && <p className="mt-1 text-[11px] text-[#C4283C]">Enter a valid email address.</p>}
           </div>
 
-          {/* Secondary Action: White with 1.5px deep-purple border */}
-          <button
-            type="button"
-            onClick={onGoogleSignIn}
-            disabled={loading || googleLoading}
-            className="w-full py-3.5 px-4 rounded-pill bg-white border-[1.5px] border-[#33178A] text-[#33178A] font-display font-semibold text-sm hover:bg-[#EAE3F7] active:scale-[0.98] flex items-center justify-center gap-2.5 transition-all shadow-sm cursor-pointer disabled:opacity-50"
-          >
-            {googleLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-[#33178A]" />
-                <span>Connecting to Google...</span>
-              </span>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 text-[#9167C2]" />
-                <span>Continue with Google</span>
-              </>
-            )}
-          </button>
-        </div>
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label htmlFor="signin-password" className="font-display text-xs font-bold text-[#241451]">Password</label>
+              <button type="button" onClick={onForgotPassword} className="font-display text-xs font-semibold text-[#33178A] hover:underline">Forgot password?</button>
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-[#A79CBC]" />
+              <input id="signin-password" type={showPassword ? 'text' : 'password'} value={password} onChange={e => { setPassword(e.target.value); setErrorMessage(null); }} onBlur={() => setPassTouched(true)} placeholder="Your password" autoComplete="current-password" className={`w-full rounded-[14px] border bg-[#F7F3FC] py-3 pl-10 pr-11 text-sm outline-none transition-colors ${passTouched && !isPassValid ? 'border-[#E11D3C]' : 'border-[#E5DFF0] focus:border-[#9167C2]'}`} />
+              <button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-3.5 top-3 text-[#6D6380]">
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            {passTouched && !isPassValid && <p className="mt-1 text-[11px] text-[#C4283C]">Password must be at least 8 characters.</p>}
+          </div>
+
+          <Button type="submit" variant="primary" disabled={loading || googleLoading} className="mt-2">{loading ? <span className="flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Signing in…</span> : 'Sign in'}</Button>
+        </form>
+
+        <div className="my-5 flex items-center gap-3"><span className="h-px flex-1 bg-[#E5DFF0]" /><span className="font-body text-[11px] text-[#A79CBC]">or</span><span className="h-px flex-1 bg-[#E5DFF0]" /></div>
+
+        <button type="button" onClick={onGoogleSignIn} disabled={loading || googleLoading} className="flex w-full items-center justify-center gap-3 rounded-[28px] border-[1.5px] border-[#33178A] bg-white px-5 py-3.5 font-display text-sm font-semibold text-[#33178A] hover:bg-[#F7F3FC] disabled:opacity-60">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-[#E5DFF0] text-xs font-bold">G</span>
+          {googleLoading ? 'Connecting…' : 'Continue with Google'}
+        </button>
       </div>
 
-      {/* Bottom Footer */}
-      <div className="pt-4 pb-1 text-center">
-        <p className="text-sm font-body text-[#6D6380]">
-          Don't have an account?{' '}
-          <button
-            type="button"
-            onClick={onCreateAccount}
-            className="text-[#33178A] font-display font-bold hover:underline cursor-pointer ml-1"
-          >
-            Create account
-          </button>
-        </p>
-
-        <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-[#6D6380]">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#9167C2]" />
-          <span>Encrypted with Kenyan data protection standards</span>
-        </div>
+      <div className="px-6 pb-7 pt-6 text-center">
+        <p className="font-body text-sm text-[#6D6380]">New to MomHaven? <button type="button" onClick={onCreateAccount} className="font-display font-bold text-[#33178A] hover:underline">Create account</button></p>
+        <div className="mt-5 flex items-center justify-center gap-2 font-body text-[11px] text-[#6D6380]"><ShieldCheck className="h-4 w-4 text-[#9167C2]" />Your health information stays private and yours.</div>
       </div>
-    </div>
+    </main>
   );
 };
