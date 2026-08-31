@@ -1,86 +1,36 @@
 /**
- * MomHaven Canonical Firestore Data Model & Application Types
- * Compliant with Kenyan Ministry of Health (MOH 216) & Phase 0 Specifications
+ * MomHaven canonical Firestore data model.
+ * Clinical structure follows the Kenya MOH Mother & Child Health Handbook (MOH 216).
  */
-
 export type UserRole = 'MOTHER' | 'PARTNER' | 'CLINICIAN' | 'ADMIN';
 export type AppViewRole = 'mother' | 'partner' | 'clinician' | 'admin';
 export type ProvenanceStatus = 'REPORTED' | 'VERIFIED';
-
-export interface Provenance {
-  status: ProvenanceStatus;
-  enteredBy: string;
-  enteredAt: string;
-  verifiedBy: string | null;
-  verifiedAt: string | null;
-  verifiedByRole?: string | null;
-  facilityName?: string | null;
-  kmhflCode?: string | null;
-  clinicianName?: string | null;
-  source?: 'reported_caregiver' | 'verified_clinician';
-  recordedAt?: string;
-}
-
-export interface UserDoc { uid: string; email: string; displayName: string; role: UserRole; createdAt: string; }
-export interface MotherProfileDoc {
-  uid: string; phone?: string; photoUrl?: string; dateOfBirth?: string; county?: string; subCounty?: string; fullName?: string;
-  bloodGroup?: string; rhesus?: string; gravida?: number; parity?: number; para?: number; isFirstPregnancy?: boolean;
-  preExistingConditions?: string[]; surgicalHistory?: string;
-  priorDeliveries?: Array<{ year: string; deliveryType: string; outcome: string; birthWeightKg?: string; facility?: string }>;
-  nextOfKinName?: string; nextOfKinPhone?: string; nextOfKinRelationship?: string; facilityName?: string; kmhflCode?: string; ancNumber?: string;
-  provenance?: Provenance;
-}
-
-export interface PregnancyDoc {
-  id: string; motherId: string; lmp?: string; edd?: string; lastMenstrualPeriod?: string; estimatedDeliveryDate?: string;
-  gestationalAgeWeeks?: number; status: 'active' | 'completed'; createdAt: string;
-}
-export interface BirthPlanDoc {
-  id: string; pregnancyId: string; motherId: string; facilityName: string; backupFacilityName?: string;
-  supportPersonName: string; supportPersonPhone: string; supportPersonRelationship: string; transportMode: string; driverName?: string; driverPhone?: string;
-  estimatedTravelTimeMinutes?: number; emergencyFundPrepared: boolean; bloodDonorIdentified: boolean; bloodDonorName?: string;
-  hospitalBagPacked: boolean; babyClothesPacked: boolean;
-  preferences: { delayedCordClamping: boolean; immediateSkinToSkin: boolean; exclusiveBreastfeeding: boolean; painReliefPreference?: string };
-  specialNotes?: string; status: 'draft' | 'complete'; sharedWithPartner?: boolean; updatedAt: string;
-}
-export interface AncEncounterDoc {
-  id: string; pregnancyId: string; date: string; facilityId?: string; facilityName?: string; visitNumber?: number; gestationWeeks?: number;
-  weight?: number; bloodPressure?: string; fundalHeight?: number; fetalHeartRate?: number; notes?: string; nextVisitDate?: string; provenance: Provenance;
-}
-
-export interface ChildDoc {
-  id: string; motherId: string; name: string; dateOfBirth: string; sex: 'boy' | 'girl'; birthOutcomeId?: string;
-  birthWeightGrams?: number; birthLengthCm?: number; cwcNumber?: string; facilityName?: string; createdAt: string;
-}
-
-export type NewbornFeedingStatus = 'well' | 'poorly' | 'unable';
-export type NewbornHivStatus = 'exposed' | 'reactive' | 'non_reactive' | 'unknown';
-
-export interface NewbornRecordDoc {
-  id: string; childId: string; date: string;
-  birthWeightGrams?: number; birthLengthCm?: number; headCircumferenceCm?: number;
-  feedingStatus?: NewbornFeedingStatus;
-  hivStatus?: NewbornHivStatus; tbScreened?: boolean;
-  apgarScore1Min?: number; apgarScore5Min?: number;
-  eyeProphylaxisGiven: boolean; vitaminKGiven: boolean; bcgGiven: boolean; opv0Given: boolean;
-  provenance: Provenance;
-}
-
-export interface PostnatalEncounterDoc { id: string; childId: string; visit: '48h' | '1-2w' | '4-6w' | '4-6mo'; date: string; motherFindings: string; babyFindings: string; provenance: Provenance; }
-export interface ImmunizationRecordDoc { id: string; childId: string; vaccine: string; dose: string; dateGiven?: string; minimumEligibleDate: string; scheduledDate: string; recommendedActionDate: string; status: 'given' | 'due' | 'upcoming' | 'missed'; provenance: Provenance; }
-export interface GrowthMeasurementDoc { id: string; childId: string; date: string; weightKg: number; heightCm: number; headCircumferenceCm?: number; provenance: Provenance; }
-export interface MuacMeasurementDoc { id: string; childId: string; date: string; cm: number; band: 'SAM' | 'MAM' | 'AtRisk' | 'Normal'; provenance: Provenance; }
-export interface NutritionRecordDoc { id: string; childId: string; date: string; feedingType: 'Exclusive Breastfeeding' | 'Complementary' | 'Replacement'; vitaminADose?: string; dewormingDose?: string; notes?: string; provenance: Provenance; }
-export interface DevelopmentRecordDoc { id: string; childId: string; date: string; milestoneTitle: string; ageCategory: string; achieved: boolean; notes?: string; provenance: Provenance; }
-export interface PartnerRelationshipDoc { id: string; motherId: string; partnerId: string; partnerName?: string; partnerPhone?: string; sharedSections?: string[]; status: 'pending' | 'active' | 'revoked'; createdAt: string; revokedAt?: string | null; }
-export interface FacilityDoc { id: string; name: string; kmhflCode: string; county: string; subcounty: string; contactPhone: string; level?: string; ambulanceAvailable?: boolean; maternityWardAvailable?: boolean; }
-export interface ClinicianDoc { uid: string; licenseNumber: string; cadre: string; facilityId: string; facilityName?: string; verificationStatus: 'pending' | 'approved' | 'rejected'; }
-export interface ClinicianAccessSessionDoc { id: string; motherId: string; clinicianId: string; shareCode: string; createdAt: string; expiresAt: string; status: 'active' | 'expired' | 'revoked'; revokedAt?: string | null; }
-export interface ClinicianPrivateNoteDoc { id: string; clinicianId: string; motherId: string; childId?: string; text: string; createdAt: string; }
-export interface ReminderDoc { id: string; userId: string; title: string; detail?: string; dueDate: string; urgency?: 'urgent' | 'normal' | 'info'; category: 'ANC' | 'Immunization' | 'PNC' | 'Medication' | 'Milestone' | 'SelfCare'; type?: 'anc' | 'supplement' | 'development' | 'immunization' | 'general'; completed: boolean; facility?: string; dosage?: string; clinicalGuidance?: string; relatedRecordId?: string; createdAt: string; }
-export interface NotificationDoc { id: string; userId: string; title: string; message: string; category: 'ANC' | 'Immunization' | 'Medication' | 'Guidance' | 'System'; read: boolean; timestamp: string; reminderId?: string; urgency?: 'urgent' | 'normal' | 'info'; }
-export interface EmergencyContactDoc { id: string; userId: string; name: string; relationship: string; phone: string; role: 'partner' | 'driver' | 'doctor' | 'facility' | 'other'; }
-export interface SavedEmergencyFacilityDoc { id: string; userId: string; facilityId: string; facilityName: string; phone: string; notes?: string; }
-export interface AuditEventDoc { id: string; actorId: string; actorRole: UserRole; action: string; objectType: string; objectId: string; timestamp: string; facilityId?: string; }
-export interface HavenSessionDoc { id: string; userId: string; createdAt: string; }
-export interface HavenMessageDoc { id: string; sessionId: string; role: 'user' | 'assistant'; text: string; createdAt: string; }
+export interface Provenance { status: ProvenanceStatus; enteredBy: string; enteredAt: string; verifiedBy: string | null; verifiedAt: string | null; verifiedByRole?: string | null; facilityName?: string | null; kmhflCode?: string | null; clinicianName?: string | null; source?: 'reported_caregiver' | 'verified_clinician'; recordedAt?: string; }
+export interface UserDoc { uid:string; email:string; displayName:string; role:UserRole; createdAt:string; }
+export interface MotherProfileDoc { uid:string; phone?:string; photoUrl?:string; dateOfBirth?:string; county?:string; subCounty?:string; fullName?:string; bloodGroup?:string; rhesus?:string; gravida?:number; parity?:number; para?:number; isFirstPregnancy?:boolean; preExistingConditions?:string[]; surgicalHistory?:string; allergies?:string[]; priorDeliveries?:Array<{year:string;deliveryType:string;outcome:string;birthWeightKg?:string;facility?:string}>; nextOfKinName?:string; nextOfKinPhone?:string; nextOfKinRelationship?:string; facilityName?:string; kmhflCode?:string; ancNumber?:string; provenance?:Provenance; }
+export interface BirthPlanLogistics { preferredFacility:string; supportPersonName:string; transportPlan:string; emergencyLogistics:string; notes:string; }
+export interface PregnancyDoc { id:string; motherId:string; lmp?:string; edd?:string; lastMenstrualPeriod?:string; estimatedDeliveryDate?:string; gestationalAgeWeeks?:number; status:'active'|'completed'; createdAt:string; birthPlan?:BirthPlanLogistics; }
+/** Legacy shape retained for compatibility with older profile screens. New Journey birth plans live on PregnancyDoc.birthPlan. */
+export interface BirthPlanDoc { id:string; pregnancyId:string; motherId:string; facilityName:string; backupFacilityName?:string; supportPersonName:string; supportPersonPhone:string; supportPersonRelationship:string; transportMode:string; driverName?:string; driverPhone?:string; estimatedTravelTimeMinutes?:number; emergencyFundPrepared:boolean; bloodDonorIdentified:boolean; bloodDonorName?:string; hospitalBagPacked:boolean; babyClothesPacked:boolean; preferences:{delayedCordClamping:boolean;immediateSkinToSkin:boolean;exclusiveBreastfeeding:boolean;painReliefPreference?:string}; specialNotes?:string; status:'draft'|'complete'; sharedWithPartner?:boolean; updatedAt:string; }
+export interface AncEncounterDoc { id:string; pregnancyId:string; date:string; facilityId?:string; facilityName?:string; visitNumber?:number; gestationWeeks?:number; weight?:number; bloodPressure?:string; fundalHeight?:number; fetalHeartRate?:number; notes?:string; nextVisitDate?:string; provenance:Provenance; }
+export interface ChildDoc { id:string; motherId:string; name:string; dateOfBirth:string; sex:'boy'|'girl'; birthOutcomeId?:string; birthWeightGrams?:number; birthLengthCm?:number; headCircumferenceCm?:number; cwcNumber?:string; facilityName?:string; createdAt:string; }
+export type NewbornFeedingStatus='well'|'poorly'|'unable'; export type NewbornHivStatus='exposed'|'reactive'|'non_reactive'|'unknown';
+export interface NewbornRecordDoc { id:string; childId:string; date:string; birthWeightGrams?:number; birthLengthCm?:number; headCircumferenceCm?:number; feedingStatus?:NewbornFeedingStatus; hivStatus?:NewbornHivStatus; tbScreened?:boolean; apgarScore1Min?:number; apgarScore5Min?:number; eyeProphylaxisGiven:boolean; vitaminKGiven:boolean; bcgGiven:boolean; opv0Given:boolean; provenance:Provenance; }
+export interface PostnatalEncounterDoc { id:string; childId:string; visit:'48h'|'1-2w'|'4-6w'|'4-6mo'; date:string; motherFindings:string; babyFindings:string; provenance:Provenance; }
+export interface ImmunizationRecordDoc { id:string; childId:string; vaccine:string; dose:string; dateGiven?:string; minimumEligibleDate:string; scheduledDate:string; recommendedActionDate:string; status:'given'|'due'|'upcoming'|'missed'; provenance:Provenance; }
+export interface GrowthMeasurementDoc { id:string; childId:string; date:string; weightKg:number; heightCm:number; headCircumferenceCm?:number; provenance:Provenance; }
+export interface MuacMeasurementDoc { id:string; childId:string; date:string; cm:number; band:'SAM'|'MAM'|'AtRisk'|'Normal'; provenance:Provenance; }
+export interface NutritionRecordDoc { id:string; childId:string; date:string; feedingType:'Exclusive Breastfeeding'|'Complementary'|'Replacement'; vitaminADose?:string; dewormingDose?:string; notes?:string; provenance:Provenance; }
+export interface DevelopmentRecordDoc { id:string; childId:string; date:string; milestoneTitle:string; ageCategory:string; achieved:boolean; notes?:string; provenance:Provenance; }
+export interface PartnerRelationshipDoc { id:string; motherId:string; partnerId:string; partnerName?:string; partnerPhone?:string; sharedSections?:string[]; status:'pending'|'active'|'revoked'; createdAt:string; revokedAt?:string|null; }
+export interface FacilityDoc { id:string; name:string; kmhflCode:string; county:string; subcounty:string; contactPhone:string; level?:string; ambulanceAvailable?:boolean; maternityWardAvailable?:boolean; }
+export interface ClinicianDoc { uid:string; licenseNumber:string; cadre:string; facilityId:string; facilityName?:string; verificationStatus:'pending'|'approved'|'rejected'; }
+export interface ClinicianAccessSessionDoc { id:string; motherId:string; clinicianId:string; shareCode:string; createdAt:string; expiresAt:string; status:'active'|'expired'|'revoked'; revokedAt?:string|null; }
+export interface ClinicianPrivateNoteDoc { id:string; clinicianId:string; motherId:string; childId?:string; text:string; createdAt:string; }
+export interface ReminderDoc { id:string; userId:string; title:string; detail?:string; dueDate:string; urgency?:'urgent'|'normal'|'info'; category:'ANC'|'Immunization'|'PNC'|'Medication'|'Milestone'|'SelfCare'; type?:'anc'|'supplement'|'development'|'immunization'|'general'; completed:boolean; facility?:string; dosage?:string; clinicalGuidance?:string; relatedRecordId?:string; createdAt:string; }
+export interface NotificationDoc { id:string; userId:string; title:string; message:string; category:'ANC'|'Immunization'|'Medication'|'Guidance'|'System'; read:boolean; timestamp:string; reminderId?:string; urgency?:'urgent'|'normal'|'info'; }
+export interface EmergencyContactDoc { id:string; userId:string; name:string; relationship:string; phone:string; role:'partner'|'driver'|'doctor'|'facility'|'other'; }
+export interface SavedEmergencyFacilityDoc { id:string; userId:string; facilityId:string; facilityName:string; phone:string; notes?:string; }
+export interface AuditEventDoc { id:string; actorId:string; actorRole:UserRole; action:string; objectType:string; objectId:string; timestamp:string; facilityId?:string; }
+export interface HavenSessionDoc { id:string; userId:string; createdAt:string; }
+export interface HavenMessageDoc { id:string; sessionId:string; role:'user'|'assistant'; text:string; createdAt:string; }
