@@ -13,11 +13,17 @@ export const DANGER_SIGN_PATTERNS: RegExp[] = [
   /\bdifficulty breathing\b/i,
   /\bcan't breathe\b/i,
   /\bnot breathing\b/i,
+  /\bfast or difficult breathing\b/i,
   /\bbaby (?:isn't|is not) moving\b/i,
   /\breduced (?:fetal |baby )?movement\b/i,
-  /\bbaby feels cold\b/i,
+  /\bbaby feels (?:cold|very hot)\b/i,
   /\bbaby (?:won't|will not) feed\b/i,
   /\bbaby is not feeding\b/i,
+  /\bbaby (?:is|looks|seems) (?:very sleepy|floppy|unconscious)\b/i,
+  /\byellow (?:skin|eyes)\b/i,
+  /\byellowing (?:during|in) the first day\b/i,
+  /\b(?:red|swollen|bleeding|smelly) cord\b/i,
+  /\bpus.{0,20}\bcord\b/i,
 ];
 
 export const SELF_HARM_OR_VIOLENCE_PATTERNS: RegExp[] = [
@@ -36,7 +42,7 @@ export const SELF_HARM_OR_VIOLENCE_PATTERNS: RegExp[] = [
 ];
 
 // Deliberately contextual: "positive" alone is meaningless.
-export const POSITIVE_TEST_CONTEXT = /\b(?:pregnancy|pregnant|pregnancy)\s+test\b.{0,80}\b(?:came back|is|was)\s+positive\b|\bpositive\b.{0,50}\b(?:pregnancy|pregnant)\s+test\b/i;
+export const POSITIVE_TEST_CONTEXT = /\b(?:pregnancy|pregnant)\s+test\b.{0,80}\b(?:came back|is|was)\s+positive\b|\bpositive\b.{0,50}\b(?:pregnancy|pregnant)\s+test\b/i;
 
 export type LayerOneResult = 'physical_danger' | 'self_harm_or_violence' | null;
 
@@ -47,8 +53,7 @@ export function classifyLayerOne(message: string): LayerOneResult {
   return null;
 }
 
-// Test intent examples to preserve the contextual distinction:
-// MUST trigger: "I'm bleeding heavily right now", "my baby isn't moving".
+// MUST trigger examples: "I'm bleeding heavily right now", "my baby isn't moving".
 // MUST NOT trigger: "that ultrasound was such a positive experience".
 // Positive pregnancy-test context is recognized separately from the bare word "positive".
 export function matchesPositivePregnancyTestContext(message: string): boolean {
