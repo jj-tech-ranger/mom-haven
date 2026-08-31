@@ -38,7 +38,7 @@ export default function EmergencyFlow({ onClose }: { onClose: () => void }) {
       const cached = await readEmergencyCache(uid);
       if (cached) {
         if (!cancelled) { setFacilities(cached.facilities); setContacts(cached.contacts); setSource('local cache'); }
-        return; // Strict cache-first: a populated cache is authoritative for this offline-capable surface.
+        return;
       }
       if (!navigator.onLine) { if (!cancelled) setSource('baseline only'); return; }
       try {
@@ -59,7 +59,6 @@ export default function EmergencyFlow({ onClose }: { onClose: () => void }) {
   const selected = signs.filter((s) => selectedIds.includes(s.id));
   const selfHarm = selected.some((s) => s.category === 'selfharm');
   const call = (number: string) => { window.location.href = `tel:${number.replace(/\s+/g, '')}`; };
-  const back = () => setStep(step === 'home' ? 'home' : step === 'target' ? 'home' : step === 'signs' ? 'target' : step === 'action' ? 'signs' : 'action');
   const reset = () => { setStep('home'); setTarget(null); setSelectedIds([]); setAddOpen(false); };
   const toggle = (id: string) => setSelectedIds((v) => v.includes(id) ? v.filter((x) => x !== id) : [...v, id]);
 
@@ -79,9 +78,11 @@ export default function EmergencyFlow({ onClose }: { onClose: () => void }) {
   };
 
   const title = step === 'home' ? 'Get help quickly' : step === 'target' ? 'Who needs help?' : step === 'signs' ? 'Danger signs' : step === 'action' ? 'Get help now' : 'Contact / Facility Guidance';
+  const goBack = () => setStep(step === 'target' ? 'home' : step === 'signs' ? 'target' : step === 'action' ? 'signs' : 'action');
+
   return <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 sm:p-4" role="dialog" aria-modal="true" aria-label="Emergency">
     <div className="flex h-full w-full max-w-[430px] flex-col overflow-hidden bg-[#F7F3FC] sm:h-[min(92vh,760px)] sm:rounded-[28px] sm:shadow-2xl">
-      <header className="shrink-0 bg-[#E11D3C] px-5 pb-5 pt-4 text-white"><div className="flex items-center justify-between"><button onClick={() => step === 'home' ? onClose() : setStep(back as never)} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15" aria-label="Back"><ArrowLeft className="h-5 w-5" /></button><span className="rounded-full bg-black/15 px-3 py-1.5 text-[10px] font-bold tracking-wider">EMERGENCY</span><button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15" aria-label="Close"><X className="h-5 w-5" /></button></div><h1 className="mt-4 font-display text-2xl font-black">{title}</h1><div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1.5 text-[10px] font-body"><WifiOff className="h-3.5 w-3.5" />{online ? 'Works offline too' : "You're offline"}</div></header>
+      <header className="shrink-0 bg-[#E11D3C] px-5 pb-5 pt-4 text-white"><div className="flex items-center justify-between"><button onClick={() => step === 'home' ? onClose() : goBack()} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15" aria-label="Back"><ArrowLeft className="h-5 w-5" /></button><span className="rounded-full bg-black/15 px-3 py-1.5 text-[10px] font-bold tracking-wider">EMERGENCY</span><button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15" aria-label="Close"><X className="h-5 w-5" /></button></div><h1 className="mt-4 font-display text-2xl font-black">{title}</h1><div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1.5 text-[10px] font-body"><WifiOff className="h-3.5 w-3.5" />{online ? 'Works offline too' : "You're offline"}</div></header>
       <main className="min-h-0 flex-1 overflow-y-auto p-5">
         {step === 'home' && <div className="space-y-4"><div className="rounded-[24px] bg-[#E11D3C] p-6 text-white"><p className="font-body text-[11px] font-bold uppercase tracking-wider text-white/75">Immediate care</p><h2 className="mt-1 font-display text-3xl font-black">If this feels like an emergency, act now.</h2><p className="mt-3 font-body text-sm leading-6 text-white/90">This pathway is deterministic. It does not use Haven or a network connection.</p></div><button onClick={() => setStep('target')} className="w-full rounded-[28px] bg-[#E11D3C] px-5 py-4 font-display font-bold text-white">Continue</button><button onClick={() => call(BASELINE_GUIDANCE.fallbackNumber)} className="flex w-full items-center justify-center gap-2 rounded-[28px] border-2 border-[#E11D3C] bg-white px-5 py-4 font-display font-bold text-[#E11D3C]"><Phone className="h-5 w-5" />Call facility / emergency transport</button></div>}
         {step === 'target' && <div className="space-y-3"><p className="font-body text-sm leading-6 text-[#6D6380]">Choose who needs help. We will only show the relevant danger signs.</p>{(['mother','newborn','child'] as Target[]).map((value) => <button key={value} onClick={() => { setTarget(value); setSelectedIds([]); setStep('signs'); }} className="flex min-h-[84px] w-full items-center gap-4 rounded-[20px] border border-[#E5DFF0] bg-white p-5 text-left"><span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FDE8EC] text-[#E11D3C]">{value === 'mother' ? <UserRound /> : value === 'newborn' ? <Baby /> : <HeartPulse />}</span><span className="flex-1 font-display text-lg font-bold text-[#241451]">{targetLabels[value]}</span><span className="text-2xl text-[#A79CBC]">›</span></button>)}</div>}
