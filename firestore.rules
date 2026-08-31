@@ -4,52 +4,21 @@ service cloud.firestore {
   function signed(){return request.auth!=null;}
   function owner(uid){return signed()&&request.auth.uid==uid;}
   function activePartner(motherId){return signed()&&exists(/databases/$(database)/documents/partnerRelationships/$(motherId + '_' + request.auth.uid))&&get(/databases/$(database)/documents/partnerRelationships/$(motherId + '_' + request.auth.uid)).data.status=='active';}
-
   match /users/{uid}{allow read,write:if owner(uid);}
   match /motherProfiles/{uid}{allow read,write:if owner(uid);}
-
-  // Clinical collections are mother-owned. PARTNER is deliberately excluded from every rule.
-  match /pregnancies/{id}{
-   allow read:if signed()&&resource.data.motherId==request.auth.uid;
-   allow create:if owner(request.resource.data.motherId);
-   allow update:if signed()&&resource.data.motherId==request.auth.uid;
-   // A connected partner may change transportPlan only. No partner read access is granted.
-   allow update:if signed()&&activePartner(resource.data.motherId)
-     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['birthPlan','updatedAt'])
-     && request.resource.data.birthPlan.diff(resource.data.birthPlan).affectedKeys().hasOnly(['transportPlan']);
-   match /{sub=**}{allow read,write:if signed()&&get(/databases/$(database)/documents/pregnancies/$(id)).data.motherId==request.auth.uid;}
-  }
+  match /pregnancies/{id}{allow read:if signed()&&resource.data.motherId==request.auth.uid;allow create:if owner(request.resource.data.motherId);allow update:if signed()&&resource.data.motherId==request.auth.uid;allow update:if signed()&&activePartner(resource.data.motherId)&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['birthPlan','updatedAt'])&&request.resource.data.birthPlan.diff(resource.data.birthPlan).affectedKeys().hasOnly(['transportPlan']);match /{sub=**}{allow read,write:if signed()&&get(/databases/$(database)/documents/pregnancies/$(id)).data.motherId==request.auth.uid;}}
   match /children/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.motherId==request.auth.uid)||(resource!=null&&resource.data.motherId==request.auth.uid));match /{sub=**}{allow read,write:if signed()&&get(/databases/$(database)/documents/children/$(id)).data.motherId==request.auth.uid;}}
   match /birthPlans/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.motherId==request.auth.uid)||(resource!=null&&resource.data.motherId==request.auth.uid));}
-
-  // Only the mother owns reminders; connected partners may read explicitly shared reminders.
-  match /reminders/{id}{
-   allow read:if signed()&&((resource.data.userId==request.auth.uid)||(activePartner(resource.data.userId)&&resource.data.sharedWithPartner==true));
-   allow write:if signed()&&resource.data.userId==request.auth.uid;
-   allow create:if signed()&&request.resource.data.userId==request.auth.uid;
-  }
-  match /notifications/{id}{allow read,write:if signed()&&((resource.data.userId==request.auth.uid)||(request.resource.data.userId==request.auth.uid));}
-  match /emergencyContacts/{id}{allow read,write:if signed()&&((resource.data.userId==request.auth.uid)||(request.resource.data.userId==request.auth.uid));}
-  match /savedEmergencyFacilities/{id}{allow read,write:if signed()&&((resource.data.userId==request.auth.uid)||(request.resource.data.userId==request.auth.uid));}
-
-  match /partnerConnections/{id}{
-   allow read:if signed()&&resource.data.status=='pending';
-   allow create:if signed()&&request.resource.data.motherId==request.auth.uid;
-   allow update:if signed()&&(resource.data.motherId==request.auth.uid||resource.data.usedBy==request.auth.uid);
-  }
-  match /partnerRelationships/{id}{
-   allow read:if signed()&&((resource.data.motherId==request.auth.uid)||(resource.data.partnerId==request.auth.uid));
-   allow create:if signed()&&request.resource.data.motherId==request.auth.uid&&request.resource.data.partnerId==null&&request.resource.data.status=='pending';
-   allow update:if signed()&&(resource.data.motherId==request.auth.uid||resource.data.partnerId==request.auth.uid);
-  }
-
-  // Sanitised, explicitly shared partner view. It contains no clinical records.
-  match /partnerShares/{motherId}{
-   allow read:if owner(motherId)||activePartner(motherId);
-   allow create,update:if owner(motherId);
-  }
-
-  match /clinicianAccessSessions/{id}{allow read:if signed()&&resource.data.motherId==request.auth.uid;allow create:if signed()&&request.resource.data.motherId==request.auth.uid&&request.resource.data.clinicianId==null&&request.resource.data.status=='active';allow update:if signed()&&resource.data.motherId==request.auth.uid;}
+  match /reminders/{id}{allow read:if signed()&&((resource.data.userId==request.auth.uid)||(activePartner(resource.data.userId)&&resource.data.sharedWithPartner==true));allow write:if signed()&&((resource.data.userId==request.auth.uid)||(resource==null&&request.resource.data.userId==request.auth.uid));}
+  match /notifications/{id}{allow read,write:if owner(resource.data.userId);}
+  match /emergencyContacts/{id}{allow read,write:if owner(resource.data.userId);}
+  match /savedEmergencyFacilities/{id}{allow read,write:if owner(resource.data.userId);}
+  match /partnerConnections/{id}{allow read:if signed()&&resource.data.status=='pending';allow create:if owner(request.resource.data.motherId);allow update:if signed()&&(resource.data.motherId==request.auth.uid||resource.data.usedBy==request.auth.uid);}
+  match /partnerRelationships/{id}{allow read:if signed()&&((resource.data.motherId==request.auth.uid)||(resource.data.partnerId==request.auth.uid));allow create:if owner(request.resource.data.motherId)&&request.resource.data.partnerId==null&&request.resource.data.status=='pending';allow update:if signed()&&(resource.data.motherId==request.auth.uid||resource.data.partnerId==request.auth.uid);}
+  match /partnerShares/{motherId}{allow read:if owner(motherId)||activePartner(motherId);allow create,update:if owner(motherId);}
+  match /clinicianAccessSessions/{id}{allow read:if owner(resource.data.motherId);allow create:if signed()&&request.resource.data.motherId==request.auth.uid&&request.resource.data.clinicianId==null&&request.resource.data.status=='active';allow update:if owner(resource.data.motherId);}
+  // Explicit privacy wall: PARTNER has no read/write path to clinical records, children, or private clinician notes.
+  match /clinicianPrivateNotes/{id}{allow read,write:if signed()&&resource.data.clinicianId==request.auth.uid;}
   match /{document=**}{allow read,write:if false;}
  }
 }
