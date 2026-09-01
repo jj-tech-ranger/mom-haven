@@ -52,7 +52,6 @@
   button, input, select, a { min-height: 48px; }
 }
 
-/* Anti-slop governance for legacy utilities. Component migrations should use tokens directly. */
 @layer utilities {
   .backdrop-blur-md, .backdrop-blur-sm, .backdrop-blur-lg { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
   .bg-white\/70, .bg-white\/80, .bg-white\/90, .bg-white\/95 { background-color: var(--surface-card) !important; }
@@ -61,4 +60,49 @@
   .bg-gradient-to-r, .bg-gradient-to-l, .bg-gradient-to-br, .bg-gradient-to-bl, .bg-gradient-to-t, .bg-gradient-to-b { background-image: none !important; }
   .bg-clip-text { background-clip: border-box !important; -webkit-background-clip: border-box !important; }
   .text-transparent { color: var(--text-primary) !important; }
+}
+
+/* Mother navigation: five fixed-feeling touch-safe destinations with an intentional active indicator. */
+nav[aria-label="Mother Navigation"] {
+  height: 64px !important;
+  padding: 4px 8px !important;
+  background: var(--surface-card) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-top: 1px solid var(--border-light) !important;
+  box-shadow: none !important;
+}
+nav[aria-label="Mother Navigation"] button {
+  position: relative;
+  min-height: 48px !important;
+  min-width: 48px;
+  border-radius: 6px !important;
+}
+nav[aria-label="Mother Navigation"] button[class*="text-haven-deep"] { color: var(--brand-primary) !important; }
+nav[aria-label="Mother Navigation"] button[class*="text-haven-deep"]::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 8px;
+  right: 8px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--brand-primary);
+}
+
+/* Emergency surface remains the one intentional crimson semantic exception. */
+[role="dialog"][aria-label="Emergency"] { background: rgba(28, 40, 51, 0.72) !important; }
+[role="dialog"][aria-label="Emergency"] > div {
+  background: var(--surface-canvas) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--sh-1) !important;
+}
+[role="dialog"][aria-label="Emergency"] header { background: var(--clinical-danger) !important; }
+[role="dialog"][aria-label="Emergency"] button { min-height: 48px; }
+
+/* Numeric clinical values must scan consistently. */
+input[type="number"], input[inputmode="numeric"], [data-clinical-value], [data-numeric] {
+  font-family: var(--font-numeric) !important;
+  font-variant-numeric: tabular-nums;
 }
