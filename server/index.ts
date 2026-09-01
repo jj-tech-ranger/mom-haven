@@ -1,10 +1,42 @@
 import express from 'express';
+import helmet from 'helmet';
 import { GoogleGenAI } from '@google/genai';
 import { clinicianRouter } from './routes/clinician.js';
 import { adminRouter } from './routes/admin.js';
 import { classifyLayerOneRemote } from './safetyConfig.js';
 
 const app = express();
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:', 'https://firebasestorage.googleapis.com'],
+      connectSrc: ["'self'", 'https://*.googleapis.com', 'https://*.firebaseio.com', 'https://identitytoolkit.googleapis.com'],
+      frameAncestors: ["'none'"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: { policy: 'same-origin' },
+  crossOriginResourcePolicy: { policy: 'same-origin' },
+  dnsPrefetchControl: { allow: false },
+  frameguard: { action: 'deny' },
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+  noSniff: true,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  permittedCrossDomainPolicies: { permittedPolicies: 'none' },
+}));
+
+app.use((req, res, next) => {
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
+  next();
+});
+
 app.use(express.json({ limit: '20kb' }));
 app.use('/api/v1/clinician', clinicianRouter);
 app.use('/api/v1/admin', adminRouter);
