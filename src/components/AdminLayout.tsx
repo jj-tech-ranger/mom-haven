@@ -1,130 +1,37 @@
-import React, { useState } from 'react';
-import {
-  LayoutDashboard,
-  Building,
-  UserCheck,
-  Scale,
-  Rocket,
-  ShieldAlert,
-  ClipboardList,
-  FileText,
-  Users,
-  BarChart3,
-  Settings,
-  Shield,
-} from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { auth } from '../lib/firebase';
+import { BarChart3, Building2, CheckCircle2, ClipboardList, FileText, LayoutDashboard, LogOut, Rocket, Scale, Settings, ShieldAlert, Users, UserCheck, XCircle } from 'lucide-react';
 import EmptyState from './EmptyState';
+import { UserDoc } from '../types';
 
-type AdminTab是一 =
-  | 'dashboard'
-  | 'facilities'
-  | 'clinicians'
-  | 'governance'
-  | 'release'
-  | 'safety'
-  | 'audit'
-  | 'content'
-  | 'team'
-  | 'reports'
-  | 'settings';
+type AdminTab = 'dashboard'|'facilities'|'clinicians'|'governance'|'release'|'safety'|'audit'|'content'|'team'|'reports'|'settings';
+interface Props { user: UserDoc; onSignOut: () => void; }
+const api = async (path: string, options: RequestInit = {}) => { const u = auth.currentUser; if (!u) throw new Error('Sign-in required.'); const token = await u.getIdToken(); const r = await fetch(`/api/v1/admin${path}`, { ...options, headers: { 'content-type':'application/json', ...(options.headers||{}), authorization:`Bearer ${token}` } }); const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || 'Request failed.'); return d; };
+const fmt = (v: any) => v ? new Date(v).toLocaleString('en-KE', { dateStyle:'medium', timeStyle:'short' }) : '—';
+const statusClass = (s: string) => { const x = s.toLowerCase(); if (['approved','active','verified','passed'].includes(x)) return 'bg-[#E6F6EE] text-[#1E8F5F]'; if (['rejected','blocked','suspended','failed'].includes(x)) return 'bg-[#FCE7EA] text-[#C4283C]'; return 'bg-[#FBF0DC] text-[#A15E06]'; };
+const Card = ({ children, className='' }: { children: React.ReactNode; className?: string }) => <section className={`bg-white border border-[#E5DFF0] rounded-2xl shadow-[0_2px_8px_rgba(51,23,138,0.06)] ${className}`}>{children}</section>;
 
-export const AdminLayout: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<AdminTab是一>('dashboard');
-
-  const navItems = [
-    { id: 'dashboard' as AdminTab是一, label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'facilities' as AdminTab是一, label: 'Facilities', icon: Building },
-    { id: 'clinicians' as AdminTab是一, label: 'Clinicians', icon: UserCheck },
-    { id: 'governance' as AdminTab是一, label: 'Governance', icon: Scale },
-    { id: 'release' as AdminTab是一, label: 'Release', icon: Rocket },
-    { id: 'safety' as AdminTab是一, label: 'Safety', icon: ShieldAlert },
-    { id: 'audit' as AdminTab是一, label: 'Audit', icon: ClipboardList },
-    { id: 'content' as AdminTab是一, label: 'Content', icon: FileText },
-    { id: 'team' as AdminTab是一, label: 'Team', icon: Users },
-    { id: 'reports' as AdminTab是一, label: 'Reports', icon: BarChart3 },
-    { id: 'settings' as AdminTab是一, label: 'Settings', icon: Settings },
-  ];
-
-  return (
-    <div className="w-full flex min-h-[680px] bg-[#FFFFFF] rounded-[24px] border border-border-hairline shadow-card-2 overflow-hidden my-2 sm:my-6">
-      {/* 230px Persistent Left Sidebar */}
-      <aside aria-label="National Admin Portal Sidebar" className="w-[230px] bg-white border-r border-border-hairline flex flex-col justify-between p-4 shrink-0">
-        <div>
-          {/* Logo & Portal Badge */}
-          <div className="flex items-center gap-2.5 px-2 pb-5 border-b border-border-hairline">
-            <img src="/logo.svg" alt="MomHaven" className="w-8 h-8 rounded-xl object-contain" />
-            <div>
-              <h1 className="font-display font-bold text-sm text-ink-900 leading-tight">
-                MomHaven
-              </h1>
-              <span className="font-body text-[11px] text-haven-deep font-semibold">
-                Admin Console
-              </span>
-            </div>
-          </div>
-
-          {/* Navigation Items (11 items) */}
-          <nav aria-label="Admin Console Navigation" className="space-y-1 pt-3 max-h-[460px] overflow-y-auto pr-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-pill font-display text-[13px] font-semibold transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-lavender-100 text-haven-deep'
-                      : 'text-ink-600 hover:text-ink-900 hover:bg-lavender-50'
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-haven-deep' : 'text-ink-600'}`} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Pinned Admin Name + Role/Scope at Bottom */}
-        <div className="pt-3 border-t border-border-hairline px-2">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-lavender-100 flex items-center justify-center text-haven-deep">
-              <Shield className="w-4 h-4" />
-            </div>
-            <div className="overflow-hidden">
-              <h2 className="font-display font-bold text-xs text-ink-900 truncate">
-                Admin Console
-              </h2>
-              <p className="text-[11px] text-ink-600 font-medium truncate">
-                National Admin
-              </p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content Area with Clean Empty States (No Fake Seed Data) */}
-      <main className="flex-1 bg-lavender-50 p-6 sm:p-8 flex flex-col justify-start overflow-y-auto">
-        <div className="space-y-4 max-w-4xl mx-auto w-full">
-          <div className="border-b border-border-hairline pb-3">
-            <h2 className="font-display font-bold text-2xl text-ink-900 capitalize">
-              {activeTab}
-            </h2>
-            <p className="font-body text-sm text-ink-600">
-              Kenyan Ministry of Health national platform administration
-            </p>
-          </div>
-
-          <EmptyState
-            icon={navItems.find((i) => i.id === activeTab)?.icon}
-            title={`No ${activeTab} data registered yet`}
-            message={`Configure and manage ${activeTab} records across Kenyan health facilities, clinical councils, and system audits.`}
-            actionLabel={`Manage ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
-            onAction={() => {}}
-          />
-        </div>
-      </main>
-    </div>
-  );
+export const AdminLayout: React.FC<Props> = ({ user, onSignOut }) => {
+  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard'); const [dashboard, setDashboard] = useState<any>(null); const [facilities, setFacilities] = useState<any[] | null>(null); const [clinicians, setClinicians] = useState<any[] | null>(null); const [audit, setAudit] = useState<any[] | null>(null); const [error, setError] = useState(''); const [busy, setBusy] = useState(false); const [selectedScope, setSelectedScope] = useState<string | null>(null); const [scopeReady, setScopeReady] = useState(false); const [facilityForm, setFacilityForm] = useState({name:'',kmhflCode:'',county:'',subcounty:'',contactPhone:''}); const [editingFacility, setEditingFacility] = useState<string | null>(null); const [reviewId, setReviewId] = useState<string | null>(null); const [rejectReason, setRejectReason] = useState('');
+  const scopes = useMemo(() => user.scopes?.filter(Boolean) || [], [user.scopes]);
+  useEffect(() => { const saved = sessionStorage.getItem('momhaven-admin-scope'); if (scopes.length <= 1) { setSelectedScope(scopes[0] || null); setScopeReady(true); } else if (saved && scopes.includes(saved)) { setSelectedScope(saved); setScopeReady(true); } }, [scopes]);
+  const load = async () => { setError(''); try { const [d,f,c] = await Promise.all([api('/dashboard'), api('/facilities'), api('/clinicians')]); setDashboard(d); setFacilities(f.items || []); setClinicians(c.items || []); } catch (e:any) { setError(e.message); } };
+  useEffect(() => { if (scopeReady) void load(); }, [scopeReady]);
+  const loadAudit = async () => { try { const d = await api('/audit'); setAudit(d.items || []); } catch (e:any) { setError(e.message); } };
+  const choose = (tab: AdminTab) => { setActiveTab(tab); if (tab === 'audit') void loadAudit(); };
+  const saveFacility = async () => { setBusy(true); setError(''); try { if (editingFacility) await api(`/facilities/${editingFacility}`, {method:'PATCH',body:JSON.stringify(facilityForm)}); else await api('/facilities',{method:'POST',body:JSON.stringify(facilityForm)}); setFacilityForm({name:'',kmhflCode:'',county:'',subcounty:'',contactPhone:''}); setEditingFacility(null); await load(); } catch(e:any) { setError(e.message); } finally { setBusy(false); } };
+  const clinicianAction = async (id:string, action:'approve'|'reject'|'suspend') => { setBusy(true); setError(''); try { await api(`/clinician/${id}/${action}`, {method:'POST',body:JSON.stringify({reason:rejectReason})}); setReviewId(null); setRejectReason(''); await load(); } catch(e:any) { setError(e.message); } finally { setBusy(false); } };
+  const nav = [ ['dashboard','Dashboard',LayoutDashboard],['facilities','Facilities',Building2],['clinicians','Clinicians',UserCheck],['governance','Governance',Scale],['release','Release',Rocket],['safety','Safety',ShieldAlert],['audit','Audit',ClipboardList],['content','Content',FileText],['team','Team',Users],['reports','Reports',BarChart3],['settings','Settings',Settings] ] as const;
+  const adminName = user.displayName || user.email || 'Administrator'; const scopeLabel = selectedScope || 'Scope not assigned';
+  if (!scopeReady) return <div className="min-h-screen bg-[#F7F3FC] flex items-center justify-center"><Loader /></div>;
+  return <div className="min-h-screen bg-[#F7F3FC] text-[#241451] flex font-body">
+    <aside className="w-[210px] bg-white border-r border-[#E5DFF0] flex flex-col justify-between p-4 shrink-0"><div><div className="flex items-center gap-2.5 px-2 pb-5 border-b border-[#E5DFF0]"><img src="/logo.svg" alt="MomHaven" className="w-8 h-8 rounded-xl"/><div><p className="font-display font-bold text-sm">MomHaven</p><p className="text-[10px] text-[#33178A] font-bold">Admin Console</p></div></div><nav className="pt-3 space-y-1">{nav.map(([id,label,I]) => <button key={id} onClick={()=>choose(id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-display font-semibold ${activeTab===id?'bg-[#EEE7F8] text-[#33178A]':'text-[#6D6380] hover:bg-[#F7F3FC]'}`}><I className="w-4 h-4"/>{label}</button>)}</nav></div><div className="border-t border-[#E5DFF0] pt-3"><div className="flex items-center gap-2.5 px-2"><div className="w-8 h-8 rounded-full bg-[#EEE7F8] flex items-center justify-center text-[#33178A] font-bold">{adminName.slice(0,1).toUpperCase()}</div><div className="min-w-0"><p className="text-xs font-display font-bold truncate">{adminName}</p><p className="text-[10px] text-[#6D6380] truncate">Admin · {scopeLabel}</p></div></div><button onClick={onSignOut} className="mt-3 w-full flex items-center gap-2 px-2 text-xs text-[#6D6380] font-display"><LogOut className="w-3.5 h-3.5"/>Sign out</button></div></aside>
+    <div className="flex-1 min-w-0"><header className="h-16 bg-white border-b border-[#E5DFF0] px-7 flex items-center justify-between"><div><h1 className="font-display font-bold text-xl">{nav.find(x=>x[0]===activeTab)?.[1]}</h1><p className="text-[11px] text-[#6D6380]">MOH platform operations · aggregate governance only</p></div><div className="flex items-center gap-3">{scopes.length>1 ? <select value={selectedScope||''} onChange={e=>{sessionStorage.setItem('momhaven-admin-scope',e.target.value);setSelectedScope(e.target.value)}} className="rounded-full border border-[#E5DFF0] bg-[#F7F3FC] px-3 py-2 text-xs font-display font-bold text-[#33178A]"><option value="">Select scope</option>{scopes.map(s=><option key={s} value={s}>{s} scope</option>)}</select> : <span className="rounded-full bg-[#EEE7F8] px-3 py-2 text-xs font-display font-bold text-[#33178A]">{scopeLabel}{selectedScope?' scope':''}</span>}<div className="w-9 h-9 rounded-full bg-[#EEE7F8] flex items-center justify-center text-[#33178A] font-display font-bold">{adminName.slice(0,1).toUpperCase()}</div></div></header>
+      <main className="p-7 max-w-[1440px] mx-auto">{error && <div className="mb-5 rounded-xl bg-[#FCE7EA] px-4 py-3 text-sm text-[#C4283C]">{error}</div>}{activeTab==='dashboard'&&<Dashboard d={dashboard} />}{activeTab==='facilities'&&<Facilities items={facilities} form={facilityForm} setForm={setFacilityForm} editing={editingFacility} setEditing={setEditingFacility} onSave={saveFacility} busy={busy}/>} {activeTab==='clinicians'&&<Clinicians items={clinicians} reviewId={reviewId} setReviewId={setReviewId} rejectReason={rejectReason} setRejectReason={setRejectReason} action={clinicianAction} busy={busy}/>} {activeTab==='audit'&&<Audit items={audit}/>} {!['dashboard','facilities','clinicians','audit'].includes(activeTab)&&<EmptyState icon={nav.find(x=>x[0]===activeTab)?.[2]} title={`No ${activeTab} records`} message="This operational area has no real records to display yet. New records will appear here when the corresponding workflow is used."/>}</main></div>
+  </div>;
 };
+const Loader=()=> <div className="w-7 h-7 rounded-full border-2 border-[#EEE7F8] border-t-[#33178A] animate-spin"/>;
+const Dashboard=({d}:{d:any})=> <div className="space-y-6"><div className={`rounded-2xl border px-6 py-5 flex items-center justify-between ${d?.release?.assessed ? 'bg-[#FCE7EA] border-[#F6CDD3]' : 'bg-[#FBF0DC] border-[#F2DEB9]'}`}><div><p className={`text-[11px] font-bold tracking-[0.12em] ${d?.release?.assessed?'text-[#C4283C]':'text-[#A15E06]'}`}>{d?.release?.assessed?'RELEASE READINESS':'RELEASE READINESS NOT ASSESSED'}</p><h2 className="font-display font-bold text-xl mt-1">{d?.release?.total ? `${d.release.blockedOrOpen} of ${d.release.total} gates blocked or open` : 'No release gates have been assessed yet'}</h2><p className="text-xs text-[#6D6380] mt-1">Gate statuses are sourced from the releaseGates collection; no progress is fabricated.</p></div><button className="rounded-full px-5 py-2.5 bg-[#33178A] text-white font-display font-bold text-sm">View readiness →</button></div><div className="grid grid-cols-4 gap-4">{[['Active facilities',d?.stats?.activeFacilities],['Pending clinician verification',d?.stats?.pendingClinicianVerification],['Open governance items',d?.stats?.openGovernanceItems],['Safety alerts this week',d?.stats?.safetyAlertsThisWeek]].map(([l,n])=><Card key={String(l)} className="p-5"><p className="text-xs text-[#6D6380]">{l}</p><p className="font-display font-bold text-3xl mt-2">{n ?? '—'}</p></Card>)}</div><div className="grid grid-cols-2 gap-5"><Card><div className="p-5 border-b border-[#E5DFF0]"><h2 className="font-display font-bold">Release readiness snapshot</h2><p className="text-xs text-[#6D6380] mt-1">Real gate records only.</p></div>{!d?.release?.gates?.length?<EmptyState icon={Rocket} title="No release gates configured" message="Real release gates will appear here once the release-readiness register is populated."/>:<table className="w-full text-left"><tbody>{d.release.gates.map((g:any)=><tr key={g.id} className="border-b border-[#E5DFF0] last:border-0"><td className="px-5 py-3 text-sm font-semibold">{g.name||g.id}</td><td className="px-5 py-3 text-right"><span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${statusClass(String(g.status||'unassessed'))}`}>{g.status||'unassessed'}</span></td></tr>)}</tbody></table>}</Card><Card><div className="p-5 border-b border-[#E5DFF0]"><h2 className="font-display font-bold">Recent platform activity</h2><p className="text-xs text-[#6D6380] mt-1">Operational events only; patient clinical content is excluded.</p></div>{!d?.activity?.length?<EmptyState icon={ClipboardList} title="No platform activity yet" message="Audited governance and operational actions will appear here."/>:<div>{d.activity.map((a:any)=><div key={`${a.time}-${a.actorId}-${a.action}`} className="px-5 py-3 border-b border-[#E5DFF0] last:border-0 grid grid-cols-[100px_1fr_1fr] gap-3 text-xs"><span className="text-[#6D6380]">{fmt(a.time)}</span><span className="font-semibold">{a.action}</span><span className="text-[#6D6380]">{a.detail}</span></div>)}</div>}</Card></div></div>;
+const Facilities=({items,form,setForm,editing,setEditing,onSave,busy}:{items:any[]|null;form:any;setForm:any;editing:string|null;setEditing:any;onSave:()=>void;busy:boolean})=><div className="space-y-5"><div className="flex items-center justify-between"><div><h2 className="font-display font-bold text-2xl">Facilities Directory</h2><p className="text-sm text-[#6D6380]">Real facility records used by clinician workflows.</p></div><span className="text-xs text-[#6D6380]">{items?.length ?? '…'} records</span></div><Card className="p-5"><div className="grid grid-cols-5 gap-3">{[['name','Facility name'],['kmhflCode','KMHFL code'],['county','County'],['subcounty','Subcounty'],['contactPhone','Contact phone']].map(([k,l])=><label key={k} className="text-xs font-bold">{l}<input value={form[k]} onChange={e=>setForm({...form,[k]:e.target.value})} className="mt-1.5 w-full rounded-[14px] border border-[#E5DFF0] px-3 py-2.5 text-sm font-normal"/></label>)}</div><div className="flex justify-end gap-2 mt-4">{editing&&<button onClick={()=>{setEditing(null);setForm({name:'',kmhflCode:'',county:'',subcounty:'',contactPhone:''})}} className="px-4 py-2 rounded-full border border-[#E5DFF0] text-xs font-bold">Cancel</button>}<button disabled={busy} onClick={onSave} className="px-5 py-2.5 rounded-full bg-[#33178A] text-white text-xs font-bold disabled:opacity-50">{editing?'Save changes':'Add facility'}</button></div></Card>{!items?.length?<Card><EmptyState icon={Building2} title="No facilities registered" message="Add the first real facility to make it available to clinician selection."/></Card>:<Card className="overflow-hidden"><table className="w-full text-left"><thead className="bg-[#F7F3FC]"><tr>{['Name','KMHFL','County','Subcounty','Phone',''].map(h=><th key={h} className="px-4 py-3 text-[10px] uppercase tracking-wide text-[#6D6380]">{h}</th>)}</tr></thead><tbody>{items.map(f=><tr key={f.id} className="border-t border-[#E5DFF0]"><td className="px-4 py-3 text-sm font-semibold">{f.name}</td><td className="px-4 py-3 text-sm">{f.kmhflCode}</td><td className="px-4 py-3 text-sm">{f.county}</td><td className="px-4 py-3 text-sm">{f.subcounty}</td><td className="px-4 py-3 text-sm">{f.contactPhone}</td><td className="px-4 py-3 text-right"><button onClick={()=>{setEditing(f.id);setForm({name:f.name||'',kmhflCode:f.kmhflCode||'',county:f.county||'',subcounty:f.subcounty||'',contactPhone:f.contactPhone||''})}} className="text-xs font-bold text-[#33178A]">Edit</button></td></tr>)}</tbody></table></Card>}</div>;
+const Clinicians=({items,reviewId,setReviewId,rejectReason,setRejectReason,action,busy}:{items:any[]|null;reviewId:string|null;setReviewId:any;rejectReason:string;setRejectReason:any;action:any;busy:boolean})=><div className="space-y-5"><div><h2 className="font-display font-bold text-2xl">Clinician Credentialing</h2><p className="text-sm text-[#6D6380]">Verification, rejection and suspension are audited administrative actions.</p></div><Card className="overflow-hidden">{!items?.filter(x=>x.verificationStatus==='pending').length?<EmptyState icon={UserCheck} title="No pending verifications" message="New clinician sign-ups awaiting approval will appear here."/>:<table className="w-full text-left"><thead className="bg-[#F7F3FC]"><tr>{['Name','Facility','Submitted','Status',''].map(h=><th key={h} className="px-4 py-3 text-[10px] uppercase tracking-wide text-[#6D6380]">{h}</th>)}</tr></thead><tbody>{items.filter(x=>x.verificationStatus==='pending').map(c=><tr key={c.id} className="border-t border-[#E5DFF0]"><td className="px-4 py-3 text-sm font-semibold">{c.displayName}</td><td className="px-4 py-3 text-sm text-[#6D6380]">{c.facilityName||c.facilityId||'—'}</td><td className="px-4 py-3 text-sm text-[#6D6380]">{fmt(c.submittedAt||c.createdAt)}</td><td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-[10px] font-bold ${statusClass(c.verificationStatus)}`}>{c.verificationStatus}</span></td><td className="px-4 py-3 text-right"><button onClick={()=>setReviewId(c.id)} className="px-4 py-2 rounded-full bg-[#33178A] text-white text-xs font-bold">Review</button></td></tr>)}</tbody></table>}</Card><Card className="overflow-hidden"><div className="p-5 border-b border-[#E5DFF0]"><h3 className="font-display font-bold">Clinician Directory</h3></div>{!items?.length?<EmptyState icon={Users} title="No clinician records" message="Approved and pending clinician accounts will appear here after real sign-up activity."/>:<table className="w-full text-left"><thead className="bg-[#F7F3FC]"><tr>{['Name','Cadre','Facility','Status',''].map(h=><th key={h} className="px-4 py-3 text-[10px] uppercase tracking-wide text-[#6D6380]">{h}</th>)}</tr></thead><tbody>{items.map(c=><tr key={c.id} className="border-t border-[#E5DFF0]"><td className="px-4 py-3 text-sm font-semibold">{c.displayName}</td><td className="px-4 py-3 text-sm">{c.cadre}</td><td className="px-4 py-3 text-sm">{c.facilityName||c.facilityId||'—'}</td><td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-[10px] font-bold ${statusClass(c.verificationStatus)}`}>{c.verificationStatus}</span></td><td className="px-4 py-3 text-right">{c.verificationStatus!=='suspended'&&<button onClick={()=>setReviewId(c.id)} className="text-xs font-bold text-[#33178A]">Manage</button>}</td></tr>)}</tbody></table>}</Card>{reviewId&&<Card className="p-6 border-l-4 border-[#33178A]"><h3 className="font-display font-bold">Verification review</h3>{items?.filter(x=>x.id===reviewId).map(c=><div key={c.id}><div className="grid grid-cols-4 gap-4 mt-4 text-sm"><div><p className="text-xs text-[#6D6380]">Name</p><p className="font-semibold mt-1">{c.displayName}</p></div><div><p className="text-xs text-[#6D6380]">Registration</p><p className="font-semibold mt-1">{c.licenseNumber}</p></div><div><p className="text-xs text-[#6D6380]">Cadre</p><p className="font-semibold mt-1">{c.cadre}</p></div><div><p className="text-xs text-[#6D6380]">Facility</p><p className="font-semibold mt-1">{c.facilityName||c.facilityId||'—'}</p></div></div><div className="flex gap-2 mt-6"><button disabled={busy} onClick={()=>action(c.id,'approve')} className="px-4 py-2 rounded-full bg-[#33178A] text-white text-xs font-bold"><CheckCircle2 className="inline w-4 mr-1"/>Approve</button><button disabled={busy} onClick={()=>action(c.id,'suspend')} className="px-4 py-2 rounded-full border border-[#C4283C] text-[#C4283C] text-xs font-bold">Suspend</button><button disabled={busy} onClick={()=>action(c.id,'reject')} className="px-4 py-2 rounded-full border border-[#E5DFF0] text-xs font-bold"><XCircle className="inline w-4 mr-1"/>Reject</button></div>{c.verificationStatus==='pending'&&<input value={rejectReason} onChange={e=>setRejectReason(e.target.value)} placeholder="Optional rejection reason" className="mt-4 w-full rounded-[14px] border border-[#E5DFF0] px-3 py-2.5 text-sm"/>}</div>)}</Card>}</div>;
+const Audit=({items}:{items:any[]|null})=>!items?.length?<Card><EmptyState icon={ClipboardList} title="No platform audit events" message="Operational and governance actions will appear here when they occur."/></Card>:<Card className="overflow-hidden"><table className="w-full text-left"><thead className="bg-[#F7F3FC]"><tr>{['Time','Actor','Action','Object','Facility'].map(h=><th key={h} className="px-4 py-3 text-[10px] uppercase tracking-wide text-[#6D6380]">{h}</th>)}</tr></thead><tbody>{items.map(a=><tr key={a.id} className="border-t border-[#E5DFF0]"><td className="px-4 py-3 text-xs text-[#6D6380]">{fmt(a.timestamp)}</td><td className="px-4 py-3 text-xs font-semibold">{a.actorId}</td><td className="px-4 py-3 text-xs">{a.action}</td><td className="px-4 py-3 text-xs">{a.objectType} · {a.objectId}</td><td className="px-4 py-3 text-xs">{a.facilityId||'—'}</td></tr>)}</tbody></table></Card>;
