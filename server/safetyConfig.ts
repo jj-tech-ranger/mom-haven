@@ -6,16 +6,6 @@ const TTL = 5 * 60 * 1000;
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
 const toRegex = (patterns: string[]) => patterns.map(p => new RegExp(`\\b${escape(p).replace(/\\s+/g, '\\s+')}\\b`, 'i'));
 
-export async function ensureSafetyPatternsSeeded() {
-  const snap = await adminDb.collection('safetyPatterns').limit(1).get();
-  if (!snap.empty) return;
-  const batch = adminDb.batch();
-  for (const sign of DANGER_SIGNS) {
-    batch.set(adminDb.doc(`safetyPatterns/${sign.id}`), { id: sign.id, label: sign.label, icon: sign.icon, category: sign.category, matchPatterns: sign.matchPatterns, version: 1, enabled: true, source: 'momhaven_baseline_migrated', updatedAt: new Date().toISOString(), versionHistory: [{ version: 1, at: new Date().toISOString(), by: 'system', matchPatterns: sign.matchPatterns }] });
-  }
-  await batch.commit();
-}
-
 export async function getSafetyPatternConfig() {
   if (cache && Date.now() - cache.at < TTL) return cache;
   try {
