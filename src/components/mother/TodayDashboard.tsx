@@ -3,6 +3,7 @@ import { Bell, Sparkles, ChevronRight, Leaf, Calendar, Baby, ChevronDown } from 
 import EmptyState from '../EmptyState';
 import { PregnancyDoc, ChildDoc, ReminderDoc, UserDoc, MotherProfileDoc, NotificationDoc } from '../../types';
 import { weekFact, formatEddDisplay } from '../../data/pregnancyWeeks';
+import { getActivePregnancy, getCurrentGestationWeeks, getPregnancyProgress } from '../../utils/pregnancy';
 
 interface TodayDashboardProps { mother: UserDoc | { displayName: string; email?: string; uid?: string }; motherProfile?: MotherProfileDoc | null; pregnancy: PregnancyDoc | null; reminders: ReminderDoc[] | null; notifications?: NotificationDoc[]; onOpenNotifications: () => void; onOpenContextSelector: () => void; onOpenReminderDetail: (reminder: ReminderDoc) => void; onOpenAskHaven: (initialQuery?: string) => void; onOpenAddPregnancy: () => void; }
 
@@ -18,12 +19,12 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({ mother, pregnanc
     return () => window.removeEventListener('mom-haven-context-selected', handler);
   }, []);
 
-  const activePregnancy = selectedChild ? null : (pregnancy?.status === 'active' ? pregnancy : null);
-  const week = activePregnancy?.lmp ? Math.floor((Date.now() - new Date(activePregnancy.lmp).getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1 : null;
+  const activePregnancy = selectedChild ? null : getActivePregnancy(pregnancy);
+  const week = getCurrentGestationWeeks(activePregnancy);
   const unreadCount = notifications.filter((n) => !n.read).length;
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const progress = week ? Math.min(100, Math.max(0, (week / 40) * 100)) : 0;
+  const progress = getPregnancyProgress(activePregnancy);
   const todayKey = new Date().toISOString().slice(0, 10);
   const todayReminders = reminders === null ? null : reminders.filter((r) => r.dueDate && r.dueDate.slice(0, 10) <= todayKey);
   const accentColor = (urgency?: string) => urgency === 'urgent' ? 'var(--status-urgent)' : urgency === 'normal' ? 'var(--status-normal)' : 'var(--haven-orchid)';
