@@ -1,6 +1,7 @@
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
+import {HealthRepositoryProvider} from './context/HealthRepositoryContext';
 import './index.css';
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
@@ -11,6 +12,8 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <HealthRepositoryProvider>
+      <App />
+    </HealthRepositoryProvider>
   </StrictMode>,
 );
