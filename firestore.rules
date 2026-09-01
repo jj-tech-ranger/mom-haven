@@ -4,31 +4,25 @@ service cloud.firestore {
   function signed(){return request.auth!=null;}
   function owner(uid){return signed()&&request.auth.uid==uid;}
   function isPartner(){return signed()&&get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role=='PARTNER';}
+  function isClinician(){return signed()&&get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role=='CLINICIAN';}
   function activePartner(motherId){return signed()&&exists(/databases/$(database)/documents/partnerRelationships/$(motherId + '_' + request.auth.uid))&&get(/databases/$(database)/documents/partnerRelationships/$(motherId + '_' + request.auth.uid)).data.status=='active';}
   match /users/{uid}{allow read,write:if owner(uid);}
   match /motherProfiles/{uid}{allow read,write:if owner(uid);}
-  // Explicit privacy wall: PARTNER accounts can never read pregnancy documents.
-  // Their sole pregnancy write is birthPlan.transportPlan.
-  match /pregnancies/{id}{allow read:if signed()&&resource.data.motherId==request.auth.uid&&!isPartner();allow create:if owner(request.resource.data.motherId);allow update:if signed()&&resource.data.motherId==request.auth.uid;allow update:if signed()&&activePartner(resource.data.motherId)&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['birthPlan','updatedAt'])&&request.resource.data.birthPlan.diff(resource.data.birthPlan).affectedKeys().hasOnly(['transportPlan']);match /{sub=**}{allow read,write:if signed()&&get(/databases/$(database)/documents/pregnancies/$(id)).data.motherId==request.auth.uid;}}
-  // Explicit partner denial for child records and their clinical subcollections.
-  match /children/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.motherId==request.auth.uid)||(resource!=null&&resource.data.motherId==request.auth.uid));match /{sub=**}{allow read,write:if signed()&&get(/databases/$(database)/documents/children/$(id)).data.motherId==request.auth.uid;}}
-  match /birthPlans/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.motherId==request.auth.uid)||(resource!=null&&resource.data.motherId==request.auth.uid));}
+  // Clinicians are structurally denied direct clinical reads. All clinician clinical access is server-mediated.
+  match /pregnancies/{id}{allow read:if signed()&&resource.data.motherId==request.auth.uid&&!isPartner()&&!isClinician();allow create:if owner(request.resource.data.motherId);allow update:if signed()&&resource.data.motherId==request.auth.uid&&!isClinician();allow update:if signed()&&activePartner(resource.data.motherId)&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['birthPlan','updatedAt'])&&request.resource.data.birthPlan.diff(resource.data.birthPlan).affectedKeys().hasOnly(['transportPlan']);match /{sub=**}{allow read,write:if signed()&&get(/databases/$(database)/documents/pregnancies/$(id)).data.motherId==request.auth.uid&&!isClinician();}}
+  match /children/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.motherId==request.auth.uid)||(resource!=null&&resource.data.motherId==request.auth.uid))&&!isClinician();match /{sub=**}{allow read,write:if signed()&&get(/databases/$(database)/documents/children/$(id)).data.motherId==request.auth.uid&&!isClinician();}}
+  match /birthPlans/{id}{allow read,write:if signed()&&((resource==null&&request.resource.data.motherId==request.auth.uid)||(resource!=null&&resource.data.motherId==request.auth.uid))&&!isClinician();}
   match /reminders/{id}{allow read:if signed()&&((resource.data.userId==request.auth.uid)||(activePartner(resource.data.userId)&&resource.data.sharedWithPartner==true));allow write:if signed()&&((resource.data.userId==request.auth.uid)||(resource==null&&request.resource.data.userId==request.auth.uid));}
   match /notifications/{id}{allow read,write:if owner(resource.data.userId);}
   match /emergencyContacts/{id}{allow read,write:if owner(resource.data.userId);}
   match /savedEmergencyFacilities/{id}{allow read,write:if owner(resource.data.userId);}
   match /partnerConnections/{id}{allow read:if signed()&&resource.data.status=='pending';allow create:if owner(request.resource.data.motherId);allow update:if signed()&&(resource.data.motherId==request.auth.uid||resource.data.usedBy==request.auth.uid);}
-  match /partnerRelationships/{id}{
-   // A partner may read their active/revoked relationship. A pending invitation is readable only when its document ID is the exact six-digit code the user already knows.
-   allow read:if signed()&&((resource.data.motherId==request.auth.uid)||(resource.data.partnerId==request.auth.uid)||(resource.data.status=='pending'&&id==resource.data.code));
-   allow create:if owner(request.resource.data.motherId)&&request.resource.data.partnerId==null&&request.resource.data.status=='pending';
-   allow create:if signed()&&isPartner()&&request.resource.data.partnerId==request.auth.uid&&request.resource.data.status=='active'&&request.resource.data.code is string&&exists(/databases/$(database)/documents/partnerRelationships/$(request.resource.data.code))&&get(/databases/$(database)/documents/partnerRelationships/$(request.resource.data.code)).data.status=='pending'&&get(/databases/$(database)/documents/partnerRelationships/$(request.resource.data.code)).data.motherId==request.resource.data.motherId&&get(/databases/$(database)/documents/partnerRelationships/$(request.resource.data.code)).data.code==request.resource.data.code;
-   allow update:if signed()&&(resource.data.motherId==request.auth.uid||resource.data.partnerId==request.auth.uid||(resource.data.status=='pending'&&request.resource.data.status=='used'&&request.resource.data.usedBy==request.auth.uid));
-  }
+  match /partnerRelationships/{id}{allow read:if signed()&&((resource.data.motherId==request.auth.uid)||(resource.data.partnerId==request.auth.uid)||(resource.data.status=='pending'&&id==resource.data.code));allow create:if owner(request.resource.data.motherId)&&request.resource.data.partnerId==null&&request.resource.data.status=='pending';allow create:if signed()&&isPartner()&&request.resource.data.partnerId==request.auth.uid&&request.resource.data.status=='active'&&request.resource.data.code is string&&exists(/databases/$(database)/documents/partnerRelationships/$(request.resource.data.code))&&get(/databases/$(database)/documents/partnerRelationships/$(request.resource.data.code)).data.status=='pending'&&get(/databases/$(database)/documents/partnerRelationships/$(request.resource.data.code)).data.motherId==request.resource.data.motherId&&get(/databases/$(database)/documents/partnerRelationships/$(request.resource.data.code)).data.code==request.resource.data.code;allow update:if signed()&&(resource.data.motherId==request.auth.uid||resource.data.partnerId==request.auth.uid||(resource.data.status=='pending'&&request.resource.data.status=='used'&&request.resource.data.usedBy==request.auth.uid));}
   match /partnerShares/{motherId}{allow read:if owner(motherId)||activePartner(motherId);allow create,update:if owner(motherId);}
   match /clinicianAccessSessions/{id}{allow read:if owner(resource.data.motherId);allow create:if signed()&&request.resource.data.motherId==request.auth.uid&&request.resource.data.clinicianId==null&&request.resource.data.status=='active';allow update:if owner(resource.data.motherId);}
-  // Explicitly no PARTNER access to clinician-private notes.
-  match /clinicianPrivateNotes/{id}{allow read,write:if signed()&&resource.data.clinicianId==request.auth.uid&&!isPartner();}
+  // Private notes are never client-readable by mother, partner, or clinician; only the privileged backend can access them.
+  match /clinicianPrivateNotes/{id}{allow read,write:if false;}
+  match /auditEvents/{id}{allow read,write:if false;}
   match /{document=**}{allow read,write:if false;}
  }
 }
