@@ -2,10 +2,12 @@ import express from 'express';
 import { GoogleGenAI } from '@google/genai';
 import { classifyLayerOne } from '../src/lib/safetyPatterns.js';
 import { clinicianRouter } from './routes/clinician.js';
+import { adminRouter } from './routes/admin.js';
 
 const app = express();
 app.use(express.json({ limit: '20kb' }));
 app.use('/api/v1/clinician', clinicianRouter);
+app.use('/api/v1/admin', adminRouter);
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mom-haven';
 const DATABASE_ID = process.env.FIRESTORE_DATABASE_ID || 'ai-studio-momhaven-f2316da7-8f94-4e5d-9e6f-cc82c1066c72';
