@@ -56,7 +56,7 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  h1, h2, h3, h4, h5, h6, .font-display { font-family: var(--font-consumer); }
+  h1, h2, h3, h4, h5, h6, .font-display, .font-consumer { font-family: var(--font-consumer); }
   .font-body, .font-clinical { font-family: var(--font-clinical); }
   .font-numeric, .tabular-nums { font-family: var(--font-numeric); font-variant-numeric: tabular-nums; }
 
