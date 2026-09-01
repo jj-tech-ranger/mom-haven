@@ -1,41 +1,44 @@
 import React from 'react';
-import { ArrowRight, Heart, ShieldCheck, UsersRound } from 'lucide-react';
+import { ArrowRight, ShieldCheck, UsersRound } from 'lucide-react';
 
 interface LandingPageProps { onMother: () => void; onPartner: () => void; onAdmin: () => void; }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onMother, onPartner, onAdmin }) => (
-  <main className="min-h-screen bg-slate-50 text-slate-900 font-body">
-    <header className="border-b border-slate-200 bg-white">
+  <main className="min-h-screen bg-surface-canvas text-text-primary font-clinical">
+    <header className="border-b border-border-light bg-surface-card">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 lg:px-8">
-        <button onClick={onMother} className="flex items-center gap-3" aria-label="MomHaven home"><span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#33178A] text-white"><Heart className="h-5 w-5 fill-current" /></span><span className="font-display text-2xl font-bold tracking-tight text-[#33178A]">MomHaven</span></button>
-        <button onClick={onAdmin} className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 hover:bg-slate-50">Admin access</button>
+        <button onClick={onMother} className="flex min-h-12 items-center gap-3" aria-label="MomHaven home">
+          <img src="/assets/favicon-source-800x800.png" alt="" className="h-10 w-10 rounded-card object-cover" />
+          <span className="font-consumer text-2xl font-bold tracking-tight text-brand-primary">MomHaven</span>
+        </button>
+        <button onClick={onAdmin} className="rounded-card border border-border-light bg-surface-card px-4 py-2 text-sm font-semibold text-text-muted hover:bg-brand-surface hover:text-brand-primary">Admin access</button>
       </nav>
     </header>
-    <section className="border-b border-slate-200 bg-white">
+    <section className="border-b border-border-light bg-surface-card">
       <div className="mx-auto grid max-w-6xl gap-12 px-6 py-16 lg:grid-cols-[1.1fr_.9fr] lg:px-8 lg:py-24">
         <div className="flex flex-col justify-center">
-          <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-[#6C3EAC]">Kenya maternal & child health</p>
-          <h1 className="mt-4 max-w-2xl font-display text-5xl font-bold leading-[1.04] tracking-tight text-slate-900 sm:text-6xl">Digital companion for the Kenya Mother-Child Health Handbook.</h1>
-          <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">Track ANC visits, immunizations, and child growth milestones with MomHaven.</p>
+          <p className="font-clinical text-xs font-bold uppercase tracking-[0.16em] text-brand-primary">Kenya maternal & child health</p>
+          <h1 className="mt-4 max-w-2xl font-consumer text-5xl font-bold leading-[1.04] tracking-tight text-text-primary sm:text-6xl">Digital companion for the Kenya Mother-Child Health Handbook.</h1>
+          <p className="mt-6 max-w-xl text-lg leading-8 text-text-muted">Track ANC visits, immunizations, and child growth milestones with MomHaven.</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <button onClick={onMother} className="inline-flex items-center justify-center gap-2 rounded-md bg-[#33178A] px-6 py-3.5 font-display font-bold text-white shadow-sm hover:bg-[#241451]">Access Maternal Records <ArrowRight className="h-4 w-4" /></button>
-            <button onClick={onMother} className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-6 py-3.5 font-display font-bold text-slate-800 hover:bg-slate-50">View Immunization Schedule</button>
+            <button onClick={onMother} className="inline-flex items-center justify-center gap-2 rounded-card bg-brand-primary px-6 py-3.5 font-consumer font-bold text-white shadow-sm hover:bg-brand-primary-hover">Access Maternal Records <ArrowRight className="h-4 w-4" /></button>
+            <button onClick={onMother} className="inline-flex items-center justify-center gap-2 rounded-card border border-border-light bg-surface-card px-6 py-3.5 font-consumer font-bold text-text-primary hover:bg-brand-surface">View Immunization Schedule</button>
           </div>
         </div>
-        <div className="border border-slate-200 bg-slate-50 p-5 shadow-sm">
-          <div className="border border-slate-200 bg-white shadow-sm">
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4"><div><p className="font-display text-lg font-bold text-slate-900">Handbook alignment</p><p className="mt-0.5 text-xs text-slate-500">Clinical content and record structure</p></div><span className="rounded-md bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">MOH source</span></div>
-            <div className="divide-y divide-slate-200">
-              <div className="flex items-center justify-between px-5 py-4"><div><p className="font-display text-sm font-bold">ANC visits</p><p className="mt-0.5 text-xs text-slate-500">Visits, measurements and follow-up</p></div><span className="font-mono text-xs font-semibold text-green-700">TRACK</span></div>
-              <div className="flex items-center justify-between px-5 py-4"><div><p className="font-display text-sm font-bold">Immunization</p><p className="mt-0.5 text-xs text-slate-500">Child schedule and recorded doses</p></div><span className="font-mono text-xs font-semibold text-green-700">TRACK</span></div>
-              <div className="flex items-center justify-between px-5 py-4"><div><p className="font-display text-sm font-bold">Growth milestones</p><p className="mt-0.5 text-xs text-slate-500">Measurements and developmental history</p></div><span className="font-mono text-xs font-semibold text-green-700">TRACK</span></div>
+        <div className="border border-border-light bg-surface-canvas p-5 shadow-sm">
+          <div className="border border-border-light bg-surface-card shadow-sm">
+            <div className="flex items-center justify-between border-b border-border-light px-5 py-4"><div><p className="font-consumer text-lg font-bold text-text-primary">Handbook alignment</p><p className="mt-0.5 text-xs text-text-muted">Clinical content and record structure</p></div><span className="rounded-card bg-clinical-normal-bg px-2.5 py-1 text-xs font-semibold text-clinical-normal">MOH source</span></div>
+            <div className="divide-y divide-border-light">
+              <div className="flex items-center justify-between px-5 py-4"><div><p className="font-consumer text-sm font-bold">ANC visits</p><p className="mt-0.5 text-xs text-text-muted">Visits, measurements and follow-up</p></div><span className="font-numeric text-xs font-semibold text-clinical-normal">TRACK</span></div>
+              <div className="flex items-center justify-between px-5 py-4"><div><p className="font-consumer text-sm font-bold">Immunization</p><p className="mt-0.5 text-xs text-text-muted">Child schedule and recorded doses</p></div><span className="font-numeric text-xs font-semibold text-clinical-normal">TRACK</span></div>
+              <div className="flex items-center justify-between px-5 py-4"><div><p className="font-consumer text-sm font-bold">Growth milestones</p><p className="mt-0.5 text-xs text-text-muted">Measurements and developmental history</p></div><span className="font-numeric text-xs font-semibold text-clinical-normal">TRACK</span></div>
             </div>
-            <div className="border-t border-slate-200 px-5 py-4 text-xs leading-5 text-slate-600">Content is presented as a digital companion to the Kenya Mother-Child Health Handbook; it does not replace care from a qualified health professional.</div>
+            <div className="border-t border-border-light px-5 py-4 text-xs leading-5 text-text-muted">Content is presented as a digital companion to the Kenya Mother-Child Health Handbook; it does not replace care from a qualified health professional.</div>
           </div>
         </div>
       </div>
     </section>
-    <section className="bg-slate-50 px-6 py-16 lg:px-8"><div className="mx-auto max-w-6xl"><div className="grid gap-10 lg:grid-cols-[.8fr_1.2fr]"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#6C3EAC]">Care framework</p><h2 className="mt-3 font-display text-3xl font-bold text-slate-900 sm:text-4xl">Guidance with a clear source of truth.</h2><p className="mt-4 text-sm leading-7 text-slate-600">Clinical content and safety pathways are designed to remain understandable, traceable and separate from the brand layer.</p></div><div className="border border-slate-200 bg-white shadow-sm"><div className="grid gap-px bg-slate-200 sm:grid-cols-2"><div className="bg-white p-6"><p className="font-mono text-xs font-semibold text-slate-500">01 / GUIDANCE</p><h3 className="mt-3 font-display text-lg font-bold">Practical health information</h3><p className="mt-2 text-sm leading-6 text-slate-600">Pregnancy and child health information presented around the moments a mother needs it.</p></div><div className="bg-white p-6"><p className="font-mono text-xs font-semibold text-slate-500">02 / RECORD</p><h3 className="mt-3 font-display text-lg font-bold">One connected record</h3><p className="mt-2 text-sm leading-6 text-slate-600">Keep relevant milestones, measurements, reminders and care history together.</p></div><div className="bg-white p-6"><p className="font-mono text-xs font-semibold text-slate-500">03 / SAFETY</p><h3 className="mt-3 font-display text-lg font-bold">Clear escalation pathways</h3><p className="mt-2 text-sm leading-6 text-slate-600">Recognize concerning symptoms and reach appropriate support when it matters.</p></div><div className="bg-white p-6"><p className="font-mono text-xs font-semibold text-slate-500">04 / CONNECTION</p><h3 className="mt-3 font-display text-lg font-bold">Trusted participation</h3><p className="mt-2 text-sm leading-6 text-slate-600">Connect partners and care teams without turning a mother's experience into a dashboard of noise.</p></div></div></div></div></div></section>
-    <footer className="border-t border-slate-200 bg-white px-6 py-8 lg:px-8"><div className="mx-auto flex max-w-6xl flex-col gap-2 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between"><span className="font-display font-bold text-[#33178A]">MomHaven</span><span>Maternal & child health support, designed with care.</span></div></footer>
+    <section className="bg-surface-canvas px-6 py-16 lg:px-8"><div className="mx-auto max-w-6xl"><div className="grid gap-10 lg:grid-cols-[.8fr_1.2fr]"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-primary">Care framework</p><h2 className="mt-3 font-consumer text-3xl font-bold text-text-primary sm:text-4xl">Guidance with a clear source of truth.</h2><p className="mt-4 text-sm leading-7 text-text-muted">Clinical content and safety pathways are designed to remain understandable, traceable and separate from the brand layer.</p></div><div className="border border-border-light bg-surface-card shadow-sm"><div className="grid gap-px bg-border-light sm:grid-cols-2"><div className="bg-surface-card p-6"><p className="font-numeric text-xs font-semibold text-text-muted">01 / GUIDANCE</p><h3 className="mt-3 font-consumer text-lg font-bold">Practical health information</h3><p className="mt-2 text-sm leading-6 text-text-muted">Pregnancy and child health information presented around the moments a mother needs it.</p></div><div className="bg-surface-card p-6"><p className="font-numeric text-xs font-semibold text-text-muted">02 / RECORD</p><h3 className="mt-3 font-consumer text-lg font-bold">One connected record</h3><p className="mt-2 text-sm leading-6 text-text-muted">Keep relevant milestones, measurements, reminders and care history together.</p></div><div className="bg-surface-card p-6"><p className="font-numeric text-xs font-semibold text-text-muted">03 / SAFETY</p><h3 className="mt-3 font-consumer text-lg font-bold">Clear escalation pathways</h3><p className="mt-2 text-sm leading-6 text-text-muted">Recognize concerning symptoms and reach appropriate support when it matters.</p></div><div className="bg-surface-card p-6"><p className="font-numeric text-xs font-semibold text-text-muted">04 / CONNECTION</p><h3 className="mt-3 font-consumer text-lg font-bold">Trusted participation</h3><p className="mt-2 text-sm leading-6 text-text-muted">Connect partners and care teams without turning a mother's experience into a dashboard of noise.</p></div></div></div></div></div></section>
+    <footer className="border-t border-border-light bg-surface-card px-6 py-8 lg:px-8"><div className="mx-auto flex max-w-6xl flex-col gap-2 text-sm text-text-muted sm:flex-row sm:items-center sm:justify-between"><span className="font-consumer font-bold text-brand-primary">MomHaven</span><span>Maternal & child health support, designed with care.</span></div></footer>
   </main>
 );
