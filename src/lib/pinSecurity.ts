@@ -7,9 +7,7 @@ function bytesToHex(bytes: Uint8Array): string {
 }
 
 function hexToBytes(hex: string): Uint8Array {
-  if (!/^[0-9a-f]{2,}$/i.test(hex) || hex.length % 2 !== 0) {
-    throw new Error('Invalid PIN salt.');
-  }
+  if (!/^[0-9a-f]{2,}$/i.test(hex) || hex.length % 2 !== 0) throw new Error('Invalid PIN salt.');
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < bytes.length; i += 1) bytes[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
   return bytes;
@@ -33,8 +31,7 @@ export async function verifyPin(enteredPin: string, storedHash: string, storedSa
 }
 
 export async function verifyLegacyPin(enteredPin: string, storedHash: string, storedSalt: string): Promise<boolean> {
-  const salt = hexToBytes(storedSalt);
   const bytes = new TextEncoder().encode(`mom-haven-app-lock-v2:${storedSalt}:${enteredPin}`);
-  const digest = await crypto.subtle.digest('SHA-256', new Uint8Array([...bytes, ...salt]));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
   return bytesToHex(new Uint8Array(digest)) === storedHash;
 }
