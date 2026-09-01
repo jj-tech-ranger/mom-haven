@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, ShieldCheck, UsersRound, ArrowRight } from 'lucide-react';
+import { ArrowRight, Heart, ShieldCheck, UsersRound } from 'lucide-react';
 
 interface LandingPageProps {
   onMother: () => void;
@@ -8,55 +8,63 @@ interface LandingPageProps {
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onMother, onPartner, onAdmin }) => (
-  <main className="min-h-screen bg-white text-[#241451] font-body overflow-hidden">
-    <section className="relative min-h-[720px] bg-gradient-to-br from-[#33178A] via-[#5B3AA8] to-[#9167C2] text-white">
-      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_75%_20%,white,transparent_32%)]" />
-      <nav className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 py-6 lg:px-8">
+  <main className="min-h-screen bg-slate-50 text-slate-900 font-body">
+    <header className="border-b border-slate-200 bg-white">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 lg:px-8">
         <button onClick={onMother} className="flex items-center gap-3" aria-label="MomHaven home">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20">
-            <Heart className="h-5 w-5 fill-white" />
+          <span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#33178A] text-white">
+            <Heart className="h-5 w-5 fill-current" />
           </span>
-          <span className="font-display text-2xl font-bold tracking-tight">MomHaven</span>
+          <span className="font-display text-2xl font-bold tracking-tight text-[#33178A]">MomHaven</span>
         </button>
-        <button onClick={onAdmin} className="rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold backdrop-blur hover:bg-white/15">
-          Admin
+        <button onClick={onAdmin} className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 hover:bg-slate-50">
+          Admin access
         </button>
       </nav>
+    </header>
 
-      <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 px-6 pb-20 pt-14 lg:grid-cols-[1.05fr_.95fr] lg:px-8 lg:pt-20">
-        <div>
-          <p className="mb-5 text-sm font-bold uppercase tracking-[0.18em] text-white/75">A calmer place for motherhood</p>
-          <h1 className="max-w-3xl font-display text-5xl font-bold leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl">
-            Every mother deserves a little more support.
+    <section className="border-b border-slate-200 bg-white">
+      <div className="mx-auto grid max-w-6xl gap-12 px-6 py-16 lg:grid-cols-[1.1fr_.9fr] lg:px-8 lg:py-24">
+        <div className="flex flex-col justify-center">
+          <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-[#6C3EAC]">Maternal & child health support</p>
+          <h1 className="mt-4 max-w-2xl font-display text-5xl font-bold leading-[1.04] tracking-tight text-slate-900 sm:text-6xl">
+            A clearer care journey for every mother.
           </h1>
-          <p className="mt-7 max-w-xl text-lg leading-8 text-white/85 sm:text-xl">
-            MomHaven brings trusted maternal and child health guidance, reminders, safety support, and a connected care journey into one gentle experience.
+          <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
+            MomHaven brings pregnancy guidance, child health records, reminders and safety support into one calm, private place.
           </p>
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <button onClick={onMother} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3.5 font-display font-bold text-[#33178A] shadow-lg shadow-[#241451]/20 hover:bg-[#F7F3FC]">
-              I'm a mother <ArrowRight className="h-4 w-4" />
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <button onClick={onMother} className="inline-flex items-center justify-center gap-2 rounded-md bg-[#33178A] px-6 py-3.5 font-display font-bold text-white shadow-sm hover:bg-[#241451]">
+              Continue as mother <ArrowRight className="h-4 w-4" />
             </button>
-            <button onClick={onPartner} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/30 bg-white/10 px-6 py-3.5 font-display font-bold text-white backdrop-blur hover:bg-white/15">
-              I'm a partner <UsersRound className="h-4 w-4" />
+            <button onClick={onPartner} className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-6 py-3.5 font-display font-bold text-slate-800 hover:bg-slate-50">
+              Partner access <UsersRound className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <div className="relative mx-auto w-full max-w-md">
-          <div className="rounded-[32px] border border-white/20 bg-white/12 p-5 shadow-2xl backdrop-blur-xl">
-            <div className="rounded-[25px] bg-[#F7F3FC] p-6 text-[#241451]">
-              <div className="flex items-center justify-between">
-                <span className="font-display text-lg font-bold">Your Haven</span>
-                <span className="rounded-full bg-[#EEE7F8] px-3 py-1 text-xs font-bold text-[#33178A]">Private</span>
+        <div className="border border-slate-200 bg-slate-50 p-5 shadow-sm">
+          <div className="border border-slate-200 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <div>
+                <p className="font-display text-lg font-bold text-slate-900">Care journey</p>
+                <p className="mt-0.5 text-xs text-slate-500">Structured around your current stage</p>
               </div>
-              <div className="mt-8 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-[#E5DFF0]">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#9167C2]">Today</p>
-                <p className="mt-2 font-display text-2xl font-bold">You're doing enough.</p>
-                <p className="mt-2 text-sm leading-6 text-[#6D6380]">Gentle guidance, useful reminders, and a clear path to help when you need it.</p>
+              <span className="rounded-md bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">Private</span>
+            </div>
+            <div className="grid grid-cols-[1fr_auto] gap-6 p-5">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Current care</p>
+                <p className="mt-2 font-display text-2xl font-bold text-slate-900">Pregnancy follow-up</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Appointments, reminders and health information stay together.</p>
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-[#EEE7F8] p-4"><ShieldCheck className="h-5 w-5 text-[#33178A]"/><p className="mt-3 text-sm font-bold">Safety support</p></div>
-                <div className="rounded-2xl bg-[#EEE7F8] p-4"><Heart className="h-5 w-5 text-[#33178A]"/><p className="mt-3 text-sm font-bold">Care journey</p></div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-md bg-[#F0EBFA] text-[#33178A]">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+            </div>
+            <div className="border-t border-slate-200 px-5 py-4">
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+                <span>Care record</span><span className="font-mono text-slate-700">READY</span>
               </div>
             </div>
           </div>
@@ -64,30 +72,44 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onMother, onPartner, o
       </div>
     </section>
 
-    <section className="bg-[#F7F3FC] px-6 py-20 lg:px-8">
+    <section className="bg-slate-50 px-6 py-16 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <div className="max-w-2xl">
-          <p className="text-sm font-bold uppercase tracking-[0.16em] text-[#9167C2]">Built around her</p>
-          <h2 className="mt-2 font-display text-3xl font-bold text-[#33178A] sm:text-4xl">Support that feels human, not overwhelming.</h2>
-        </div>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {[
-            ['Guidance when it matters', 'Clear, practical maternal and child health information designed for real moments.'],
-            ['A safer way to stay connected', 'Bring trusted partners into the journey while keeping personal information protected.'],
-            ['Help beyond the screen', 'Safety pathways make it easier to recognize when urgent or professional care is needed.'],
-          ].map(([title, body]) => (
-            <article key={title} className="rounded-2xl border border-[#E5DFF0] bg-white p-6">
-              <div className="h-2 w-12 rounded-full bg-[#9167C2]" />
-              <h3 className="mt-6 font-display text-xl font-bold">{title}</h3>
-              <p className="mt-3 text-sm leading-6 text-[#6D6380]">{body}</p>
-            </article>
-          ))}
+        <div className="grid gap-10 lg:grid-cols-[.8fr_1.2fr]">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#6C3EAC]">Care framework</p>
+            <h2 className="mt-3 font-display text-3xl font-bold text-slate-900 sm:text-4xl">Guidance with a clear source of truth.</h2>
+            <p className="mt-4 text-sm leading-7 text-slate-600">Clinical content and safety pathways are designed to remain understandable, traceable and separate from the brand layer.</p>
+          </div>
+          <div className="border border-slate-200 bg-white shadow-sm">
+            <div className="grid gap-px bg-slate-200 sm:grid-cols-2">
+              <div className="bg-white p-6">
+                <p className="font-mono text-xs font-semibold text-slate-500">01 / GUIDANCE</p>
+                <h3 className="mt-3 font-display text-lg font-bold">Practical health information</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Pregnancy and child health information presented around the moments a mother needs it.</p>
+              </div>
+              <div className="bg-white p-6">
+                <p className="font-mono text-xs font-semibold text-slate-500">02 / RECORD</p>
+                <h3 className="mt-3 font-display text-lg font-bold">One connected record</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Keep relevant milestones, measurements, reminders and care history together.</p>
+              </div>
+              <div className="bg-white p-6">
+                <p className="font-mono text-xs font-semibold text-slate-500">03 / SAFETY</p>
+                <h3 className="mt-3 font-display text-lg font-bold">Clear escalation pathways</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Recognize concerning symptoms and reach appropriate support when it matters.</p>
+              </div>
+              <div className="bg-white p-6">
+                <p className="font-mono text-xs font-semibold text-slate-500">04 / CONNECTION</p>
+                <h3 className="mt-3 font-display text-lg font-bold">Trusted participation</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Connect partners and care teams without turning a mother's experience into a dashboard of noise.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <footer className="border-t border-[#E5DFF0] bg-white px-6 py-8 lg:px-8">
-      <div className="mx-auto flex max-w-6xl flex-col gap-2 text-sm text-[#6D6380] sm:flex-row sm:items-center sm:justify-between">
+    <footer className="border-t border-slate-200 bg-white px-6 py-8 lg:px-8">
+      <div className="mx-auto flex max-w-6xl flex-col gap-2 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
         <span className="font-display font-bold text-[#33178A]">MomHaven</span>
         <span>Maternal & child health support, designed with care.</span>
       </div>
