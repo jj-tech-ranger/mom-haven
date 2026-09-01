@@ -1,48 +1,70 @@
 /* theme.css — global tokens, load once, reference everywhere */
 :root {
   /* Brand */
-  --haven-deep: #33178A;
-  --haven-orchid: #9167C2;
-  --haven-orchid-light: #B79CDA;
-  --grad-haven: linear-gradient(135deg, #33178A 0%, #9167C2 100%);
+  --brand-primary: #5B2C6F;
+  --brand-primary-hover: #4A235A;
+  --brand-surface: #F5EEF8;
+  --brand-accent: #8E44AD;
 
-  /* Surfaces */
-  --lavender-50: #F7F3FC;   /* app canvas background */
-  --lavender-100: #EEE7F8;  /* card-on-card / chip fill */
-  --lavender-200: #E5D9F2;  /* stronger surface / pressed state */
-  --border-hairline: #E5DFF0;
-  --surface-white: #FFFFFF;
+  /* Neutral / canvas */
+  --surface-canvas: #FAFAFC;
+  --surface-card: #FFFFFF;
+  --border-light: #E5E7EB;
+  --text-primary: #1C2833;
+  --text-muted: #566573;
 
-  /* Text */
-  --ink-900: #241451;  /* primary text */
-  --ink-600: #6D6380;  /* secondary text */
-  --ink-400: #A79CBC;  /* disabled / tertiary */
+  /* Semantic clinical tokens — never substitute brand colors for clinical meaning */
+  --clinical-normal: #1E8449;
+  --clinical-normal-bg: #F0FDF4;
+  --clinical-warning: #D68910;
+  --clinical-warning-bg: #FFFBEB;
+  --clinical-danger: #C0392B;
+  --clinical-danger-bg: #FEF2F2;
 
-  /* Semantic (accents only, never full-screen fills except Emergency) */
-  --status-normal: #1E8F5F;
-  --status-normal-bg: #E6F6EE;
-  --status-caution: #A15E06;
-  --status-caution-bg: #FBF0DC;
-  --status-urgent: #C4283C;
-  --status-urgent-bg: #FCE7EA;
-  --status-emergency: #E11D3C;
-  --status-info: #4A3A80;
-  --status-info-bg: #EEE7F8;
+  /* Typography */
+  --font-consumer: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-clinical: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-numeric: 'JetBrains Mono', monospace;
 
-  /* Radius */
-  --r-pill: 28px;
-  --r-card: 20px;
-  --r-chip: 12px;
-  --r-input: 14px;
-  --r-sheet: 24px;
+  /* Compatibility aliases for existing components; all resolve to the governed palette. */
+  --haven-deep: var(--brand-primary);
+  --haven-orchid: var(--brand-accent);
+  --haven-orchid-light: #B77BCB;
+  --grad-haven: var(--brand-primary);
+  --lavender-50: var(--surface-canvas);
+  --lavender-100: var(--brand-surface);
+  --lavender-200: #EADCF0;
+  --border-hairline: var(--border-light);
+  --surface-white: var(--surface-card);
+  --ink-900: var(--text-primary);
+  --ink-600: var(--text-muted);
+  --ink-400: #7B8794;
 
-  /* Shadow */
-  --sh-1: 0 2px 8px rgba(51,23,138,0.06);
-  --sh-2: 0 8px 24px rgba(51,23,138,0.10);
-  --sh-3: 0 16px 48px rgba(36,20,81,0.18);
-  --sh-emergency: 0 8px 20px rgba(225,29,60,0.35);
+  /* Compatibility aliases for clinical status classes. */
+  --status-normal: var(--clinical-normal);
+  --status-normal-bg: var(--clinical-normal-bg);
+  --status-caution: var(--clinical-warning);
+  --status-caution-bg: var(--clinical-warning-bg);
+  --status-urgent: var(--clinical-danger);
+  --status-urgent-bg: var(--clinical-danger-bg);
+  --status-emergency: var(--clinical-danger);
+  --status-info: var(--brand-primary);
+  --status-info-bg: var(--brand-surface);
 
-  /* Type */
-  --font-display: 'Baloo 2', cursive;
-  --font-body: 'Inter', sans-serif;
+  /* Geometry */
+  --r-pill: 999px;
+  --r-card: 6px;
+  --r-chip: 6px;
+  --r-input: 6px;
+  --r-sheet: 12px;
+
+  /* Restrained elevation */
+  --sh-1: 0 1px 2px rgba(28,40,51,0.05);
+  --sh-2: 0 2px 8px rgba(28,40,51,0.08);
+  --sh-3: 0 8px 24px rgba(28,40,51,0.12);
+  --sh-emergency: 0 4px 12px rgba(192,57,43,0.22);
+
+  /* Legacy aliases */
+  --font-display: var(--font-consumer);
+  --font-body: var(--font-clinical);
 }
