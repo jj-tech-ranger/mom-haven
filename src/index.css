@@ -17,8 +17,6 @@
   --color-clinical-warning-bg: var(--clinical-warning-bg);
   --color-clinical-danger: var(--clinical-danger);
   --color-clinical-danger-bg: var(--clinical-danger-bg);
-
-  /* Existing utility names resolve to the governed palette. */
   --color-haven-deep: var(--brand-primary);
   --color-haven-orchid: var(--brand-accent);
   --color-haven-orchid-light: #B77BCB;
@@ -38,7 +36,6 @@
   --color-status-emergency: var(--clinical-danger);
   --color-status-info: var(--brand-primary);
   --color-status-info-bg: var(--brand-surface);
-
   --font-display: var(--font-consumer);
   --font-body: var(--font-clinical);
   --radius-card: 6px;
@@ -47,24 +44,21 @@
 }
 
 @layer base {
-  body {
-    background-color: var(--surface-canvas);
-    color: var(--text-primary);
-    font-family: var(--font-consumer);
-    font-size: 14px;
-    line-height: 1.6;
-    -webkit-tap-highlight-color: transparent;
-  }
-
+  body { background-color: var(--surface-canvas); color: var(--text-primary); font-family: var(--font-consumer); font-size: 14px; line-height: 1.6; -webkit-tap-highlight-color: transparent; }
   h1, h2, h3, h4, h5, h6, .font-display, .font-consumer { font-family: var(--font-consumer); }
   .font-body, .font-clinical { font-family: var(--font-clinical); }
   .font-numeric, .tabular-nums { font-family: var(--font-numeric); font-variant-numeric: tabular-nums; }
-
-  *:focus-visible {
-    outline: 2px solid var(--brand-primary) !important;
-    outline-offset: 2px !important;
-    border-radius: 6px;
-  }
-
+  *:focus-visible { outline: 2px solid var(--brand-primary) !important; outline-offset: 2px !important; border-radius: 6px; }
   button, input, select, a { min-height: 48px; }
+}
+
+/* Anti-slop governance for legacy utilities. Component migrations should use tokens directly. */
+@layer utilities {
+  .backdrop-blur-md, .backdrop-blur-sm, .backdrop-blur-lg { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  .bg-white\/70, .bg-white\/80, .bg-white\/90, .bg-white\/95 { background-color: var(--surface-card) !important; }
+  .shadow-2xl { box-shadow: var(--sh-1) !important; }
+  .rounded-3xl { border-radius: 12px !important; }
+  .bg-gradient-to-r, .bg-gradient-to-l, .bg-gradient-to-br, .bg-gradient-to-bl, .bg-gradient-to-t, .bg-gradient-to-b { background-image: none !important; }
+  .bg-clip-text { background-clip: border-box !important; -webkit-background-clip: border-box !important; }
+  .text-transparent { color: var(--text-primary) !important; }
 }
