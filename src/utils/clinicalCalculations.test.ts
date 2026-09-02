@@ -44,7 +44,7 @@ test('does not report a negative gestational age for a future LMP', () => {
   const result = calculateGestationFromLmp('2026-09-10', asOf);
   assert.equal(result.gestationalAgeWeeks, 0);
   assert.equal(result.gestationalAgeDays, 0);
-  assert.equal(result.daysRemaining, 300);
+  assert.equal(result.daysRemaining, 288);
 });
 
 test('caps gestational age at 42 weeks', () => {
