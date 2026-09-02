@@ -93,40 +93,74 @@ export const sw = {
     motherRole: 'Huduma ya Mama',
     childRole: 'Afya ya Mtoto',
     careTeamRole: 'Wahudumu wa Afya',
+    milestones: {
+      pregnancy: {
+        title: 'Ujauzito',
+        desc: 'Miongozo ya miezi mitatu, dalili & maandalizi',
+      },
+      anc: {
+        title: 'Kliniki ya ANC',
+        desc: 'Ufuatiliaji wa ziara za MOH 216, rekodi za kliniki & maandalizi ya huduma',
+      },
+      birth: {
+        title: 'Kujifungua',
+        desc: 'Maandalizi ya uzazi & mpango wa kujifungua',
+      },
+      newborn: {
+        title: 'Mtoto Mchanga',
+        desc: 'Unyonyeshaji, huduma ya kitovu, dalili za hatari & huduma za awali',
+      },
+      childHealth: {
+        title: 'Afya ya Mtoto',
+        desc: 'Chanjo, ufuatiliaji wa magonjwa & huduma za kinga',
+      },
+      growth: {
+        title: 'Ukuaji & Hatua',
+        desc: 'Uzito, urefu, maendeleo & hatua za ukuaji',
+      },
+      ongoing: {
+        title: 'Huduma Endelevu',
+        desc: 'Ushirikiano wa familia na wahudumu wa afya',
+      },
+      reminders: {
+        title: 'Vikumbusho vya Moja kwa Moja',
+        desc: 'Miadi muhimu, hatua za ukuaji, kazi za afya na ufuatiliaji vinabaki wazi vinapohitajika.',
+      },
+    },
     steps: {
       pregnancy: {
         title: 'Ujauzito',
-        desc: 'Miongozo ya kila miezi mitatu, ufuatiliaji wa dalili, na vidonge vya madini ya chuma (IFAS).',
+        desc: 'Miongozo ya miezi mitatu, dalili & maandalizi',
         focus: 'Afya ya Mama',
       },
       anc: {
         title: 'Kliniki ya ANC',
-        desc: 'Ratiba ya ziara 8 za MOH 216, vipimo vya kliniki, na uchunguzi wa afya.',
+        desc: 'Ufuatiliaji wa ziara za MOH 216, rekodi za kliniki & maandalizi ya huduma',
         focus: 'Wahudumu wa Afya',
       },
       birth: {
         title: 'Kujifungua',
-        desc: 'Maandalizi ya uzazi, mfuko wa hospitali, na mpango wa mtu wa kusindikiza.',
+        desc: 'Maandalizi ya uzazi & mpango wa kujifungua',
         focus: 'Mama na Familia',
       },
       newborn: {
         title: 'Mtoto Mchanga',
-        desc: 'Huduma ya kitovu, unyonyeshaji wa maziwa pekee, joto, na dalili za hatari.',
+        desc: 'Unyonyeshaji, huduma ya kitovu, dalili za hatari & huduma za awali',
         focus: 'Afya ya Mtoto',
       },
       childHealth: {
         title: 'Afya ya Mtoto',
-        desc: 'Ratiba ya chanjo za KEPI, ufuatiliaji wa ukuaji, na rekodi za magonjwa.',
+        desc: 'Chanjo, ufuatiliaji wa magonjwa & huduma za kinga',
         focus: 'Mtoto & Kliniki',
       },
       growth: {
         title: 'Ukuaji & Hatua',
-        desc: 'Chati ya uzito kulingana na umri, maendeleo ya kimwili, na kuanza vyakula vya nyongeza.',
+        desc: 'Uzito, urefu, maendeleo & hatua za ukuaji',
         focus: 'Afya ya Mtoto',
       },
       ongoing: {
         title: 'Huduma Endelevu',
-        desc: 'Uchunguzi baada ya kujifungua, upangaji uzazi, afya ya akili, na ripoti za daktari.',
+        desc: 'Ushirikiano wa familia na wahudumu wa afya',
         focus: 'Mama & Mtoto',
       },
     },

@@ -93,40 +93,74 @@ export const en = {
     motherRole: 'Mother Care',
     childRole: 'Child Health',
     careTeamRole: 'Care Team',
+    milestones: {
+      pregnancy: {
+        title: 'Pregnancy',
+        desc: 'Trimester guidance, symptoms & preparation',
+      },
+      anc: {
+        title: 'Antenatal care',
+        desc: 'MOH 216 visit tracking, clinical records & care preparation',
+      },
+      birth: {
+        title: 'Birth',
+        desc: 'Delivery preparedness & birth planning',
+      },
+      newborn: {
+        title: 'Newborn',
+        desc: 'Feeding, cord care, danger signs & early care',
+      },
+      childHealth: {
+        title: 'Child health',
+        desc: 'Immunization, illness tracking & preventive care',
+      },
+      growth: {
+        title: 'Growth & milestones',
+        desc: 'Weight, height, development & developmental milestones',
+      },
+      ongoing: {
+        title: 'Ongoing care',
+        desc: 'Family and clinician collaboration',
+      },
+      reminders: {
+        title: 'Get reminders',
+        desc: 'Important appointments, milestones, care tasks and follow-ups stay visible when they matter.',
+      },
+    },
     steps: {
       pregnancy: {
         title: 'Pregnancy',
-        desc: 'Trimester guidance, symptom tracking, and IFAS iron supplementation.',
+        desc: 'Trimester guidance, symptoms & preparation',
         focus: 'Mother Health',
       },
       anc: {
         title: 'Antenatal care',
-        desc: 'Kenya MOH 216 8-visit schedule, clinical vitals, and screening tests.',
+        desc: 'MOH 216 visit tracking, clinical records & care preparation',
         focus: 'Care Team',
       },
       birth: {
         title: 'Birth',
-        desc: 'Delivery preparedness, hospital bag checklist, and birth companion plan.',
+        desc: 'Delivery preparedness & birth planning',
         focus: 'Mother & Family',
       },
       newborn: {
         title: 'Newborn',
-        desc: 'Umbilical cord care, exclusive breastfeeding, warmth, and danger signs.',
+        desc: 'Feeding, cord care, danger signs & early care',
         focus: 'Child Health',
       },
       childHealth: {
         title: 'Child health',
-        desc: 'Kenya KEPI immunization schedule, growth monitoring, and sickness logs.',
+        desc: 'Immunization, illness tracking & preventive care',
         focus: 'Child & Clinic',
       },
       growth: {
         title: 'Growth & milestones',
-        desc: 'Weight-for-age curves, motor development, and complementary feeding.',
+        desc: 'Weight, height, development & developmental milestones',
         focus: 'Child Health',
       },
       ongoing: {
         title: 'Ongoing care',
-        desc: 'Postnatal checkups, family planning, mental wellbeing, and doctor reports.',
+        desc: 'Family and clinician collaboration',
         focus: 'Mother & Child',
       },
     },

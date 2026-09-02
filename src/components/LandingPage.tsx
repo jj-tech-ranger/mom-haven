@@ -37,7 +37,18 @@ import {
   Mic,
   Smile,
   ShieldAlert,
-  ChevronDown
+  ChevronDown,
+  Bell,
+  Syringe,
+  Pill,
+  Wifi,
+  Signal,
+  Battery,
+  Home,
+  Milestone,
+  FileText,
+  User,
+  CheckCircle
 } from 'lucide-react';
 import AnonymousMotherShell from './auth/AnonymousMotherShell';
 import PartnerConnectFlow from './auth/PartnerConnectFlow';
@@ -46,6 +57,7 @@ import AboutModal from './modals/AboutModal';
 import PrivacyModal from './modals/PrivacyModal';
 import SafetyModal from './modals/SafetyModal';
 import PartnerInfoModal from './modals/PartnerInfoModal';
+import MotherViewPhoneMockup from './MotherViewPhoneMockup';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageToggle } from './LanguageToggle';
 import { usePreferences } from '../context/PreferencesContext';
@@ -70,9 +82,6 @@ export default function LandingPage({ onSignedIn, onPartnerConnected }: LandingP
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   const [showPartnerInfoModal, setShowPartnerInfoModal] = useState(false);
   const [showClinicianModal, setShowClinicianModal] = useState(false);
-
-  // Selected stage in Lifecycle
-  const [activeLifecycleStage, setActiveLifecycleStage] = useState<string>('pregnancy');
 
   // Anonymous shell initial tab & prompt config
   const [anonTab, setAnonTab] = useState<'today' | 'journey' | 'haven' | 'records' | 'profile'>('today');
@@ -245,16 +254,6 @@ export default function LandingPage({ onSignedIn, onPartnerConnected }: LandingP
     );
   }
 
-  const lifecycleStages = [
-    { id: 'pregnancy', icon: Heart, number: '01' },
-    { id: 'anc', icon: Calendar, number: '02' },
-    { id: 'birth', icon: ShieldCheck, number: '03' },
-    { id: 'newborn', icon: Baby, number: '04' },
-    { id: 'childHealth', icon: Activity, number: '05' },
-    { id: 'growth', icon: FileCheck, number: '06' },
-    { id: 'ongoing', icon: Users, number: '07' },
-  ];
-
   return (
     <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-primary)] font-body selection:bg-[var(--surface-3)]">
       
@@ -391,153 +390,6 @@ export default function LandingPage({ onSignedIn, onPartnerConnected }: LandingP
               <span className="font-bold text-[var(--haven-deep)]">{t('hero.createAccountLink')}</span>
             </button>
           </div>
-        </div>
-
-        {/* Visual Anchor: Mother View Product Composite */}
-        <div className="mt-8 relative bg-gradient-to-b from-[var(--surface-2)] to-[var(--surface-1)] rounded-[32px] border border-[var(--border)] p-4 sm:p-7 shadow-xl overflow-hidden">
-          
-          {/* App Shell Mockup Bar */}
-          <div className="flex flex-wrap items-center justify-between pb-4 border-b border-[var(--border)] gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-[var(--haven-deep)] text-white flex items-center justify-center font-bold text-xs">
-                MZ
-              </div>
-              <div className="text-left">
-                <span className="font-display font-bold text-xs sm:text-sm text-[var(--text-primary)] block leading-tight">
-                  Mama Zawadi
-                </span>
-                <span className="text-[11px] font-semibold text-[var(--haven-orchid)]">
-                  {t('hero.uiPreview.gestationBadge')}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-[11px] font-bold flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                {t('hero.uiPreview.vitalsBadge')}
-              </span>
-            </div>
-          </div>
-
-          {/* Grid Preview: Left is Clinical / Records, Right is Haven Live Chat */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-5 text-left">
-            
-            {/* Left Card: ANC Schedule & Daily Tip (5 cols) */}
-            <div className="lg:col-span-5 space-y-4">
-              {/* ANC Card */}
-              <div className="bg-[var(--surface-1)] rounded-2xl p-4 border border-[var(--border)] shadow-xs space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-[var(--haven-orchid)]" />
-                    <span className="font-display font-bold text-xs text-[var(--text-primary)]">
-                      {language === 'sw' ? 'Kliniki ya ANC (Ziara ya 3/8)' : 'ANC Clinical Care (Visit 3 of 8)'}
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/10 text-[var(--haven-deep)]">
-                    MOH 216
-                  </span>
-                </div>
-
-                <p className="text-xs text-[var(--text-secondary)] font-medium leading-relaxed">
-                  {t('hero.uiPreview.nextAnc')}
-                </p>
-
-                <div className="p-2.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] flex items-start gap-2 text-[11px] text-[var(--text-secondary)]">
-                  <Clock className="w-3.5 h-3.5 text-[var(--haven-orchid)] shrink-0 mt-0.5" />
-                  <span>{t('hero.uiPreview.dailyTip')}</span>
-                </div>
-              </div>
-
-              {/* Child Immunization Readiness Tag */}
-              <div className="bg-[var(--surface-1)] rounded-2xl p-4 border border-[var(--border)] shadow-xs flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
-                    <Baby className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="font-display font-bold text-xs text-[var(--text-primary)] block">
-                      {language === 'sw' ? 'Maandalizi ya Mtoto & Chanjo' : 'Newborn & Immunization Plan'}
-                    </span>
-                    <span className="text-[10px] text-[var(--text-muted)]">
-                      {language === 'sw' ? 'Mwongozo wa KEPI Kenya Tayari' : 'Kenya KEPI Schedule Grounded'}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleLaunchAnonymous('records')}
-                  className="text-xs font-bold text-[var(--haven-deep)] hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <span>{t('common.previewApp')}</span>
-                  <ChevronRight className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-
-            {/* Right Card: Haven Chat Consultation (7 cols) */}
-            <div className="lg:col-span-7 bg-[var(--surface-1)] rounded-2xl p-4 sm:p-5 border border-[var(--border)] shadow-xs space-y-3.5 flex flex-col justify-between">
-              <div>
-                {/* Haven Header */}
-                <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-[var(--haven-deep)] text-white flex items-center justify-center font-bold text-xs">
-                      H
-                    </div>
-                    <div>
-                      <span className="font-display font-bold text-xs text-[var(--text-primary)] block leading-none">
-                        Haven AI
-                      </span>
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                        {t('hero.uiPreview.clinicalSource')}
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold text-[var(--text-muted)] bg-[var(--surface-2)] px-2 py-1 rounded-md">
-                    {language === 'sw' ? 'Mwongozo wa Afya' : 'Health Guidance'}
-                  </span>
-                </div>
-
-                {/* Chat Bubbles */}
-                <div className="space-y-2.5 pt-3">
-                  {/* Mother question */}
-                  <div className="bg-[var(--surface-2)] rounded-2xl rounded-tr-none p-3 text-xs text-[var(--text-primary)] ml-auto max-w-[85%] border border-[var(--border)]">
-                    {t('hero.uiPreview.havenQuery')}
-                  </div>
-
-                  {/* Haven response */}
-                  <div className="bg-[var(--surface-2)]/60 rounded-2xl rounded-tl-none p-3.5 text-xs text-[var(--text-primary)] border border-[var(--border)] space-y-2">
-                    <p className="leading-relaxed">
-                      {t('hero.uiPreview.havenReply')}
-                    </p>
-                    <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-800 dark:text-amber-200">
-                      {language === 'sw' 
-                        ? '⚠️ Kituo cha Afya: Ikiwa maumivu ni makali au kuna damu, tembelea kliniki mara moja.' 
-                        : '⚠️ Clinical note: If pelvic pain is sharp or accompanied by cramping or fever, visit your antenatal clinic.'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Interactive Action */}
-              <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between">
-                <span className="text-[11px] text-[var(--text-muted)]">
-                  {language === 'sw' ? 'Ushauri wa bure wa dharura & lishe' : 'Free maternal advice & dietary tips'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleLaunchAnonymous('haven')}
-                  className="px-4 py-1.5 rounded-full bg-[var(--haven-deep)] text-white text-xs font-display font-bold shadow-xs hover:opacity-90 flex items-center gap-1.5 cursor-pointer"
-                >
-                  <span>{t('havenShowcase.tryHaven')}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-            </div>
-
-          </div>
-
         </div>
 
       </section>
@@ -711,109 +563,155 @@ export default function LandingPage({ onSignedIn, onPartnerConnected }: LandingP
       </section>
 
       {/* ========================================================================= */}
-      {/* 3. SIGNATURE CONTINUOUS CARE LIFECYCLE (VISUAL TIMELINE FLOW) */}
+      {/* 3. CONTINUOUS CARE LIFECYCLE (COLUMN BOXES JOURNEY) */}
       {/* ========================================================================= */}
-      <section id="lifecycle" className="py-14 sm:py-20 px-4 sm:px-6 max-w-6xl mx-auto scroll-mt-20">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="text-xs font-display font-bold uppercase tracking-wider text-[var(--haven-orchid)]">
-            {t('lifecycle.badge')}
-          </span>
-          <h2 className="font-display font-extrabold text-2xl sm:text-3xl text-[var(--text-primary)] tracking-tight mt-1">
+      <section id="lifecycle" className="py-14 sm:py-24 px-4 sm:px-6 max-w-6xl mx-auto scroll-mt-20 text-left">
+        {/* Header Block */}
+        <div className="max-w-3xl mb-10 sm:mb-12 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--surface-2)] text-[var(--haven-deep)] dark:text-[var(--haven-orchid)] font-display font-semibold text-xs border border-[var(--border)]">
+            <Sparkles className="w-3.5 h-3.5 text-[var(--haven-orchid)]" />
+            <span>{t('lifecycle.badge')}</span>
+          </div>
+
+          <h2 className="font-display font-black text-2xl sm:text-3xl lg:text-4xl text-[var(--text-primary)] tracking-tight leading-[1.15]">
             {t('lifecycle.heading')}
           </h2>
-          <p className="font-body text-sm sm:text-base text-[var(--text-secondary)] mt-2">
+
+          <p className="font-body text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed">
             {t('lifecycle.subheading')}
           </p>
         </div>
 
-        {/* Horizontal Visual Stepper */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-          {lifecycleStages.map((stage) => {
+        {/* Lifecycle 8 Column/Card Boxes */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          {[
+            {
+              id: 'pregnancy',
+              number: '01',
+              icon: Heart,
+              title: t('lifecycle.milestones.pregnancy.title'),
+              desc: t('lifecycle.milestones.pregnancy.desc'),
+              iconColor: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+            },
+            {
+              id: 'anc',
+              number: '02',
+              icon: Calendar,
+              title: t('lifecycle.milestones.anc.title'),
+              desc: t('lifecycle.milestones.anc.desc'),
+              iconColor: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+            },
+            {
+              id: 'birth',
+              number: '03',
+              icon: ShieldCheck,
+              title: t('lifecycle.milestones.birth.title'),
+              desc: t('lifecycle.milestones.birth.desc'),
+              iconColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+            },
+            {
+              id: 'newborn',
+              number: '04',
+              icon: Baby,
+              title: t('lifecycle.milestones.newborn.title'),
+              desc: t('lifecycle.milestones.newborn.desc'),
+              iconColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+            },
+            {
+              id: 'childHealth',
+              number: '05',
+              icon: Syringe,
+              title: t('lifecycle.milestones.childHealth.title'),
+              desc: t('lifecycle.milestones.childHealth.desc'),
+              iconColor: 'bg-teal-500/10 text-teal-600 dark:text-teal-400',
+            },
+            {
+              id: 'growth',
+              number: '06',
+              icon: Milestone,
+              title: t('lifecycle.milestones.growth.title'),
+              desc: t('lifecycle.milestones.growth.desc'),
+              iconColor: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+            },
+            {
+              id: 'ongoing',
+              number: '07',
+              icon: Users,
+              title: t('lifecycle.milestones.ongoing.title'),
+              desc: t('lifecycle.milestones.ongoing.desc'),
+              iconColor: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+            },
+          ].map((stage) => {
             const IconComponent = stage.icon;
-            const isSelected = activeLifecycleStage === stage.id;
             return (
-              <button
-                key={stage.id}
-                type="button"
-                onClick={() => setActiveLifecycleStage(stage.id)}
-                className={`text-left p-4 rounded-[22px] border transition-all cursor-pointer flex flex-col justify-between ${
-                  isSelected 
-                    ? 'bg-[var(--surface-1)] border-[var(--haven-deep)] shadow-card ring-2 ring-[var(--haven-deep)]/20' 
-                    : 'bg-[var(--surface-1)]/70 border-[var(--border)] hover:bg-[var(--surface-1)] hover:border-[var(--haven-orchid)]'
-                }`}
+              <div 
+                key={stage.id} 
+                className="p-5 rounded-[22px] bg-[var(--surface-1)] border border-[var(--border)] shadow-2xs hover:shadow-card hover:border-[var(--haven-orchid)]/40 transition-all flex flex-col justify-between group"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[10px] font-display font-bold text-[var(--text-muted)]">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`w-9 h-9 rounded-xl ${stage.iconColor} flex items-center justify-center border border-[var(--border)] transition-transform group-hover:scale-105`}>
+                      <IconComponent className="w-4.5 h-4.5" />
+                    </div>
+                    <span className="font-display font-bold text-xs text-[var(--text-muted)] tracking-wider">
                       {stage.number}
                     </span>
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                      isSelected ? 'bg-[var(--haven-deep)] text-white' : 'bg-[var(--surface-2)] text-[var(--haven-orchid)]'
-                    }`}>
-                      <IconComponent className="w-3.5 h-3.5" />
-                    </div>
                   </div>
 
-                  <h4 className="font-display font-bold text-xs sm:text-sm text-[var(--text-primary)] mb-1">
-                    {t(`lifecycle.steps.${stage.id}.title`)}
-                  </h4>
-                  
-                  <span className="inline-block text-[10px] font-semibold text-[var(--haven-orchid)] bg-[var(--surface-2)] px-2 py-0.5 rounded-full mb-2">
-                    {t(`lifecycle.steps.${stage.id}.focus`)}
-                  </span>
-                </div>
+                  <h3 className="font-display font-bold text-base text-[var(--text-primary)] leading-snug">
+                    {stage.title}
+                  </h3>
 
-                <p className="font-body text-[11px] text-[var(--text-secondary)] leading-relaxed">
-                  {t(`lifecycle.steps.${stage.id}.desc`)}
-                </p>
-              </button>
+                  <p className="font-body text-xs text-[var(--text-secondary)] leading-relaxed mt-1.5">
+                    {stage.desc}
+                  </p>
+                </div>
+              </div>
             );
           })}
-        </div>
 
-        {/* Detailed Lifecycle Highlight Panel */}
-        <div className="mt-6 bg-[var(--surface-1)] rounded-[24px] border border-[var(--border)] p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-6 text-left">
-          <div className="space-y-1.5 max-w-xl">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--haven-orchid)]">
-              {language === 'sw' ? 'Hatua Iliyochaguliwa' : 'Selected Stage Focus'}
-            </span>
-            <h3 className="font-display font-extrabold text-xl text-[var(--text-primary)]">
-              {t(`lifecycle.steps.${activeLifecycleStage}.title`)}
-            </h3>
-            <p className="font-body text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
-              {t(`lifecycle.steps.${activeLifecycleStage}.desc`)}
-            </p>
+          {/* 8th Box: Proactive / Get Reminders */}
+          <div className="p-5 rounded-[22px] bg-gradient-to-br from-[var(--surface-1)] to-[var(--surface-2)] border border-[var(--haven-orchid)]/35 shadow-2xs hover:shadow-card hover:border-[var(--haven-orchid)] transition-all flex flex-col justify-between group relative overflow-hidden">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-9 h-9 rounded-xl bg-[var(--haven-deep)] text-white flex items-center justify-center shadow-xs transition-transform group-hover:scale-105">
+                  <Bell className="w-4.5 h-4.5 text-[var(--haven-orchid)]" />
+                </div>
+                <span className="text-[10px] font-display font-bold px-2 py-0.5 rounded-full bg-[var(--haven-deep)]/10 text-[var(--haven-deep)] dark:text-[var(--haven-orchid)] border border-[var(--haven-orchid)]/20">
+                  {language === 'sw' ? 'Moja kwa Moja' : 'Proactive'}
+                </span>
+              </div>
+
+              <h3 className="font-display font-bold text-base text-[var(--text-primary)] leading-snug">
+                {t('lifecycle.milestones.reminders.title')}
+              </h3>
+
+              <p className="font-body text-xs text-[var(--text-secondary)] leading-relaxed mt-1.5">
+                {t('lifecycle.milestones.reminders.desc')}
+              </p>
+            </div>
           </div>
-
-          <button
-            type="button"
-            onClick={() => handleLaunchAnonymous('today')}
-            className="shrink-0 px-6 py-3 rounded-full bg-[var(--haven-deep)] hover:opacity-90 text-white font-display font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-2"
-          >
-            <span>{language === 'sw' ? 'Angalia Kwenye Mfumo' : 'Explore this Stage'}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* 4. HAVEN FEATURE SHOWCASE: BEAUTIFUL LEGITIMATE MOTHER VIEW OF HAVEN CHAT */}
+      {/* 4. HAVEN FEATURE SHOWCASE: PAIRED PRODUCT DEMONSTRATION */}
       {/* ========================================================================= */}
-      <section id="haven" className="py-14 sm:py-20 px-4 sm:px-6 max-w-6xl mx-auto scroll-mt-20">
-        <div className="bg-gradient-to-br from-[var(--surface-1)] via-[var(--surface-1)] to-[var(--surface-2)] rounded-[32px] border border-[var(--border)] p-6 sm:p-10 shadow-card flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+      <section id="haven" className="py-14 sm:py-24 px-4 sm:px-6 max-w-6xl mx-auto scroll-mt-20">
+        <div className="bg-gradient-to-br from-[var(--surface-1)] via-[var(--surface-1)] to-[var(--surface-2)] rounded-[32px] border border-[var(--border)] p-6 sm:p-10 lg:p-12 shadow-card grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           
-          {/* Left Text Explanation */}
-          <div className="flex-1 text-left space-y-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--surface-2)] text-[var(--haven-deep)] font-display font-semibold text-xs border border-[var(--border)]">
+          {/* Left Column (50%): Try Haven Chat */}
+          <div className="lg:col-span-6 text-left space-y-5">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--surface-2)] text-[var(--haven-deep)] dark:text-[var(--haven-orchid)] font-display font-semibold text-xs border border-[var(--border)]">
               <Sparkles className="w-3.5 h-3.5 text-[var(--haven-orchid)]" />
               <span>{t('havenShowcase.badge')}</span>
             </div>
 
-            <h2 className="font-display font-extrabold text-2xl sm:text-3xl text-[var(--text-primary)] tracking-tight leading-tight">
+            <h2 className="font-display font-extrabold text-2xl sm:text-3xl lg:text-4xl text-[var(--text-primary)] tracking-tight leading-tight">
               {t('havenShowcase.heading')}
             </h2>
 
-            <p className="font-display font-bold text-base text-[var(--haven-orchid)]">
+            <p className="font-display font-bold text-sm sm:text-base text-[var(--haven-orchid)]">
               {t('havenShowcase.companionTitle')}
             </p>
 
@@ -860,79 +758,12 @@ export default function LandingPage({ onSignedIn, onPartnerConnected }: LandingP
             </div>
           </div>
 
-          {/* Right: Legitimate Beautiful Mother View of Haven Chat */}
-          <div className="w-full lg:w-[420px] bg-[var(--surface-1)] rounded-[28px] border border-[var(--border)] shadow-xl overflow-hidden text-left flex flex-col justify-between">
-            
-            {/* Chat View Header */}
-            <div className="bg-[var(--surface-2)] p-4 border-b border-[var(--border)] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-9 h-9 rounded-full bg-[var(--haven-deep)] text-white flex items-center justify-center font-bold text-xs shadow-2xs">
-                    H
-                  </div>
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[var(--surface-2)]" />
-                </div>
-                <div>
-                  <span className="font-display font-bold text-xs text-[var(--text-primary)] block leading-tight">
-                    Haven AI
-                  </span>
-                  <span className="text-[10px] text-[var(--haven-orchid)] font-semibold">
-                    {t('havenShowcase.readyStatus')}
-                  </span>
-                </div>
-              </div>
-
-              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                MOH 216
-              </span>
-            </div>
-
-            {/* Chat Body Mockup */}
-            <div className="p-4 space-y-3 bg-[var(--app-bg)]/40 max-h-[380px] overflow-y-auto">
-              
-              {/* User Question */}
-              <div className="flex justify-end">
-                <div className="bg-[var(--haven-deep)] text-white rounded-2xl rounded-tr-xs p-3.5 text-xs max-w-[85%] shadow-2xs leading-relaxed">
-                  {t('havenShowcase.sampleQuestion')}
-                </div>
-              </div>
-
-              {/* Haven Detailed Response */}
-              <div className="flex justify-start">
-                <div className="bg-[var(--surface-1)] border border-[var(--border)] rounded-2xl rounded-tl-xs p-4 text-xs text-[var(--text-primary)] max-w-[95%] shadow-xs space-y-2.5">
-                  <p className="leading-relaxed">
-                    {t('havenShowcase.sampleAnswer')}
-                  </p>
-                  
-                  <div className="p-2.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] text-[11px] text-[var(--text-secondary)] space-y-1">
-                    <span className="font-bold text-[var(--haven-orchid)] block">
-                      {language === 'sw' ? 'Ushauri wa Lishe & Nguvu:' : 'Dietary Tip for 2nd Trimester:'}
-                    </span>
-                    <p>{t('havenShowcase.sampleDietTip')}</p>
-                  </div>
-
-                  <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-800 dark:text-amber-200">
-                    {t('havenShowcase.sampleWarning')}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Input Bar Mockup */}
-            <div className="p-3 bg-[var(--surface-1)] border-t border-[var(--border)] flex items-center gap-2">
-              <div className="flex-1 bg-[var(--surface-2)] border border-[var(--border)] rounded-full px-3.5 py-2 text-xs text-[var(--text-muted)] flex items-center justify-between">
-                <span>{language === 'sw' ? 'Andika swali lako kwa Haven...' : 'Ask Haven a maternal question...'}</span>
-                <Mic className="w-3.5 h-3.5 text-[var(--text-muted)]" />
-              </div>
-              <button
-                type="button"
-                onClick={() => handleLaunchAnonymous('haven')}
-                className="w-8 h-8 rounded-full bg-[var(--haven-deep)] text-white flex items-center justify-center shrink-0 cursor-pointer shadow-2xs hover:opacity-90"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
+          {/* Right Column (50%): Eve Pendo's MomHaven Mother View Phone Preview */}
+          <div className="lg:col-span-6 flex justify-center lg:justify-end">
+            <MotherViewPhoneMockup 
+              onExplore={() => handleLaunchAnonymous('today')}
+              language={language}
+            />
           </div>
 
         </div>
