@@ -1,0 +1,64 @@
+name: MomHaven production deploy
+
+on:
+  workflow_run:
+    workflows: ["MomHaven checks"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: mom-haven
+  REGION: europe-west1
+  CLOUD_RUN_SERVICE: momhaven-api
+  DEPLOY_SERVICE_ACCOUNT: momhaven-deploy@mom-haven.iam.gserviceaccount.com
+  WIF_PROVIDER: projects/306450754584/locations/global/workloadIdentityPools/github/providers/mom-haven
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out tested commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOY_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy backend to Cloud Run
+        run: |
+          gcloud run deploy "$CLOUD_RUN_SERVICE" \
+            --source . \
+            --region "$REGION" \
+            --project "$PROJECT_ID" \
+            --allow-unauthenticated \
+            --service-account momhaven-runtime@mom-haven.iam.gserviceaccount.com
+
+      - name: Verify backend health
+        run: |
+          curl --fail --show-error --silent \
+            "https://${CLOUD_RUN_SERVICE}-306450754584.${REGION}.run.app/api/health"
+
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools
+
+      - name: Deploy Firebase Hosting
+        run: firebase deploy --only hosting --project "$PROJECT_ID" --non-interactive
