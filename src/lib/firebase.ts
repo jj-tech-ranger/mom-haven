@@ -1,8 +1,8 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
   signOut as fbSignOut,
   signInAnonymously as fbSignInAnonymously,
   sendSignInLinkToEmail as fbSendSignInLinkToEmail,
@@ -11,13 +11,13 @@ import {
   signInWithEmailAndPassword as fbSignInWithEmailAndPassword,
   createUserWithEmailAndPassword as fbCreateUserWithEmailAndPassword,
   sendPasswordResetEmail as fbSendPasswordResetEmail,
-  updateProfile
+  updateProfile,
 } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+import { firebaseConfig } from './firebaseConfig';
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
@@ -40,10 +40,7 @@ export interface FirestoreErrorInfo {
     emailVerified?: boolean | null;
     isAnonymous?: boolean | null;
     tenantId?: string | null;
-    providerInfo?: {
-      providerId?: string | null;
-      email?: string | null;
-    }[];
+    providerInfo?: { providerId?: string | null; email?: string | null }[];
   };
 }
 
@@ -56,10 +53,7 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
       emailVerified: auth.currentUser?.emailVerified,
       isAnonymous: auth.currentUser?.isAnonymous,
       tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData?.map(provider => ({
-        providerId: provider.providerId,
-        email: provider.email,
-      })) || [],
+      providerInfo: auth.currentUser?.providerData?.map(provider => ({ providerId: provider.providerId, email: provider.email })) || [],
     },
     operationType,
     path,
@@ -72,63 +66,37 @@ export async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.error('Please check your Firebase configuration.');
-    }
+    if (error instanceof Error && error.message.includes('the client is offline')) console.error('Please check your Firebase configuration.');
   }
 }
 
-export async function signInWithGoogle() {
-  return signInWithPopup(auth, googleProvider);
-}
-
-export async function signInAsGuest() {
-  return fbSignInAnonymously(auth);
-}
+export async function signInWithGoogle() { return signInWithPopup(auth, googleProvider); }
+export async function signInAsGuest() { return fbSignInAnonymously(auth); }
 
 export async function sendMagicLink(email: string) {
-  const actionCodeSettings = {
-    url: window.location.origin + window.location.pathname,
-    handleCodeInApp: true,
-  };
+  const actionCodeSettings = { url: window.location.origin + window.location.pathname, handleCodeInApp: true };
   await fbSendSignInLinkToEmail(auth, email, actionCodeSettings);
   window.localStorage.setItem('emailForSignIn', email);
 }
 
-export function isMagicLink(url: string = window.location.href) {
-  return fbIsSignInWithEmailLink(auth, url);
-}
+export function isMagicLink(url: string = window.location.href) { return fbIsSignInWithEmailLink(auth, url); }
 
 export async function completeMagicLinkSignIn(emailParam?: string, url: string = window.location.href) {
   let email = emailParam || window.localStorage.getItem('emailForSignIn');
-  if (!email) {
-    email = window.prompt('Please provide your email for sign-in confirmation') || '';
-  }
-  if (!email) {
-    throw new Error('Email is required to complete magic link sign in.');
-  }
+  if (!email) email = window.prompt('Please provide your email for sign-in confirmation') || '';
+  if (!email) throw new Error('Email is required to complete magic link sign in.');
   const result = await fbSignInWithEmailLink(auth, email, url);
   window.localStorage.removeItem('emailForSignIn');
   return result;
 }
 
-export async function signInWithEmail(email: string, pass: string) {
-  return fbSignInWithEmailAndPassword(auth, email, pass);
-}
+export async function signInWithEmail(email: string, pass: string) { return fbSignInWithEmailAndPassword(auth, email, pass); }
 
 export async function createAccountWithEmail(email: string, pass: string, displayName?: string) {
   const cred = await fbCreateUserWithEmailAndPassword(auth, email, pass);
-  if (displayName && cred.user) {
-    await updateProfile(cred.user, { displayName });
-  }
+  if (displayName && cred.user) await updateProfile(cred.user, { displayName });
   return cred;
 }
 
-export async function resetPassword(email: string) {
-  return fbSendPasswordResetEmail(auth, email);
-}
-
-export async function logoutUser() {
-  return fbSignOut(auth);
-}
-
+export async function resetPassword(email: string) { return fbSendPasswordResetEmail(auth, email); }
+export async function logoutUser() { return fbSignOut(auth); }
