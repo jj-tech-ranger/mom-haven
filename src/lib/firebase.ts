@@ -12,8 +12,9 @@ import {
   createUserWithEmailAndPassword as fbCreateUserWithEmailAndPassword,
   sendPasswordResetEmail as fbSendPasswordResetEmail,
   updateProfile,
+  User,
 } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, getDocFromServer, setDoc, serverTimestamp } from 'firebase/firestore';
 import { firebaseConfig } from './firebaseConfig';
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -70,6 +71,26 @@ export async function testConnection() {
   } catch (error) {
     if (error instanceof Error && error.message.includes('the client is offline')) console.error('Please check your Firebase configuration.');
   }
+}
+
+/**
+ * Establish the MomHaven user profile required by role-based routing and backend authorization.
+ * Existing profiles are never overwritten, so an ADMIN/PARTNER/CLINICIAN role is preserved.
+ * Anonymous Haven sessions intentionally do not create user profile documents.
+ */
+export async function ensureUserProfile(user: User) {
+  if (user.isAnonymous) return;
+
+  const userRef = doc(db, 'users', user.uid);
+  const snap = await getDoc(userRef);
+  if (snap.exists()) return;
+
+  await setDoc(userRef, {
+    displayName: user.displayName || user.email?.split('@')[0] || 'Mama',
+    email: user.email || '',
+    role: 'MOTHER',
+    createdAt: serverTimestamp(),
+  });
 }
 
 export async function signInWithGoogle() { return signInWithPopup(auth, googleProvider); }
