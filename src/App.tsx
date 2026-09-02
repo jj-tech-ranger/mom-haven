@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { auth, db, logoutUser, testConnection } from './lib/firebase';
+import { auth, db, ensureUserProfile, logoutUser, testConnection } from './lib/firebase';
 import { UserRole, Clinician } from './types';
 import LandingPage from './components/LandingPage';
 import MotherShell from './components/MotherShell';
@@ -62,6 +62,11 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
+        try {
+          await ensureUserProfile(user);
+        } catch (err) {
+          console.warn('Could not initialize MomHaven user profile', err);
+        }
         await fetchUserData(user);
       } else {
         setClinicianData(null);
@@ -116,12 +121,12 @@ export default function App() {
               clinicianName={currentUser?.displayName || clinicianData?.name || 'Healthcare Professional'}
               clinicianData={clinicianData}
               onRefresh={() => currentUser && fetchUserData(currentUser)}
-              onSignOut={handleSignOut}
               onInstantApprove={() => {
                 if (clinicianData) {
                   setClinicianData({ ...clinicianData, verificationStatus: 'approved' });
                 }
               }}
+              onSignOut={handleSignOut}
             />
           );
         }
