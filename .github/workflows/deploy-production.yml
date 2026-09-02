@@ -20,6 +20,7 @@ env:
   CLOUD_RUN_SERVICE: momhaven-api
   DEPLOY_SERVICE_ACCOUNT: momhaven-deploy@mom-haven.iam.gserviceaccount.com
   WIF_PROVIDER: projects/306450754584/locations/global/workloadIdentityPools/github/providers/mom-haven
+  WIF_AUDIENCE: https://iam.googleapis.com/projects/306450754584/locations/global/workloadIdentityPools/github/providers/mom-haven
 
 jobs:
   deploy:
@@ -32,11 +33,12 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           project_id: ${{ env.PROJECT_ID }}
           workload_identity_provider: ${{ env.WIF_PROVIDER }}
           service_account: ${{ env.DEPLOY_SERVICE_ACCOUNT }}
+          audience: ${{ env.WIF_AUDIENCE }}
           create_credentials_file: true
           export_environment_variables: true
 
