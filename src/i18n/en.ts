@@ -3,7 +3,7 @@ export const en = {
     appName: 'MomHaven',
     appTagline: 'Every Mother, Every Child, Every Milestone.',
     mohTagline: 'MOH 216 Digital Companion',
-    previewApp: 'Preview App',
+    previewApp: 'Explore',
     signIn: 'Sign in',
     signOut: 'Sign out',
     createAccount: 'Create account',
@@ -21,7 +21,10 @@ export const en = {
 
   header: {
     tagline: 'MOH 216 Digital Companion',
-    preview: 'Preview App',
+    knowledge: 'Knowledge',
+    haven: 'Haven',
+    lifecycle: 'How it works',
+    about: 'About',
     signIn: 'Sign in',
     explore: 'Explore MomHaven',
     themeToggleAria: 'Toggle color theme',
@@ -29,14 +32,23 @@ export const en = {
   },
 
   hero: {
-    badge: 'Maternal & Child Health Support Platform',
-    title: 'MomHaven',
+    badge: 'Every Mother, Every Child, Every Milestone.',
+    title: 'Everything you need for the journey of mother and child.',
     subtitle: 'Every Mother, Every Child, Every Milestone.',
-    description: 'A trusted place to learn, prepare, track your journey, and stay connected to the care that matters.',
+    description: 'Learn what to expect. Keep your health journey organized. Ask Haven when questions come up. Stay connected to the people involved in your care.',
     primaryCta: 'Explore MomHaven',
     secondaryCta: 'Sign in',
     createAccountPrompt: "Don't have an account?",
     createAccountLink: 'Create an account',
+    uiPreview: {
+      gestationBadge: 'Week 24 • Trimester 2',
+      nextAnc: 'Next ANC Visit: St. Mary Clinic • Thursday 9:00 AM',
+      dailyTip: 'Haven Health Tip: Take IFAS with fresh citrus juice for best iron absorption.',
+      havenQuery: 'Is pelvic pressure normal at 24 weeks?',
+      havenReply: 'Mild pelvic pressure is common as your baby grows. If accompanied by sharp pain, fluid leakage, or bleeding, visit your clinic immediately.',
+      clinicalSource: 'Kenya MOH Mother & Child Health Handbook',
+      vitalsBadge: 'Blood Pressure: 118/76 mmHg • Normal',
+    },
   },
 
   valueProps: {
@@ -46,21 +58,31 @@ export const en = {
       title: 'Learn',
       desc: 'Trusted maternal and child health information, written to help you understand what matters.',
       action: 'Read health guides',
+      sampleTag: 'First Trimester Guide',
+      sampleHeadline: 'Nutrition & Iron Absorption (IFAS)',
+      sampleTime: '3 min read • Kenya MOH 216',
     },
     track: {
       title: 'Track',
       desc: 'Keep your pregnancy, ANC, child health, growth and milestones organized.',
       action: 'Explore MOH records',
+      sampleTag: 'MOH 216 Record Card',
+      sampleVitals: 'BP 118/76 • Weight 64.5kg • Fundal Ht 24cm',
+      sampleAnc: 'ANC Visit 3 of 8 Complete',
     },
     askHaven: {
       title: 'Ask Haven',
       desc: 'Get helpful answers to health questions and know when something needs professional attention.',
       action: 'Ask a question',
+      sampleQuery: 'When is the first KEPI vaccine due?',
+      sampleReply: 'BCG and OPV 0 are administered at birth. Rotavirus & Pentavalent begin at 6 weeks.',
     },
     stayConnected: {
       title: 'Stay connected',
       desc: 'Keep important information ready for your care team and involve the people supporting you.',
       action: 'Partner & Clinician sharing',
+      samplePartner: 'Partner Connected: David',
+      sampleSync: 'Clinic visits & emergency plan synced',
     },
   },
 
@@ -68,34 +90,44 @@ export const en = {
     badge: 'Continuous Care Lifecycle',
     heading: 'From pregnancy to growing up.',
     subheading: "MomHaven isn't just a pregnancy counter. It's a complete maternal and child health companion covering every essential milestone.",
+    motherRole: 'Mother Care',
+    childRole: 'Child Health',
+    careTeamRole: 'Care Team',
     steps: {
       pregnancy: {
         title: 'Pregnancy',
-        desc: 'Trimester guidance & symptom logging',
+        desc: 'Trimester guidance, symptom tracking, and IFAS iron supplementation.',
+        focus: 'Mother Health',
       },
       anc: {
         title: 'Antenatal care',
-        desc: 'MOH 216 8-visit schedule & IFAS',
+        desc: 'Kenya MOH 216 8-visit schedule, clinical vitals, and screening tests.',
+        focus: 'Care Team',
       },
       birth: {
         title: 'Birth',
-        desc: 'Delivery preparedness & birth plan',
+        desc: 'Delivery preparedness, hospital bag checklist, and birth companion plan.',
+        focus: 'Mother & Family',
       },
       newborn: {
         title: 'Newborn',
-        desc: 'Cord care, feeding & danger signs',
+        desc: 'Umbilical cord care, exclusive breastfeeding, warmth, and danger signs.',
+        focus: 'Child Health',
       },
       childHealth: {
         title: 'Child health',
-        desc: 'EPI vaccines & illness tracking',
+        desc: 'Kenya KEPI immunization schedule, growth monitoring, and sickness logs.',
+        focus: 'Child & Clinic',
       },
       growth: {
         title: 'Growth & milestones',
-        desc: 'Weight, height & development',
+        desc: 'Weight-for-age curves, motor development, and complementary feeding.',
+        focus: 'Child Health',
       },
       ongoing: {
         title: 'Ongoing care',
-        desc: 'Family & clinician collaboration',
+        desc: 'Postnatal checkups, family planning, mental wellbeing, and doctor reports.',
+        focus: 'Mother & Child',
       },
     },
   },
@@ -105,11 +137,18 @@ export const en = {
     heading: "Questions don't always wait for an appointment.",
     companionTitle: 'Meet Haven, your MomHaven health companion.',
     description: 'Ask questions about pregnancy, motherhood and child health. Haven helps you understand health information, find relevant guidance and recognize when professional care may be important.',
-    tryHaven: 'Try Haven',
-    sampleQuestion: 'Is light spotting normal during week 8?',
-    sampleAnswer: 'Light spotting can occur early in pregnancy, but it is important to monitor it closely.',
-    sampleWarning: '⚠️ If accompanied by pain, dizziness, or heavier bleeding, seek urgent clinical evaluation.',
-    sampleAskOwn: 'Ask your own question →',
+    tryHaven: 'Try Haven Chat',
+    readyStatus: 'Kenya MOH Grounded • Ready to Assist',
+    sampleQuestion: 'Is mild pelvic heaviness normal at 24 weeks?',
+    sampleAnswer: 'Mild pelvic heaviness is common in the second trimester as the baby grows and ligaments stretch. However, it is essential to monitor for any warning signs.',
+    sampleDietTip: 'Tip: Incorporate iron-rich Kenyan foods such as sukuma wiki, managu, terere, and beans with vitamin C fruits to support energy.',
+    sampleWarning: '⚠️ If heaviness is accompanied by sharp abdominal pain, fluid leakage, fever, or bleeding, visit your nearest antenatal clinic immediately.',
+    sampleAskOwn: 'Ask Haven your own question →',
+    suggestedChips: [
+      'What are the danger signs in pregnancy?',
+      'KEPI vaccine schedule for baby',
+      'Foods that boost breastmilk supply',
+    ],
   },
 
   knowledge: {
@@ -141,17 +180,17 @@ export const en = {
   },
 
   trust: {
-    badge: 'Clinical Integrity',
+    badge: 'Clinical Integrity & Safety',
     heading: 'Built around trusted care.',
     subheading: 'Designed to bridge patient understanding and real-world clinical consultations.',
     pillars: {
       evidence: {
         title: 'Evidence-informed',
-        desc: 'Health information grounded in trusted clinical guidance, aligned with Kenya Ministry of Health (MOH 216) maternal standards and WHO protocols.',
+        desc: 'Health information grounded in trusted clinical guidance, aligned with Kenya Ministry of Health (MOH 216) maternal standards and global best practices.',
       },
       privacy: {
         title: 'Privacy-conscious',
-        desc: 'Your personal health information belongs to you. No unauthorized data sharing, secure encrypted records, and strict patient consent.',
+        desc: 'Your health information is handled with privacy and consent in mind, with access designed around the people you choose to involve in your care.',
       },
       care: {
         title: 'Designed for real care',
@@ -169,12 +208,14 @@ export const en = {
   },
 
   partner: {
+    badge: 'Shared Care',
     heading: "Motherhood doesn't have to be carried alone.",
     description: 'Invite someone you trust to support your journey. Partners can stay updated with pregnancy milestones, clinic visit reminders, and practical care tips to share the mental load.',
     cta: "I'm supporting someone",
-    cardTitle: 'Partner Syncing',
-    cardDesc: 'Generate a secure 6-character connection code to link your accounts without sharing passwords.',
-    cardCheck: '✓ Shared calendar & alerts',
+    howItWorks: 'How partner support works',
+    cardTitle: 'Partner Support Sync',
+    cardDesc: 'Share clinic reminders, emergency contacts, and daily milestones with your trusted partner.',
+    cardCheck: '✓ Shared appointment schedule & emergency contacts',
   },
 
   accountCta: {
@@ -191,6 +232,45 @@ export const en = {
     clinicianPortal: 'Clinician Portal',
     partnerAccess: 'Partner Access',
     copyright: 'MomHaven • Kenya MOH 216 Digital Companion',
+  },
+
+  modals: {
+    about: {
+      title: 'About MomHaven',
+      subtitle: 'Empowering mothers and children with dignified, evidence-grounded digital healthcare companionship.',
+      missionTitle: 'Our Mission',
+      missionText: 'MomHaven is designed to support every mother and child through each critical milestone—from the earliest weeks of pregnancy through birth, newborn care, immunization, and early childhood growth.',
+      mohTitle: 'Kenya MOH 216 Alignment',
+      mohText: 'We bridge standard Kenya Ministry of Health (MOH 216) Mother and Child Health Handbooks into an accessible, digital experience that keeps maternal vitals, clinic schedules, and essential guidance organized in one place.',
+      philosophyTitle: 'Our Care Philosophy',
+      philosophyText: 'We believe healthcare tools should empower women, respect cultural contexts, and facilitate meaningful conversations between mothers and their licensed clinicians.',
+    },
+    privacy: {
+      title: 'Privacy & Data Protection',
+      subtitle: 'Transparent, consent-driven handling of maternal and child health records.',
+      principlesTitle: 'Core Privacy Commitments',
+      item1Title: 'You Own Your Health Data',
+      item1Text: 'Your health records, notes, and milestones belong exclusively to you. MomHaven does not sell, broker, or monetize your personal health information.',
+      item2Title: 'Granular Sharing Consent',
+      item2Text: 'You choose whether to connect a partner or clinician. Sharing can be activated or severed at any time by generating or resetting connection tokens.',
+      item3Title: 'Secure Transmission & Encryption',
+      item3Text: 'All health vitals, appointments, and communication logs are transmitted over encrypted protocols and safeguarded in isolated data partitions.',
+    },
+    safety: {
+      title: 'Safety Guidelines & Clinical Boundaries',
+      subtitle: 'Understanding the role of MomHaven alongside professional medical care.',
+      disclaimerTitle: 'Informational Companion, Not a Medical Diagnosis',
+      disclaimerText: 'MomHaven and the Haven assistant provide educational health guidance grounded in Kenya MOH protocols. They do not replace physical clinical examination, laboratory tests, or doctor diagnoses.',
+      dangerSignsTitle: 'Maternal & Newborn Emergency Danger Signs',
+      dangerSignsList: [
+        'Vaginal bleeding or heavy fluid leakage during pregnancy',
+        'Severe headaches, blurred vision, or sudden swelling of face/hands',
+        'High fever, chills, or foul-smelling vaginal discharge',
+        'Reduced or absent fetal movements in the third trimester',
+        'Newborn difficulty breathing, convulsion, or inability to feed',
+      ],
+      emergencyAction: 'If you experience any of these signs, proceed immediately to the nearest health facility or call 1199 / 999.',
+    },
   },
 
   auth: {

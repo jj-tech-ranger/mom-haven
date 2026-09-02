@@ -3,7 +3,7 @@ export const sw = {
     appName: 'MomHaven',
     appTagline: 'Kila Mama, Kila Mtoto, Kila Hatua ya Maisha.',
     mohTagline: 'Mwenzi wa Kidijitali wa MOH 216',
-    previewApp: 'Angalia Mfumo',
+    previewApp: 'Gundua',
     signIn: 'Ingia',
     signOut: 'Toka',
     createAccount: 'Fungua akaunti',
@@ -21,7 +21,10 @@ export const sw = {
 
   header: {
     tagline: 'Mwenzi wa Kidijitali wa MOH 216',
-    preview: 'Angalia Mfumo',
+    knowledge: 'Maktaba ya Maarifa',
+    haven: 'Haven',
+    lifecycle: 'Jinsi Inavyofanya Kazi',
+    about: 'Kuhusu MomHaven',
     signIn: 'Ingia',
     explore: 'Gundua MomHaven',
     themeToggleAria: 'Badilisha mandhari ya rangi',
@@ -29,14 +32,23 @@ export const sw = {
   },
 
   hero: {
-    badge: 'Mfumo wa Huduma za Afya ya Uzazi na Mtoto',
-    title: 'MomHaven',
+    badge: 'Kila Mama, Kila Mtoto, Kila Hatua ya Maisha.',
+    title: 'Kila kitu unachohitaji katika safari ya mama na mtoto.',
     subtitle: 'Kila Mama, Kila Mtoto, Kila Hatua ya Maisha.',
-    description: 'Mahali pa kuaminika pa kujifunza, kujiandaa, kufuatilia safari yako, na kuendelea kuwa karibu na huduma muhimu za afya.',
+    description: 'Jifunze nini cha kutarajia. Weka safari yako ya afya kwa mpangilio. Muulize Haven maswali yanapojitokeza. Baki ukiwa umeunganishwa na wale wanaokuhudumia.',
     primaryCta: 'Gundua MomHaven',
     secondaryCta: 'Ingia',
     createAccountPrompt: 'Huna akaunti bado?',
     createAccountLink: 'Fungua akaunti',
+    uiPreview: {
+      gestationBadge: 'Wiki ya 24 • Robo ya 2',
+      nextAnc: 'Kliniki Inayofuata: St. Mary • Alhamisi 3:00 Asubuhi',
+      dailyTip: 'Ushauri wa Haven: Kunywa vidonge vya IFAS na juisi ya machungwa kuongeza ufyonzwaji wa madini ya chuma.',
+      havenQuery: 'Je, mgandamizo wa chini ya tumbo katika wiki ya 24 ni kawaida?',
+      havenReply: 'Mgandamizo mdogo wa chini ya tumbo hutokea mtoto anapokua. Ikiwa una maumivu makali, maji kutoka, au damu, nenda kituo cha afya mara moja.',
+      clinicalSource: 'Kitabu cha Afya ya Mama na Mtoto (MOH Kenya)',
+      vitalsBadge: 'Shinikizo la Damu: 118/76 mmHg • Kawaida',
+    },
   },
 
   valueProps: {
@@ -46,21 +58,31 @@ export const sw = {
       title: 'Jifunze',
       desc: 'Taarifa za kuaminika kuhusu afya ya uzazi na mtoto, zilizotungwa kukusaidia kuelewa mambo muhimu.',
       action: 'Soma miongozo ya afya',
+      sampleTag: 'Mwongozo wa Robo ya 1',
+      sampleHeadline: 'Lishe & Vidonge vya Madini ya Chuma (IFAS)',
+      sampleTime: 'Dakika 3 kusoma • Kenya MOH 216',
     },
     track: {
       title: 'Fuatilia',
       desc: 'Weka rekodi zako za ujauzito, kliniki ya wajawazito (ANC), chanjo, na ukuaji wa mtoto kwa mpangilio mzuri.',
       action: 'Angalia rekodi za MOH',
+      sampleTag: 'Kadi ya Rekodi za MOH 216',
+      sampleVitals: 'BP 118/76 • Uzito 64.5kg • Urefu wa Tumbo 24cm',
+      sampleAnc: 'Ziara ya 3 kati ya 8 Imekamilika',
     },
     askHaven: {
       title: 'Muulize Haven',
       desc: 'Pata majibu yenye manufaa kuhusu maswali ya afya na utambue wakati ambapo msaada wa daktari unahitajika.',
       action: 'Uliza swali lako',
+      sampleQuery: 'Chanjo ya kwanza ya KEPI inatolewa lini?',
+      sampleReply: 'Chanjo za BCG na OPV 0 hutolewa mara baada ya kuzaliwa. Rotavirus na Pentavalent huanza wiki ya 6.',
     },
     stayConnected: {
       title: 'Ungana na Wengine',
       desc: 'Weka taarifa zako muhimu tayari kwa daktari wako na washirikishe watu wanaokusaidia kwenye safari yako.',
       action: 'Shiriki na Mwenzi & Daktari',
+      samplePartner: 'Mwenzi Ameunganishwa: David',
+      sampleSync: 'Tarehe za kliniki & mawasiliano ya dharura yamesawazishwa',
     },
   },
 
@@ -68,34 +90,44 @@ export const sw = {
     badge: 'Mzunguko Kamili wa Huduma za Afya',
     heading: 'Kutoka ujauzito hadi mtoto anapokua.',
     subheading: 'MomHaven si kikokotoo cha kawaida cha ujauzito tu. Ni mwenzi kamili wa afya ya mama na mtoto katika kila hatua muhimu.',
+    motherRole: 'Huduma ya Mama',
+    childRole: 'Afya ya Mtoto',
+    careTeamRole: 'Wahudumu wa Afya',
     steps: {
       pregnancy: {
         title: 'Ujauzito',
-        desc: 'Miongozo ya kila miezi mitatu na ufuatiliaji wa dalili',
+        desc: 'Miongozo ya kila miezi mitatu, ufuatiliaji wa dalili, na vidonge vya madini ya chuma (IFAS).',
+        focus: 'Afya ya Mama',
       },
       anc: {
         title: 'Kliniki ya ANC',
-        desc: 'Ratiba ya ziara 8 za MOH 216 na vidonge vya IFAS',
+        desc: 'Ratiba ya ziara 8 za MOH 216, vipimo vya kliniki, na uchunguzi wa afya.',
+        focus: 'Wahudumu wa Afya',
       },
       birth: {
         title: 'Kujifungua',
-        desc: 'Maandalizi ya uzazi na mpango wa kujifungua salama',
+        desc: 'Maandalizi ya uzazi, mfuko wa hospitali, na mpango wa mtu wa kusindikiza.',
+        focus: 'Mama na Familia',
       },
       newborn: {
         title: 'Mtoto Mchanga',
-        desc: 'Huduma ya kitovu, unyonyeshaji na dalili za hatari',
+        desc: 'Huduma ya kitovu, unyonyeshaji wa maziwa pekee, joto, na dalili za hatari.',
+        focus: 'Afya ya Mtoto',
       },
       childHealth: {
         title: 'Afya ya Mtoto',
-        desc: 'Chanjo za EPI na ufuatiliaji wa maradhi',
+        desc: 'Ratiba ya chanjo za KEPI, ufuatiliaji wa ukuaji, na rekodi za magonjwa.',
+        focus: 'Mtoto & Kliniki',
       },
       growth: {
         title: 'Ukuaji & Hatua',
-        desc: 'Uzito, urefu na hatua za maendeleo ya mtoto',
+        desc: 'Chati ya uzito kulingana na umri, maendeleo ya kimwili, na kuanza vyakula vya nyongeza.',
+        focus: 'Afya ya Mtoto',
       },
       ongoing: {
         title: 'Huduma Endelevu',
-        desc: 'Ushirikiano wa familia na wahudumu wa afya',
+        desc: 'Uchunguzi baada ya kujifungua, upangaji uzazi, afya ya akili, na ripoti za daktari.',
+        focus: 'Mama & Mtoto',
       },
     },
   },
@@ -105,11 +137,18 @@ export const sw = {
     heading: 'Maswali ya afya hayasubiri hadi siku ya miadi.',
     companionTitle: 'Kutana na Haven, mshauri wako wa afya ndani ya MomHaven.',
     description: 'Uliza maswali kuhusu ujauzito, uzazi, na malezi ya mtoto. Haven inakusaidia kuelewa taarifa za afya, kupata mwongozo sahihi na kutambua wakati huduma ya kliniki inahitajika.',
-    tryHaven: 'Jaribu Haven',
-    sampleQuestion: 'Je, kutokwa na matone madogo ya damu katika wiki ya 8 ni kawaida?',
-    sampleAnswer: 'Kutokwa na matone madogo ya damu kunaweza kutokea mapema kwenye ujauzito, lakini ni muhimu kuifuatilia kwa umakini.',
-    sampleWarning: '⚠️ Ikiwa inaambatana na maumivu makali, kizunguzungu, au damu nyingi, nenda kituo cha afya mara moja.',
-    sampleAskOwn: 'Uliza swali lako mwenyewe →',
+    tryHaven: 'Jaribu Mazungumzo ya Haven',
+    readyStatus: 'Imejengwa na Mwongozo wa MOH Kenya • Tayari Kusaidia',
+    sampleQuestion: 'Je, mgandamizo wa chini ya tumbo katika wiki ya 24 ni kawaida?',
+    sampleAnswer: 'Mgandamizo mdogo wa chini ya tumbo ni jambo la kawaida katika robo ya pili mtoto anapokua na misuli ya uzazi inapovutika. Hata hivyo, ni muhimu kufuatilia dalili za hatari.',
+    sampleDietTip: 'Kidokezo: Kula vyakula vya kienyeji vyenye madini ya chuma kama sukuma wiki, managu, terere, na maharage pamoja na matunda ya vitamin C kuongeza nguvu.',
+    sampleWarning: '⚠️ Ikiwa mgandamizo unaambatana na maumivu makali ya tumbo, maji kutoka, homa, au damu, nenda kituo cha afya mara moja.',
+    sampleAskOwn: 'Muulize Haven swali lako mwenyewe →',
+    suggestedChips: [
+      'Dalili zipi za hatari wakati wa ujauzito?',
+      'Ratiba ya chanjo za KEPI kwa mtoto',
+      'Vyakula vinavyoongeza maziwa ya mama',
+    ],
   },
 
   knowledge: {
@@ -141,17 +180,17 @@ export const sw = {
   },
 
   trust: {
-    badge: 'Uadilifu wa Kitabibu',
+    badge: 'Uadilifu wa Kitabibu & Usalama',
     heading: 'Imejengwa kwa msingi wa huduma zinazoaminika.',
     subheading: 'Imeundwa kuimarisha uelewa wa mama na kurahisisha mashauriano kwenye vituo vya afya.',
     pillars: {
       evidence: {
         title: 'Inayozingatia ushahidi wa kitabibu',
-        desc: 'Taarifa za afya zinazoendana na miongozo ya Wizara ya Afya Kenya (MOH 216) na viwango vya Shirika la Afya Duniani (WHO).',
+        desc: 'Taarifa za afya zinazoendana na miongozo ya Wizara ya Afya Kenya (MOH 216) na viwango vya kimataifa vya afya ya uzazi.',
       },
       privacy: {
-        title: 'Kulinda faragha yako',
-        desc: 'Taarifa zako za afya ni mali yako. Hakuna kushiriki data bila idhini, rekodi zinalindwa kwa usalama wa hali ya juu.',
+        title: 'Inayojali faragha yako',
+        desc: 'Taarifa zako za afya zinashughulikiwa kwa heshima ya faragha na ridhaa kamili, zikiwa wazi kwa wale tu unaochagua kuwashirikisha.',
       },
       care: {
         title: 'Imebuniwa kwa huduma halisi',
@@ -169,12 +208,14 @@ export const sw = {
   },
 
   partner: {
+    badge: 'Ushirika wa Malezi',
     heading: 'Safari ya uzazi haipaswi kubebwa peke yako.',
     description: 'Mwalike mtu unayemwamini akusaidie kwenye safari hii. Wenza wanaweza kufuatilia hatua za ujauzito, tarehe za kliniki, na vidokezo vya kusaidia kupunguza mzigo wa mawazo.',
     cta: 'Namsaidia mtu mwingine',
+    howItWorks: 'Jinsi usaidizi wa mwenzi unavyofanya kazi',
     cardTitle: 'Kuunganisha na Mwenzi',
-    cardDesc: 'Tengeneza nambari salama ya tarakimu 6 ya kuunganisha akaunti zenu bila kupeana manenosiri.',
-    cardCheck: '✓ Kalenda ya pamoja & vikumbusho',
+    cardDesc: 'Shiriki tarehe za kliniki, mawasiliano ya dharura, na hatua za kila siku na mwenzi unayemwamini.',
+    cardCheck: '✓ Kalenda ya pamoja & mawasiliano ya dharura',
   },
 
   accountCta: {
@@ -191,6 +232,45 @@ export const sw = {
     clinicianPortal: 'Mlango wa Wahudumu wa Afya',
     partnerAccess: 'Mlango wa Wenza',
     copyright: 'MomHaven • Mwenzi wa Kidijitali wa MOH 216 Kenya',
+  },
+
+  modals: {
+    about: {
+      title: 'Kuhusu MomHaven',
+      subtitle: 'Kuwezesha akina mama na watoto kwa mwongozo wa afya wa kidijitali wenye hadhi na ushahidi wa kitabibu.',
+      missionTitle: 'Dhamira Yetu',
+      missionText: 'MomHaven imeundwa kumuunga mkono kila mama na mtoto katika kila hatua muhimu—kuanzia wiki za kwanza za ujauzito, uzazi salama, malezi ya mtoto mchanga, chanjo, na ukuaji wa mapema.',
+      mohTitle: 'Ushirikiano na Miongozo ya MOH 216',
+      mohText: 'Tunahamisha maudhui na mifumo ya Kitabu cha Afya ya Mama na Mtoto (MOH 216) cha Wizara ya Afya Kenya kuwa mfumo rahisi wa kidijitali unaoweka vipimo, ratiba za kliniki, na miongozo katika sehemu moja.',
+      philosophyTitle: 'Falsafa Yetu ya Huduma',
+      philosophyText: 'Tunaamini zana za afya zinapaswa kuwawezesha wanawake, kuheshimu mazingira na mila zetu, na kurahisisha mashauriano yenye tija kati ya mama na wahudumu wa afya walioidhinishwa.',
+    },
+    privacy: {
+      title: 'Faragha & Ulinzi wa Data',
+      subtitle: 'Ushughulikiaji wa rekodi za afya ya mama na mtoto kwa uwazi na ridhaa kamili.',
+      principlesTitle: 'Ahadi Zetu Kuu za Faragha',
+      item1Title: 'Wewe Ndiye Mmiliki wa Data Yako',
+      item1Text: 'Rekodi zako za afya, maelezo, na hatua za maendeleo ni mali yako pekee. MomHaven haiuzi, haitoi udalali, wala kutumia data yako ya afya kwa biashara.',
+      item2Title: 'Ridhaa ya Kina ya Kushiriki',
+      item2Text: 'Wewe ndiye unayeamua kumuunganisha mwenzi au daktari. Ushirikiano huu unaweza kusitishwa wakati wowote kwa kubadilisha nambari za uunganishaji.',
+      item3Title: 'Usalama na Usimbaji Fiche',
+      item3Text: 'Vipimo vyote vya afya, miadi ya kliniki, na mazungumzo yanasafirishwa kwa itifaki zilizolindwa na kuhifadhiwa kwa usalama wa hali ya juu.',
+    },
+    safety: {
+      title: 'Miongozo ya Usalama & Mipaka ya Kitabibu',
+      subtitle: 'Kuelewa wajibu wa MomHaven pamoja na huduma za kitaalamu za madaktari.',
+      disclaimerTitle: 'Mwongozo wa Kuelimisha, Sio Utambuzi wa Kimatibabu',
+      disclaimerText: 'MomHaven na mshauri Haven hutoa elimu ya afya inayozingatia miongozo ya MOH Kenya. Haichukui nafasi ya uchunguzi wa kimwili wa daktari, vipimo vya maabara, au matibabu rasmi.',
+      dangerSignsTitle: 'Dalili za Hatari za Dharura kwa Mama na Mtoto Mchanga',
+      dangerSignsList: [
+        'Kutokwa na damu ukeni au maji mengi wakati wa ujauzito',
+        'Maumivu makali ya kichwa, macho kuona giza, au kuvimba uso na mikono',
+        'Homa kali, kutetemeka, au uchafu wenye harufu mbaya ukeni',
+        'Mtoto kuacha au kupunguza kucheza tumboni katika miezi ya mwisho',
+        'Mtoto mchanga kushindwa kupumua vizuri, degedege, au kushindwa kunyonya',
+      ],
+      emergencyAction: 'Ukiona dalili yoyote kati ya hizi, nenda mara moja kwenye kituo cha afya kilicho karibu au piga simu za dharura 1199 / 999.',
+    },
   },
 
   auth: {
