@@ -13,51 +13,14 @@ import {
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Pregnancy, AncEncounter, Child, Provenance } from '../types';
+import {
+  calculateGestationFromLmp,
+  calculateLmpFromEdd,
+  type GestationCalculation,
+} from '../utils/clinicalCalculations';
 
-export interface GestationCalculation {
-  lmp: string;
-  edd: string;
-  gestationalAgeWeeks: number;
-  gestationalAgeDays: number;
-  trimester: 1 | 2 | 3;
-  daysRemaining: number;
-}
-
-export function calculateGestationFromLmp(lmpString: string): GestationCalculation {
-  const lmpDate = new Date(lmpString);
-  const eddDate = new Date(lmpDate.getTime() + 280 * 24 * 60 * 60 * 1000);
-  const today = new Date();
-  
-  const diffTime = today.getTime() - lmpDate.getTime();
-  const totalDays = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
-  const weeks = Math.min(42, Math.floor(totalDays / 7));
-  const days = totalDays % 7;
-  
-  const remainingTime = eddDate.getTime() - today.getTime();
-  const daysRemaining = Math.max(0, Math.ceil(remainingTime / (1000 * 60 * 60 * 24)));
-
-  let trimester: 1 | 2 | 3 = 1;
-  if (weeks >= 28) {
-    trimester = 3;
-  } else if (weeks >= 13) {
-    trimester = 2;
-  }
-
-  return {
-    lmp: lmpDate.toISOString().split('T')[0],
-    edd: eddDate.toISOString().split('T')[0],
-    gestationalAgeWeeks: weeks,
-    gestationalAgeDays: days,
-    trimester,
-    daysRemaining,
-  };
-}
-
-export function calculateLmpFromEdd(eddString: string): GestationCalculation {
-  const eddDate = new Date(eddString);
-  const lmpDate = new Date(eddDate.getTime() - 280 * 24 * 60 * 60 * 1000);
-  return calculateGestationFromLmp(lmpDate.toISOString().split('T')[0]);
-}
+export type { GestationCalculation } from '../utils/clinicalCalculations';
+export { calculateGestationFromLmp, calculateLmpFromEdd } from '../utils/clinicalCalculations';
 
 export async function getActivePregnancy(motherId: string): Promise<Pregnancy | null> {
   try {
@@ -200,7 +163,6 @@ export async function completePregnancyTransition(
   }
 ): Promise<string> {
   try {
-    // 1. Mark pregnancy completed
     const pregRef = doc(db, 'pregnancies', pregnancyId);
     await updateDoc(pregRef, {
       status: 'completed',
@@ -208,7 +170,6 @@ export async function completePregnancyTransition(
       outcomeDetails: outcome,
     });
 
-    // 2. Create child record
     const childRef = collection(db, 'children');
     const childDoc = await addDoc(childRef, {
       motherId,
@@ -219,7 +180,6 @@ export async function completePregnancyTransition(
       createdAt: new Date().toISOString(),
     });
 
-    // 3. Create initial newborn record in child subcollection
     const nbRef = collection(db, `children/${childDoc.id}/newbornRecords`);
     const provenance: Provenance = {
       status: 'REPORTED',
