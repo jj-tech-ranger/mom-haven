@@ -15,6 +15,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import { askHavenChat, ChatMessage, MaternalContext } from '../../services/geminiService';
 import { InterceptorResult } from '../../services/safetyInterceptor';
+import { usePreferences } from '../../context/PreferencesContext';
 
 interface HavenChatViewProps {
   context?: MaternalContext;
@@ -29,16 +30,33 @@ export default function HavenChatView({
   onOpenEmergencyHub,
   onTriggerEmergency 
 }: HavenChatViewProps) {
+  const { language } = usePreferences();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome-1',
       sender: 'haven',
-      text: context.mode === 'PREGNANCY'
+      text: language === 'sw'
+        ? context.mode === 'PREGNANCY'
+          ? `Habari Mama! Mimi ni **Haven**, mshauri wako wa afya katika safari yako ya ujauzito na malezi. Kwa sasa uko katika **wiki ya ${context.gestationalWeeks || 24}**.\n\nUnajisikiaje leo? Unaweza kuniuliza kuhusu lishe bora, miadi ya kliniki, dalili za kawaida, au maandalizi ya uzazi.`
+          : `Habari Mama! Mimi ni **Haven**, niko hapa kukusaidia katika kumtunza **${context.childName || 'mwanao'}** (${context.childAgeFormatted || 'mwenye miezi 4'}).\n\nNiulize chochote kuhusu ratiba ya chanjo, unyonyeshaji, vyakula vya nyongeza, au ukuaji wa mtoto.`
+        : context.mode === 'PREGNANCY'
         ? `Hello Mama! I am **Haven**, your companion through pregnancy and early motherhood. You are currently at **${context.gestationalWeeks || 24} weeks**.\n\nHow are you feeling today? You can ask me about nutrition, clinic appointments, common symptoms, or labor preparation.`
         : `Hello Mama! I am **Haven**, here to support you in caring for **${context.childName || 'your baby'}** (${context.childAgeFormatted || '4 months old'}).\n\nAsk me anything about immunization schedules, breastfeeding, complementary feeding, or developmental milestones.`,
       timestamp: new Date().toISOString(),
-      provenanceTag: 'Kenya MOH Mother & Child Health Handbook Guidance',
-      suggestedFollowups: context.mode === 'PREGNANCY'
+      provenanceTag: language === 'sw' ? 'Miongozo ya Kitabu cha Afya ya Mama na Mtoto (MOH Kenya)' : 'Kenya MOH Mother & Child Health Handbook Guidance',
+      suggestedFollowups: language === 'sw'
+        ? context.mode === 'PREGNANCY'
+          ? [
+              'Vyakula vipi vya kienyeji vinaongeza damu?',
+              'Ratiba ya ziara 8 za kliniki ya ANC Kenya ikoje?',
+              'Nipakie nini kwenye begi la kwenda kujifungua hospitali?'
+            ]
+          : [
+              'Chanjo inayofuata ya KEPI ni lini?',
+              'Nitaanzaje kumpa mtoto vyakula vya nyongeza akifikisha miezi 6?',
+              'Ni hatua gani za kawaida za mtoto wa miezi 4?'
+            ]
+        : context.mode === 'PREGNANCY'
         ? [
             'What traditional foods build strong blood?',
             'What are the 8 ANC visits in Kenya?',
@@ -81,7 +99,7 @@ export default function HavenChatView({
     setLoading(true);
 
     try {
-      const havenResponse = await askHavenChat(query, messages, context);
+      const havenResponse = await askHavenChat(query, messages, { ...context, language });
       setMessages((prev) => [...prev, havenResponse]);
 
       if (havenResponse.escalationData?.action === 'PRIVACY_WARNING') {

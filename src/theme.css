@@ -1,24 +1,46 @@
-/* theme.css — global tokens, load once, reference everywhere */
+/* theme.css — global tokens with Light and Dark theme support */
+
 :root {
   /* Brand */
+  --brand-primary: #33178A;
+  --brand-secondary: #9167C2;
+  --brand-accent: #B79CDA;
   --haven-deep: #33178A;
   --haven-orchid: #9167C2;
   --haven-orchid-light: #B79CDA;
   --grad-haven: linear-gradient(135deg, #33178A 0%, #9167C2 100%);
 
-  /* Surfaces */
-  --lavender-50: #F7F3FC;   /* app canvas background */
-  --lavender-100: #EEE7F8;  /* card-on-card / chip fill */
-  --lavender-200: #E5D9F2;  /* stronger surface / pressed state */
+  /* Semantic Surfaces (Light) */
+  --app-bg: #F7F3FC;           /* Base app canvas */
+  --surface-1: #FFFFFF;         /* Cards, modals, top sheets */
+  --surface-2: #EEE7F8;         /* Nested cards, input fills, chips */
+  --surface-3: #E5D9F2;         /* Hover/active surfaces, subtle dividers */
+  --surface-elevated: #FFFFFF;  /* Overlays, dropdowns */
+
+  /* Legacy aliases for backward compatibility */
+  --lavender-50: var(--app-bg);
+  --lavender-100: var(--surface-2);
+  --lavender-200: var(--surface-3);
+  --surface-white: var(--surface-1);
+
+  /* Semantic Text (Light) */
+  --text-primary: #241451;      /* Headings, primary text */
+  --text-secondary: #6D6380;    /* Descriptive paragraphs, secondary meta */
+  --text-muted: #A79CBC;        /* Placeholders, quiet labels */
+  --text-disabled: #C6BED4;     /* Inactive controls */
+
+  /* Legacy text aliases */
+  --ink-900: var(--text-primary);
+  --ink-600: var(--text-secondary);
+  --ink-400: var(--text-muted);
+
+  /* Borders & Focus (Light) */
+  --border: #E5DFF0;
+  --border-strong: #D1C5E3;
   --border-hairline: #E5DFF0;
-  --surface-white: #FFFFFF;
+  --focus-ring: #9167C2;
 
-  /* Text */
-  --ink-900: #241451;  /* primary text */
-  --ink-600: #6D6380;  /* secondary text */
-  --ink-400: #A79CBC;  /* disabled / tertiary */
-
-  /* Semantic (accents only, never full-screen fills except Emergency) */
+  /* Semantic Health Status Colors */
   --status-normal: #1E8F5F;
   --status-normal-bg: #E6F6EE;
   --status-caution: #A15E06;
@@ -43,6 +65,54 @@
   --sh-emergency: 0 8px 20px rgba(225, 29, 60, 0.35);
 
   /* Type */
-  --font-display: 'Roboto', sans-serif;
-  --font-body: 'Roboto', sans-serif;
+  --font-display: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Dark Theme Tokens */
+html[data-theme="dark"] {
+  /* Brand in Dark Mode — slightly brighter for high legibility */
+  --brand-primary: #8B65D9;
+  --brand-secondary: #B79CDA;
+  --brand-accent: #D4C3ED;
+  --haven-deep: #8B65D9;
+  --haven-orchid: #B79CDA;
+  --haven-orchid-light: #D4C3ED;
+  --grad-haven: linear-gradient(135deg, #4A27A8 0%, #8B65D9 100%);
+
+  /* Semantic Surfaces (Dark) */
+  --app-bg: #130E1C;           /* Deep nocturnal purple-gray */
+  --surface-1: #1D1728;         /* Card surface */
+  --surface-2: #292138;         /* Nested cards, input containers */
+  --surface-3: #382D4C;         /* Interactive hovers & active states */
+  --surface-elevated: #241D32;  /* Overlays, dropdowns, modals */
+
+  /* Semantic Text (Dark) */
+  --text-primary: #F8F5FC;      /* High contrast light text */
+  --text-secondary: #C9C0D4;    /* Balanced secondary text */
+  --text-muted: #93889F;        /* Subdued meta text */
+  --text-disabled: #645873;     /* Disabled controls */
+
+  /* Borders & Focus (Dark) */
+  --border: #382E49;
+  --border-strong: #4F4265;
+  --border-hairline: #332A42;
+  --focus-ring: #B79CDA;
+
+  /* Semantic Health Status Colors (Dark-tuned backgrounds) */
+  --status-normal: #34D399;
+  --status-normal-bg: rgba(16, 185, 129, 0.16);
+  --status-caution: #FBBF24;
+  --status-caution-bg: rgba(245, 158, 11, 0.18);
+  --status-urgent: #F87171;
+  --status-urgent-bg: rgba(239, 68, 68, 0.18);
+  --status-emergency: #FB7185;
+  --status-info: #A78BFA;
+  --status-info-bg: rgba(139, 92, 246, 0.18);
+
+  /* Shadows (Dark mode utilizes deeper black alpha) */
+  --sh-1: 0 2px 8px rgba(0, 0, 0, 0.40);
+  --sh-2: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --sh-3: 0 16px 48px rgba(0, 0, 0, 0.70);
+  --sh-emergency: 0 8px 24px rgba(225, 29, 60, 0.45);
 }

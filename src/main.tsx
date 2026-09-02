@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { PreferencesProvider } from './context/PreferencesContext';
 import './services/syncEngine'; // Initialize offline sync engine
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
@@ -14,8 +15,11 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <PreferencesProvider>
+        <App />
+      </PreferencesProvider>
     </ErrorBoundary>
   </StrictMode>,
 );
+
 

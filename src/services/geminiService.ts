@@ -21,6 +21,7 @@ export interface MaternalContext {
   childAgeMonths?: number;
   childAgeFormatted?: string;
   parity?: number;
+  language?: 'en' | 'sw';
 }
 
 export async function askHavenChat(
@@ -28,17 +29,19 @@ export async function askHavenChat(
   history: ChatMessage[],
   context: MaternalContext
 ): Promise<ChatMessage> {
+  const preferredLang = context.language || 'en';
+
   // Step 1: Layer 1 Deterministic Pre-Check BEFORE making any AI network call
   const safetyCheck = evaluateLayer1Deterministic(userPrompt);
   if (safetyCheck.blocked) {
     return {
       id: `haven-${Date.now()}`,
       sender: 'haven',
-      text: safetyCheck.emergencyActionText || 'This query requires clinical escalation.',
+      text: safetyCheck.emergencyActionText || (preferredLang === 'sw' ? 'Swali hili linahitaji tathmini ya haraka ya daktari kituo cha afya.' : 'This query requires clinical escalation.'),
       timestamp: new Date().toISOString(),
       isEscalation: true,
       escalationData: safetyCheck,
-      provenanceTag: 'Clinical Safety Protocol · Kenya MOH Guidelines',
+      provenanceTag: preferredLang === 'sw' ? 'Itifaki ya Usalama wa Kitabibu · Miongozo ya MOH Kenya' : 'Clinical Safety Protocol · Kenya MOH Guidelines',
     };
   }
 
@@ -53,10 +56,16 @@ export async function askHavenChat(
   const systemInstruction = `
 You are Haven, a compassionate, culturally grounded maternal and child health care companion for mothers in Kenya.
 ${contextSnippet}
+The user's current interface language preference is: ${preferredLang === 'sw' ? 'Kiswahili (SW)' : 'English (EN)'}.
+
+LANGUAGE RULES:
+- Default to the selected UI language (${preferredLang === 'sw' ? 'Kiswahili' : 'English'}).
+- However, if the user asks a question in English, respond in English. If the user asks in Swahili, respond in clear, warm, authentic Kiswahili.
+- When responding in Swahili, use culturally authentic Kenyan Swahili terminology (e.g., 'Mama', 'kliniki ya wajawazito', 'vidonge vya IFAS', 'vyakula vya kuongeza damu', 'dalili za hatari').
 
 STRICT CLINICAL RULES:
 1. Ground all guidance in Kenya Ministry of Health (MOH) Mother & Child Health Handbook and WHO antenatal/postnatal guidelines.
-2. Maintain a warm, encouraging, plain-English tone. Use Kenyan context when appropriate (e.g. mention sukuma wiki, managu, terere, beans, liver for iron; local clinic visits; M-Pesa logistics).
+2. Maintain a warm, encouraging tone. Use Kenyan context when appropriate (e.g. mention sukuma wiki, managu, terere, beans, liver for iron; local clinic visits; M-Pesa logistics).
 3. NEVER diagnose medical conditions or give prescriptive medical diagnoses.
 4. NEVER provide specific milligram medication dosages or tell the user to take prescription medications without clinic consultation.
 5. If the user mentions any danger signs, immediately advise them to visit their local antenatal clinic or hospital.

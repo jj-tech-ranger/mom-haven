@@ -33,6 +33,8 @@ import { Pregnancy, AncEncounter, Child, ChildVaccineRecord, GrowthMeasurement }
 interface AnonymousMotherShellProps {
   onBackToLanding: () => void;
   onCreateAccount: () => void;
+  initialTab?: MotherTab;
+  initialPrompt?: string;
 }
 
 type MotherTab = 'today' | 'journey' | 'haven' | 'records' | 'profile';
@@ -40,10 +42,12 @@ type MotherTab = 'today' | 'journey' | 'haven' | 'records' | 'profile';
 export default function AnonymousMotherShell({
   onBackToLanding,
   onCreateAccount,
+  initialTab = 'today',
+  initialPrompt,
 }: AnonymousMotherShellProps) {
-  const [activeTab, setActiveTab] = useState<MotherTab>('today');
+  const [activeTab, setActiveTab] = useState<MotherTab>(initialTab);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
-  const [havenInitialPrompt, setHavenInitialPrompt] = useState<string | undefined>(undefined);
+  const [havenInitialPrompt, setHavenInitialPrompt] = useState<string | undefined>(initialPrompt);
 
   // Sample demonstration data for showcasing features
   const demoPregnancy: Pregnancy = {
@@ -187,9 +191,9 @@ export default function AnonymousMotherShell({
               type="button"
               onClick={onBackToLanding}
               className="px-2.5 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white font-display font-bold text-xs flex items-center gap-1 cursor-pointer"
-              title="Return to main landing page"
+              title="Return to main screen"
             >
-              <span>Landing</span>
+              <span>Back</span>
             </button>
           </div>
         </div>

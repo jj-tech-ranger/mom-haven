@@ -133,9 +133,9 @@ export default function PartnerConnectFlow({ onBack, onConnected }: PartnerConne
             type="button"
             onClick={onBack}
             className="text-xs font-display font-bold text-[var(--haven-deep)] hover:underline cursor-pointer"
-            title="Return to main landing page"
+            title="Return to main screen"
           >
-            Landing
+            Back
           </button>
         </div>
 
