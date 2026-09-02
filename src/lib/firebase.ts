@@ -17,7 +17,9 @@ import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import { firebaseConfig } from './firebaseConfig';
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-export const db = getFirestore(app);
+const FIRESTORE_DATABASE_ID = 'mom-haven';
+
+export const db = getFirestore(app, FIRESTORE_DATABASE_ID);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
