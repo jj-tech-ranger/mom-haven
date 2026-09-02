@@ -1,5 +1,143 @@
-import React,{useState} from 'react';
-import {ArrowLeft,Mail,AlertCircle,Loader2,ShieldCheck,CheckCircle2,ExternalLink,RotateCw} from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, Mail, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Button from '../Button';
-interface ForgotPasswordScreenProps{onBack:()=>void;onSendResetEmail:(email:string)=>Promise<void>}
-export const ForgotPasswordScreen:React.FC<ForgotPasswordScreenProps>=({onBack,onSendResetEmail})=>{const[email,setEmail]=useState('');const[loading,setLoading]=useState(false);const[emailSent,setEmailSent]=useState(false);const[errorMessage,setErrorMessage]=useState<string|null>(null);const[emailTouched,setEmailTouched]=useState(false);const[resendTimer,setResendTimer]=useState(0);const valid=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());const startTimer=()=>{setResendTimer(30);const id=setInterval(()=>setResendTimer(v=>{if(v<=1){clearInterval(id);return 0}return v-1}),1000)};const submit=async(e:React.FormEvent)=>{e.preventDefault();setEmailTouched(true);setErrorMessage(null);if(!valid)return setErrorMessage('Please enter a valid email address.');setLoading(true);try{await onSendResetEmail(email.trim());setEmailSent(true);startTimer()}catch(err:any){setErrorMessage(err?.message||'We could not send the reset link. Please try again.')}finally{setLoading(false)}};const resend=async()=>{if(resendTimer)return;setLoading(true);try{await onSendResetEmail(email.trim());startTimer()}catch(err:any){setErrorMessage(err?.message||'Resend failed. Please try again.')}finally{setLoading(false)}};if(emailSent)return <main className="mx-auto min-h-screen w-full max-w-md bg-surface-card p-6 text-text-primary"><div className="flex items-center justify-between"><button type="button" onClick={onBack} aria-label="Back to sign in" className="flex min-h-12 min-w-12 items-center justify-center rounded-md border border-border-light bg-white text-brand-primary"><ArrowLeft className="h-5 w-5"/></button><span className="font-numeric text-xs font-semibold text-text-muted">RECOVERY</span></div><section className="mt-10 rounded-xl border border-border-light bg-white p-6 text-center shadow-sm"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-xl border border-clinical-normal bg-clinical-normal-bg text-clinical-normal"><CheckCircle2 className="h-8 w-8"/></div><h1 className="mt-6 font-consumer text-3xl font-bold text-text-primary">Check your email</h1><p className="mt-3 text-sm leading-6 text-text-muted">A secure password reset link was sent to <span className="font-semibold text-text-primary">{email}</span>.</p>{errorMessage&&<div className="mt-5 flex items-start gap-2 rounded-md border border-clinical-danger bg-clinical-danger-bg p-3 text-left text-xs text-clinical-danger"><AlertCircle className="h-4 w-4 shrink-0"/><span>{errorMessage}</span></div>}<div className="mt-6 space-y-3"><Button onClick={()=>window.open('mailto:','_blank')} className="flex items-center justify-center gap-2">Open email app <ExternalLink className="h-4 w-4"/></Button><button type="button" onClick={resend} disabled={loading||resendTimer>0} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-brand-primary bg-white px-5 text-sm font-semibold text-brand-primary disabled:opacity-60"><RotateCw className={`h-4 w-4 ${loading?'animate-spin':''}`}/>{loading?'Resending…':resendTimer?`Resend link in ${resendTimer}s`:'Resend reset link'}</button></div></section><div className="pt-6 text-center"><button type="button" onClick={onBack} className="min-h-12 font-semibold text-brand-primary hover:underline">Back to sign in</button></div></main>;return <main className="mx-auto min-h-screen w-full max-w-md bg-surface-card p-6 text-text-primary"><div className="flex items-center justify-between"><button type="button" onClick={onBack} aria-label="Back to sign in" className="flex min-h-12 min-w-12 items-center justify-center rounded-md border border-border-light bg-white text-brand-primary"><ArrowLeft className="h-5 w-5"/></button><span className="font-numeric text-xs font-semibold text-text-muted">ACCOUNT RECOVERY</span></div><div className="pt-10"><p className="font-clinical text-xs font-bold uppercase tracking-[0.14em] text-brand-primary">Secure recovery</p><h1 className="mt-2 font-consumer text-4xl font-bold leading-tight">Reset your password</h1><p className="mt-3 text-sm leading-6 text-text-muted">Enter the email associated with your MomHaven account. We will send a secure reset link.</p></div>{errorMessage&&<div className="mt-6 flex items-start gap-2 rounded-md border border-clinical-danger bg-clinical-danger-bg p-3 text-xs text-clinical-danger"><AlertCircle className="h-4 w-4 shrink-0"/><span>{errorMessage}</span></div>}<section className="mt-6 rounded-xl border border-border-light bg-white p-5 shadow-sm"><form onSubmit={submit}><label htmlFor="reset-email" className="mb-2 block text-sm font-semibold">Email address</label><div className="relative"><Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-text-muted"/><input id="reset-email" type="email" required value={email} onChange={e=>{setEmail(e.target.value);setErrorMessage(null)}} onBlur={()=>setEmailTouched(true)} placeholder="you@example.com" className={`min-h-12 w-full rounded-md border bg-surface-canvas py-3 pl-10 pr-3.5 text-sm outline-none ${emailTouched&&!valid?'border-clinical-danger':'border-border-light focus:border-brand-primary'}`}/></div>{emailTouched&&!valid&&<p className="mt-1 text-xs text-clinical-danger">Enter a valid email address.</p>}<p className="mt-2 text-xs leading-5 text-text-muted">Your existing account and health record remain unchanged.</p><Button type="submit" disabled={loading} className="mt-6">{loading?<span className="flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin"/>Sending reset link…</span>:'Send reset link'}</Button></form></section><div className="mt-8 flex items-center justify-center gap-2 text-[11px] text-text-muted"><ShieldCheck className="h-4 w-4 text-clinical-normal"/>Secured by Firebase Authentication</div></main>};
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../../lib/firebase';
+
+interface ForgotPasswordScreenProps {
+  onBack: () => void;
+}
+
+export default function ForgotPasswordScreen({ onBack }: ForgotPasswordScreenProps) {
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSendReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      setError('Please provide your registered email address.');
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      await sendPasswordResetEmail(auth, email);
+      setSubmitted(true);
+    } catch (err: any) {
+      console.error('Password reset failed', err);
+      setError(err?.message || 'Failed to send reset link. Please check your email.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // M-AUTH-005: Account Recovery State
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-[var(--lavender-50)] flex flex-col justify-between p-6 sm:p-8">
+        <div className="w-full max-w-sm mx-auto text-center pt-8">
+          <div className="w-20 h-20 rounded-full bg-[var(--lavender-100)] border border-[var(--border-hairline)] flex items-center justify-center text-[var(--haven-deep)] mx-auto mb-5 shadow-sm">
+            <Mail className="w-9 h-9" />
+          </div>
+
+          <h2 className="font-display font-bold text-[26px] text-[var(--ink-900)] leading-tight">
+            Check your email
+          </h2>
+          <p className="font-body text-[14px] text-[var(--ink-600)] mt-2 leading-relaxed">
+            We have sent password reset instructions to <strong className="text-[var(--ink-900)]">{email}</strong>. Follow the link in that email to choose a new password.
+          </p>
+
+          <div className="mt-8 space-y-3">
+            <Button variant="primary" onClick={onBack} className="w-full py-3.5">
+              Back to sign in
+            </Button>
+            <button
+              type="button"
+              onClick={() => {
+                setSubmitted(false);
+                setError(null);
+              }}
+              className="text-[13px] font-display font-semibold text-[var(--haven-deep)] hover:underline cursor-pointer pt-2"
+            >
+              Didn't receive the email? Resend
+            </button>
+          </div>
+        </div>
+
+        <div className="text-center text-[12px] text-[var(--ink-400)]">
+          Need help? <a href="mailto:support@momhaven.ke" className="underline">Contact support</a>
+        </div>
+      </div>
+    );
+  }
+
+  // M-AUTH-004: Forgot Password Request Form
+  return (
+    <div className="min-h-screen bg-[var(--lavender-50)] flex flex-col justify-between p-6 sm:p-8">
+      <div className="w-full max-w-sm mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <button
+            type="button"
+            onClick={onBack}
+            className="w-10 h-10 rounded-full bg-white border border-[var(--border-hairline)] flex items-center justify-center text-[var(--ink-900)] shadow-xs hover:bg-[var(--lavender-100)] transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-1.5">
+            <img src="/assets/logo.png" alt="MomHaven" className="w-6 h-6 object-contain" referrerPolicy="no-referrer" />
+            <span className="font-display font-extrabold text-[16px] text-[var(--haven-deep)]">MomHaven</span>
+          </div>
+          <div className="w-10" />
+        </div>
+
+        <div className="mb-6">
+          <h2 className="font-display font-bold text-[26px] text-[var(--ink-900)] leading-tight">
+            Reset password
+          </h2>
+          <p className="font-body text-[14px] text-[var(--ink-600)] mt-1">
+            Enter your registered email address and we'll send you instructions to reset your password.
+          </p>
+        </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-[13px] rounded-[14px] flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSendReset} className="space-y-4">
+          <div>
+            <label className="block text-[13px] font-display font-semibold text-[var(--ink-900)] mb-1">
+              Registered Email
+            </label>
+            <input
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="w-full px-4 py-3 rounded-[14px] border border-[var(--border-hairline)] bg-white focus:outline-none focus:border-[var(--haven-orchid)] text-[14px] shadow-xs text-[var(--ink-900)]"
+              required
+            />
+          </div>
+
+          <Button type="submit" variant="primary" disabled={loading} className="w-full py-3.5 mt-2">
+            {loading ? 'Sending link...' : 'Send reset link'}
+          </Button>
+        </form>
+      </div>
+
+      <div className="text-center pt-4">
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-[13px] font-display font-semibold text-[var(--haven-deep)] hover:underline cursor-pointer"
+        >
+          Return to sign in
+        </button>
+      </div>
+    </div>
+  );
+}

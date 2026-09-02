@@ -1,20 +1,186 @@
-/** @license Apache-2.0 */
-import React,{useState,useEffect} from 'react';
-import {signInWithPopup,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,onAuthStateChanged,signOut,User as FirebaseUser} from 'firebase/auth';
-import {doc,getDoc,setDoc,addDoc,collection,serverTimestamp} from 'firebase/firestore';
-import {auth,googleProvider,db} from './lib/firebase';
-import {UserRole,UserDoc,MotherProfileDoc,Provenance} from './types';
-import {LandingPage} from './components/LandingPage'; import {WelcomeScreen} from './components/auth/WelcomeScreen'; import {SignInScreen} from './components/auth/SignInScreen'; import {CreateAccountScreen} from './components/auth/CreateAccountScreen'; import {ForgotPasswordScreen} from './components/auth/ForgotPasswordScreen'; import {InitialProfileSetup} from './components/auth/InitialProfileSetup'; import {PregnancySetup} from './components/auth/PregnancySetup'; import {AddPregnancyHistory} from './components/auth/AddPregnancyHistory';
-import {MotherLayout} from './components/MotherLayout'; import {PartnerLayout} from './components/PartnerLayout'; import PartnerAuth from './components/PartnerAuth'; import {ClinicianLayout} from './components/ClinicianLayout'; import {AdminLayout} from './components/AdminLayout'; import AdminAuth from './components/AdminAuth'; import {EmergencyModal} from './components/EmergencyModal'; import {AppLockGate} from './components/AppLockGate'; import {LogOut,Loader2} from 'lucide-react';
-type AuthView='welcome'|'signin'|'create_account'|'forgot_password'; type OnboardingStage='profile_setup'|'pregnancy_setup'|'pregnancy_history';
-export default function App(){const[currentUser,setCurrentUser]=useState<FirebaseUser|null>(null);const[userProfile,setUserProfile]=useState<UserDoc|null>(null);const[motherProfile,setMotherProfile]=useState<MotherProfileDoc|null>(null);const[loading,setLoading]=useState(true);const[googleLoading,setGoogleLoading]=useState(false);const[authView,setAuthView]=useState<AuthView>('welcome');const[partnerEntry,setPartnerEntry]=useState(false);const[isOnboarding,setIsOnboarding]=useState(false);const[onboardingStage,setOnboardingStage]=useState<OnboardingStage>('profile_setup');const[activePregnancyId,setActivePregnancyId]=useState<string|null>(null);const[isEmergencyOpen,setIsEmergencyOpen]=useState(false);const[adminVerified,setAdminVerified]=useState(false);const[showAuth,setShowAuth]=useState(false);const isAdminPortal=typeof window!=='undefined'&&window.location.pathname.startsWith('/admin');
-useEffect(()=>onAuthStateChanged(auth,async u=>{if(!u){setCurrentUser(null);setUserProfile(null);setMotherProfile(null);setIsOnboarding(false);setAdminVerified(false);setLoading(false);return}setCurrentUser(u);try{const ref=doc(db,'users',u.uid);const snap=await getDoc(ref);let data:UserDoc;if(snap.exists())data=snap.data() as UserDoc;else{data={uid:u.uid,email:u.email||'',displayName:u.displayName||'Mama',role:'MOTHER' as UserRole,createdAt:new Date().toISOString()};await setDoc(ref,{...data,createdAt:serverTimestamp()})}setUserProfile(data);if(data.role==='MOTHER'){const ms=await getDoc(doc(db,'motherProfiles',u.uid));if(ms.exists()){setMotherProfile(ms.data() as MotherProfileDoc);setIsOnboarding(false)}else{setIsOnboarding(true);setOnboardingStage('profile_setup')}}else{setMotherProfile(null);setIsOnboarding(false)}}catch(e){console.error(e);setUserProfile({uid:u.uid,email:u.email||'',displayName:u.displayName||'Mama',role:'MOTHER',createdAt:new Date().toISOString()});setIsOnboarding(false)}finally{setLoading(false)} }),[]);
-const handleGoogleSignIn=async()=>{setGoogleLoading(true);try{await signInWithPopup(auth,googleProvider)}finally{setGoogleLoading(false)}};const handleEmailSignIn=async(e:string,p:string)=>{await signInWithEmailAndPassword(auth,e,p)};const handleEmailSignUp=async(e:string,p:string,n:string)=>{const r=await createUserWithEmailAndPassword(auth,e,p);const d:UserDoc={uid:r.user.uid,email:r.user.email||e,displayName:n||'Mama',role:'MOTHER',createdAt:new Date().toISOString()};await setDoc(doc(db,'users',r.user.uid),{...d,createdAt:serverTimestamp()});setUserProfile(d);setIsOnboarding(true);setOnboardingStage('profile_setup')};const reset=async(e:string)=>sendPasswordResetEmail(auth,e);const logout=async()=>signOut(auth);const finishPartnerEntry=async()=>{setPartnerEntry(false);setIsOnboarding(false);const u=auth.currentUser;if(u){try{const snap=await getDoc(doc(db,'users',u.uid));if(snap.exists())setUserProfile(snap.data() as UserDoc)}catch(e){console.error(e)}}};
-const pregnancy=async(data:{method:'LMP'|'EDD';date:string;calculatedEDD:string;calculatedWeeks:number})=>{if(!currentUser)return;const input=new Date(`${data.date}T00:00:00`);const lmpDate=data.method==='LMP'?input:new Date(input);if(data.method==='EDD')lmpDate.setDate(lmpDate.getDate()-280);const provenance:Provenance={status:'REPORTED',enteredBy:currentUser.uid,enteredAt:new Date().toISOString(),verifiedBy:null,verifiedAt:null};const r=await addDoc(collection(db,'pregnancies'),{motherId:currentUser.uid,lmp:lmpDate.toISOString().slice(0,10),edd:data.calculatedEDD,status:'active',calculationMethod:data.method,currentWeek:data.calculatedWeeks,provenance,createdAt:serverTimestamp()});setActivePregnancyId(r.id);setOnboardingStage('pregnancy_history')};
-if(loading)return <div className="min-h-screen bg-[#F7F3FC] flex flex-col items-center justify-center text-[#241451]"><Loader2 className="h-8 w-8 animate-spin text-[#33178A]"/><p className="mt-3 font-display font-bold">Loading MomHaven…</p></div>;
-if(isAdminPortal||userProfile?.role==='ADMIN'){if(adminVerified&&currentUser&&userProfile?.role==='ADMIN')return <AdminLayout user={userProfile} onSignOut={logout}/>;return <AdminAuth onSuccess={()=>setAdminVerified(true)}/>;}
-if(partnerEntry)return <PartnerAuth onComplete={finishPartnerEntry}/>;
-if(!currentUser&&!showAuth)return <LandingPage onMother={()=>setShowAuth(true)} onPartner={()=>setPartnerEntry(true)} onAdmin={()=>{window.location.href='/admin'}}/>;
-if(!currentUser)return <div className="min-h-screen bg-[#F7F3FC] flex items-center justify-center p-3 sm:p-6">{authView==='welcome'&&<WelcomeScreen onCreateAccount={()=>setAuthView('create_account')} onSignIn={()=>setAuthView('signin')} onGoogleSignIn={handleGoogleSignIn} googleLoading={googleLoading} onPartner={()=>setPartnerEntry(true)}/>} {authView==='signin'&&<SignInScreen onBack={()=>setAuthView('welcome')} onSuccess={()=>{}} onCreateAccount={()=>setAuthView('create_account')} onForgotPassword={()=>setAuthView('forgot_password')} onGoogleSignIn={handleGoogleSignIn} onEmailSignIn={handleEmailSignIn} googleLoading={googleLoading}/>} {authView==='create_account'&&<CreateAccountScreen onBack={()=>setAuthView('welcome')} onSignIn={()=>setAuthView('signin')} onSuccess={()=>{}} onGoogleSignIn={handleGoogleSignIn} onEmailSignUp={handleEmailSignUp} googleLoading={googleLoading}/>} {authView==='forgot_password'&&<ForgotPasswordScreen onBack={()=>setAuthView('signin')} onSendResetEmail={reset}/>}</div>;
-if(isOnboarding&&userProfile)return <div className="min-h-screen bg-[#F7F3FC] flex items-center justify-center p-3 sm:p-6">{onboardingStage==='profile_setup'&&<InitialProfileSetup user={userProfile} onBack={logout} onContinue={p=>{setMotherProfile(x=>({...x,...p} as MotherProfileDoc));setOnboardingStage('pregnancy_setup')}}/>}{onboardingStage==='pregnancy_setup'&&<PregnancySetup onBack={()=>setOnboardingStage('profile_setup')} onContinue={pregnancy} onSkip={()=>setOnboardingStage('pregnancy_history')}/>} {onboardingStage==='pregnancy_history'&&<AddPregnancyHistory userId={currentUser.uid} pregnancyId={activePregnancyId||undefined} onBack={()=>setOnboardingStage('pregnancy_setup')} onComplete={()=>setIsOnboarding(false)} onSkip={()=>setIsOnboarding(false)}/>}</div>;
-const role=userProfile?.role||'MOTHER';return <AppLockGate><div className="min-h-screen bg-[#F7F3FC] text-[#241451] flex flex-col font-body"><header className="w-full bg-white border-b border-[#E5DFF0] px-4 py-2.5 text-xs flex items-center justify-between"><div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#1E8F5F]"/><span className="font-display font-bold">{userProfile?.displayName||currentUser.email}</span><span className="rounded-full bg-[#EEE7F8] px-2 py-0.5 font-display text-[11px] font-bold text-[#33178A]">{role}</span></div><button onClick={logout} className="flex items-center gap-1.5 font-display font-semibold text-[#6D6380]"><LogOut className="h-3.5 w-3.5"/>Sign out</button></header><main className="flex-1 w-full mx-auto">{role==='MOTHER'&&<MotherLayout user={userProfile||{uid:currentUser.uid,email:currentUser.email||'',displayName:currentUser.displayName||'Mama',role:'MOTHER',createdAt:new Date().toISOString()}} motherProfile={motherProfile} onOpenEmergency={()=>setIsEmergencyOpen(true)}/>} {role==='PARTNER'&&<PartnerLayout onOpenEmergency={()=>setIsEmergencyOpen(true)}/>} {role==='CLINICIAN'&&<ClinicianLayout/>}</main><EmergencyModal isOpen={isEmergencyOpen} onClose={()=>setIsEmergencyOpen(false)}/></div></AppLockGate>}
+// src/App.tsx
+import React, { useEffect, useState, useCallback } from 'react';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db, logoutUser, testConnection } from './lib/firebase';
+import { UserRole, Clinician } from './types';
+import LandingPage from './components/LandingPage';
+import MotherShell from './components/MotherShell';
+import PartnerShell from './components/PartnerShell';
+import ClinicianShell from './components/ClinicianShell';
+import AdminShell from './components/AdminShell';
+import ClinicianPendingScreen from './components/auth/ClinicianPendingScreen';
+import AdminMfaModal from './components/auth/AdminMfaModal';
+
+export default function App() {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<UserRole>('MOTHER');
+  const [clinicianData, setClinicianData] = useState<Clinician | null>(null);
+  const [adminMfaVerified, setAdminMfaVerified] = useState<boolean>(() => {
+    return sessionStorage.getItem('admin_mfa_verified') === 'true';
+  });
+  const [loading, setLoading] = useState(true);
+
+  const fetchUserData = useCallback(async (user: User) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        const role = (data?.role as UserRole) || 'MOTHER';
+        setUserRole(role);
+
+        if (role === 'CLINICIAN') {
+          const clinDoc = await getDoc(doc(db, 'clinicians', user.uid));
+          if (clinDoc.exists()) {
+            setClinicianData({ ...clinDoc.data(), uid: user.uid } as Clinician);
+          } else {
+            // Default pending profile if clinician record doesn't exist yet
+            setClinicianData({
+              uid: user.uid,
+              name: data.displayName || 'Healthcare Professional',
+              email: data.email || '',
+              licenseNumber: 'KMPDC A-14920',
+              cadre: 'Medical Officer (ObsGyn)',
+              facilityId: '13000',
+              facilityName: 'Kenyatta National Hospital (Level 6)',
+              verificationStatus: 'pending',
+            });
+          }
+        }
+      } else {
+        setUserRole('MOTHER');
+      }
+    } catch (err) {
+      console.warn('Could not read user role from Firestore, defaulting to MOTHER', err);
+      setUserRole('MOTHER');
+    }
+  }, []);
+
+  useEffect(() => {
+    testConnection();
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user);
+      if (user) {
+        await fetchUserData(user);
+      } else {
+        setClinicianData(null);
+        setAdminMfaVerified(false);
+        sessionStorage.removeItem('admin_mfa_verified');
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [fetchUserData]);
+
+  const handleSignOut = async () => {
+    sessionStorage.removeItem('admin_mfa_verified');
+    setAdminMfaVerified(false);
+    await logoutUser();
+  };
+
+  const handleAdminMfaSuccess = () => {
+    sessionStorage.setItem('admin_mfa_verified', 'true');
+    setAdminMfaVerified(true);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[var(--lavender-50)] flex flex-col items-center justify-center p-4 font-body">
+        <div className="w-16 h-16 rounded-2xl bg-white shadow-card-1 p-3 mb-4 flex items-center justify-center animate-pulse">
+          <img src="/assets/logo.png" alt="MomHaven" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+        </div>
+        <p className="font-display font-bold text-[16px] text-[var(--haven-deep)]">Loading MomHaven...</p>
+      </div>
+    );
+  }
+
+  const renderCurrentShell = () => {
+    switch (userRole) {
+      case 'PARTNER':
+        return (
+          <PartnerShell
+            partnerId={currentUser?.uid || 'partner-user'}
+            partnerName={currentUser?.displayName || 'Partner Support'}
+            onSignOut={handleSignOut}
+          />
+        );
+
+      case 'CLINICIAN':
+        // Check verification status: if pending or not approved, enforce boundary
+        if (!clinicianData || clinicianData.verificationStatus !== 'approved') {
+          return (
+            <ClinicianPendingScreen
+              clinicianId={currentUser?.uid || 'clinician-user'}
+              clinicianName={currentUser?.displayName || clinicianData?.name || 'Healthcare Professional'}
+              clinicianData={clinicianData}
+              onRefresh={() => currentUser && fetchUserData(currentUser)}
+              onSignOut={handleSignOut}
+              onInstantApprove={() => {
+                if (clinicianData) {
+                  setClinicianData({ ...clinicianData, verificationStatus: 'approved' });
+                }
+              }}
+            />
+          );
+        }
+
+        return (
+          <ClinicianShell
+            clinicianId={currentUser?.uid || 'clinician-dr-sarah'}
+            clinicianName={currentUser?.displayName || clinicianData?.name || 'Dr. Sarah Kimani (MO ObsGyn)'}
+            facilityName={clinicianData?.facilityName || 'Kenyatta National Hospital (Level 6)'}
+            onSignOut={handleSignOut}
+          />
+        );
+
+      case 'ADMIN':
+        // Check MFA Step-up for administrative clearance
+        if (!adminMfaVerified) {
+          return (
+            <div className="min-h-screen bg-[var(--lavender-50)] flex items-center justify-center p-4">
+              <AdminMfaModal
+                adminEmail={currentUser?.email || 'admin@health.go.ke'}
+                onSuccess={handleAdminMfaSuccess}
+                onCancel={handleSignOut}
+              />
+            </div>
+          );
+        }
+
+        return <AdminShell onRoleSwitch={(r) => setUserRole(r)} />;
+
+      case 'MOTHER':
+      default:
+        return (
+          <MotherShell
+            userId={currentUser?.uid || 'guest-user'}
+            userEmail={currentUser?.email || 'mama@example.com'}
+            userName={currentUser?.displayName || 'Mama Jemimah'}
+            onSignOut={handleSignOut}
+          />
+        );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[var(--lavender-50)] text-[var(--ink-900)]">
+      {!currentUser ? (
+        <LandingPage
+          onSignedIn={() => {
+            if (auth.currentUser) {
+              fetchUserData(auth.currentUser);
+            }
+          }}
+          onPartnerConnected={(partnerId, partnerName, motherInfo) => {
+            setUserRole('PARTNER');
+            localStorage.setItem('momhaven_partner_link', JSON.stringify(motherInfo));
+          }}
+        />
+      ) : (
+        renderCurrentShell()
+      )}
+    </div>
+  );
+}

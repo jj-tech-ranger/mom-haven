@@ -2,39 +2,29 @@
   "entities": {
     "User": {
       "title": "User",
-      "description": "Base authenticated user record",
+      "description": "Base user account record",
       "type": "object",
       "properties": {
-        "uid": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "displayName": { "type": "string" },
         "role": { "type": "string", "enum": ["MOTHER", "PARTNER", "CLINICIAN", "ADMIN"] },
         "createdAt": { "type": "string" }
       },
-      "required": ["uid", "email", "role", "createdAt"]
+      "required": ["email", "role"]
     },
     "MotherProfile": {
       "title": "MotherProfile",
-      "description": "MOH 216 maternal health profile",
+      "description": "Mother personal demographics and contact information",
       "type": "object",
       "properties": {
-        "uid": { "type": "string" },
-        "fullName": { "type": "string" },
         "phone": { "type": "string" },
         "dateOfBirth": { "type": "string" },
-        "county": { "type": "string" },
-        "subCounty": { "type": "string" },
-        "bloodGroup": { "type": "string" },
-        "rhesus": { "type": "string" },
-        "gravida": { "type": "number" },
-        "para": { "type": "number" },
-        "preExistingConditions": { "type": "array" }
-      },
-      "required": ["uid"]
+        "county": { "type": "string" }
+      }
     },
     "Pregnancy": {
       "title": "Pregnancy",
-      "description": "Maternal pregnancy record conforming to MOH 216",
+      "description": "Maternal pregnancy record",
       "type": "object",
       "properties": {
         "motherId": { "type": "string" },
@@ -43,76 +33,214 @@
         "status": { "type": "string", "enum": ["active", "completed"] },
         "createdAt": { "type": "string" }
       },
-      "required": ["motherId", "edd", "status"]
+      "required": ["motherId", "status"]
+    },
+    "AncEncounter": {
+      "title": "AncEncounter",
+      "description": "Antenatal clinic visit record",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "facilityId": { "type": "string" },
+        "weight": { "type": "number" },
+        "bloodPressure": { "type": "string" },
+        "fundalHeight": { "type": "number" },
+        "fetalHeartRate": { "type": "number" },
+        "notes": { "type": "string" },
+        "provenance": { "type": "object" }
+      },
+      "required": ["date", "provenance"]
     },
     "Child": {
       "title": "Child",
-      "description": "Child health record under mother care",
+      "description": "Child health profile",
       "type": "object",
       "properties": {
         "motherId": { "type": "string" },
         "name": { "type": "string" },
         "dateOfBirth": { "type": "string" },
-        "sex": { "type": "string", "enum": ["boy", "girl"] },
+        "sex": { "type": "string", "enum": ["male", "female"] },
+        "birthOutcomeId": { "type": "string" },
         "createdAt": { "type": "string" }
       },
       "required": ["motherId", "name", "dateOfBirth", "sex"]
     },
-    "Reminder": {
-      "title": "Reminder",
-      "description": "Maternal reminder or appointment schedule",
+    "ImmunizationRecord": {
+      "title": "ImmunizationRecord",
+      "description": "KEPI childhood immunization record",
       "type": "object",
       "properties": {
-        "userId": { "type": "string" },
-        "title": { "type": "string" },
-        "detail": { "type": "string" },
-        "dueDate": { "type": "string" },
-        "urgency": { "type": "string", "enum": ["urgent", "normal", "info"] },
-        "category": { "type": "string" },
-        "completed": { "type": "boolean" },
+        "vaccine": { "type": "string" },
+        "dose": { "type": "string" },
+        "dateGiven": { "type": "string" },
+        "minimumEligibleDate": { "type": "string" },
+        "scheduledDate": { "type": "string" },
+        "recommendedActionDate": { "type": "string" },
+        "provenance": { "type": "object" }
+      },
+      "required": ["vaccine", "dose", "minimumEligibleDate", "scheduledDate", "recommendedActionDate", "provenance"]
+    },
+    "GrowthMeasurement": {
+      "title": "GrowthMeasurement",
+      "description": "Child growth monitoring measurement",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "weightKg": { "type": "number" },
+        "heightCm": { "type": "number" },
+        "headCircumferenceCm": { "type": "number" },
+        "provenance": { "type": "object" }
+      },
+      "required": ["date", "weightKg", "provenance"]
+    },
+    "MuacMeasurement": {
+      "title": "MuacMeasurement",
+      "description": "Mid-upper arm circumference measurement",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "cm": { "type": "number" },
+        "band": { "type": "string", "enum": ["SAM", "MAM", "AtRisk", "Normal"] },
+        "provenance": { "type": "object" }
+      },
+      "required": ["date", "cm", "band", "provenance"]
+    },
+    "PartnerRelationship": {
+      "title": "PartnerRelationship",
+      "description": "Mother-partner connection link",
+      "type": "object",
+      "properties": {
+        "motherId": { "type": "string" },
+        "partnerId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "active", "revoked"] },
+        "createdAt": { "type": "string" },
+        "revokedAt": { "type": "string" }
+      },
+      "required": ["motherId", "partnerId", "status"]
+    },
+    "Facility": {
+      "title": "Facility",
+      "description": "Master health facility registry item",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "kmhflCode": { "type": "string" },
+        "county": { "type": "string" },
+        "subcounty": { "type": "string" },
+        "contactPhone": { "type": "string" }
+      },
+      "required": ["name", "county"]
+    },
+    "Clinician": {
+      "title": "Clinician",
+      "description": "Verified health professional profile",
+      "type": "object",
+      "properties": {
+        "licenseNumber": { "type": "string" },
+        "cadre": { "type": "string" },
+        "facilityId": { "type": "string" },
+        "verificationStatus": { "type": "string", "enum": ["pending", "approved", "rejected"] }
+      },
+      "required": ["licenseNumber", "verificationStatus"]
+    },
+    "ClinicianAccessSession": {
+      "title": "ClinicianAccessSession",
+      "description": "15-minute temporary clinician access token grant",
+      "type": "object",
+      "properties": {
+        "motherId": { "type": "string" },
+        "clinicianId": { "type": "string" },
+        "shareCode": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "expiresAt": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "expired", "revoked"] }
+      },
+      "required": ["motherId", "clinicianId", "shareCode", "expiresAt", "status"]
+    },
+    "ClinicianPrivateNote": {
+      "title": "ClinicianPrivateNote",
+      "description": "Private clinical notes strictly hidden from Mother and Partner",
+      "type": "object",
+      "properties": {
+        "clinicianId": { "type": "string" },
+        "motherId": { "type": "string" },
+        "childId": { "type": "string" },
+        "text": { "type": "string" },
         "createdAt": { "type": "string" }
       },
-      "required": ["userId", "title", "completed"]
+      "required": ["clinicianId", "motherId", "text"]
     },
-    "Notification": {
-      "title": "Notification",
-      "description": "User notification item",
+    "AuditEvent": {
+      "title": "AuditEvent",
+      "description": "Immutable security and access audit record",
       "type": "object",
       "properties": {
-        "userId": { "type": "string" },
-        "title": { "type": "string" },
-        "message": { "type": "string" },
-        "read": { "type": "boolean" },
-        "category": { "type": "string" },
+        "actorId": { "type": "string" },
+        "actorRole": { "type": "string" },
+        "action": { "type": "string" },
+        "objectType": { "type": "string" },
+        "objectId": { "type": "string" },
         "timestamp": { "type": "string" }
       },
-      "required": ["userId", "title", "read"]
+      "required": ["actorId", "actorRole", "action", "timestamp"]
     }
   },
   "firestore": {
     "/users/{uid}": {
       "schema": { "$ref": "#/entities/User" },
-      "description": "User account documents"
+      "description": "Authenticated user accounts"
     },
     "/motherProfiles/{uid}": {
       "schema": { "$ref": "#/entities/MotherProfile" },
-      "description": "Mother profile records"
+      "description": "Demographic profiles of mothers"
     },
     "/pregnancies/{pregnancyId}": {
       "schema": { "$ref": "#/entities/Pregnancy" },
-      "description": "Active and past pregnancy records"
+      "description": "Pregnancy records"
+    },
+    "/pregnancies/{pregnancyId}/ancEncounters/{encounterId}": {
+      "schema": { "$ref": "#/entities/AncEncounter" },
+      "description": "ANC encounter records"
     },
     "/children/{childId}": {
       "schema": { "$ref": "#/entities/Child" },
-      "description": "Children records"
+      "description": "Child health records"
     },
-    "/reminders/{reminderId}": {
-      "schema": { "$ref": "#/entities/Reminder" },
-      "description": "Reminders and priorities"
+    "/children/{childId}/immunizationRecords/{recordId}": {
+      "schema": { "$ref": "#/entities/ImmunizationRecord" },
+      "description": "Childhood immunization records"
     },
-    "/notifications/{notificationId}": {
-      "schema": { "$ref": "#/entities/Notification" },
-      "description": "User notifications"
+    "/children/{childId}/growthMeasurements/{measurementId}": {
+      "schema": { "$ref": "#/entities/GrowthMeasurement" },
+      "description": "Growth tracking records"
+    },
+    "/children/{childId}/muacMeasurements/{measurementId}": {
+      "schema": { "$ref": "#/entities/MuacMeasurement" },
+      "description": "MUAC assessment records"
+    },
+    "/partnerRelationships/{relationshipId}": {
+      "schema": { "$ref": "#/entities/PartnerRelationship" },
+      "description": "Partner connection authorizations"
+    },
+    "/facilities/{facilityId}": {
+      "schema": { "$ref": "#/entities/Facility" },
+      "description": "KMHFL registry facilities"
+    },
+    "/clinicians/{clinicianId}": {
+      "schema": { "$ref": "#/entities/Clinician" },
+      "description": "Clinician registry"
+    },
+    "/clinicianAccessSessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/ClinicianAccessSession" },
+      "description": "Temporary clinician access sessions"
+    },
+    "/clinicianPrivateNotes/{noteId}": {
+      "schema": { "$ref": "#/entities/ClinicianPrivateNote" },
+      "description": "Private clinician clinical notes"
+    },
+    "/auditEvents/{eventId}": {
+      "schema": { "$ref": "#/entities/AuditEvent" },
+      "description": "Platform audit log records"
     }
   }
 }

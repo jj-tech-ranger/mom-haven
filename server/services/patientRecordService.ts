@@ -1,4 +1,4 @@
-import { adminDb, document } from '../clinicianAccess';
+import { adminDb, document } from '../clinicianAccess.js';
 
 export const CLINICAL_RECORD_GROUPS = [
   'ancEncounters', 'newbornRecords', 'postnatalEncounters', 'immunizationRecords',

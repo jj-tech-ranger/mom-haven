@@ -1,8 +1,9 @@
-import {StrictMode} from 'react';
-import {createRoot} from 'react-dom/client';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
-import {HealthRepositoryProvider} from './context/HealthRepositoryContext';
 import './index.css';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+import './services/syncEngine'; // Initialize offline sync engine
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
@@ -12,8 +13,9 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <HealthRepositoryProvider>
+    <ErrorBoundary>
       <App />
-    </HealthRepositoryProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );
+

@@ -1,22 +1,39 @@
 import React from 'react';
-import { FileText, LucideIcon } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 interface EmptyStateProps {
+  icon?: LucideIcon | React.ComponentType<{ className?: string; strokeWidth?: number | string }>;
   title: string;
-  description?: string;
-  message?: string;
+  message: string;
   actionLabel?: string;
   onAction?: () => void;
-  icon?: LucideIcon | React.ComponentType<{className?: string; strokeWidth?: number}>;
 }
 
-export default function EmptyState({title, description, message, actionLabel, onAction, icon: Icon = FileText}: EmptyStateProps) {
-  return <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center max-w-md mx-auto my-6 shadow-sm">
-    <div className="w-12 h-12 bg-[#F5EEF8] text-[#5B2C6F] rounded-full flex items-center justify-center mx-auto mb-4">
-      <Icon className="w-6 h-6" strokeWidth={2} aria-hidden="true" />
+// src/components/EmptyState.tsx
+// The ONE empty-state component used everywhere in the app. Never invent a
+// screen-specific empty state — always use this, with different icon/copy/action.
+export default function EmptyState({ icon: Icon, title, message, actionLabel, onAction }: EmptyStateProps) {
+  return (
+    <div className="flex flex-col items-center justify-center text-center px-8 py-16">
+      <div className="w-20 h-20 rounded-[24px] bg-[var(--lavender-100)] flex items-center justify-center mb-5 shadow-sm">
+        {Icon ? <Icon className="w-8 h-8 text-[var(--haven-orchid)]" strokeWidth={2} /> : null}
+      </div>
+      <h3 className="font-display font-bold text-[18px] leading-snug text-[var(--ink-900)] mb-1.5">
+        {title}
+      </h3>
+      <p className="font-body text-[14px] leading-relaxed text-[var(--ink-600)] max-w-[280px] mb-6">
+        {message}
+      </p>
+      {actionLabel && onAction && (
+        <button
+          type="button"
+          onClick={onAction}
+          className="font-display font-semibold text-[15px] text-white rounded-[28px] px-6 py-3.5 transition-transform active:scale-98"
+          style={{ background: 'var(--grad-haven)', boxShadow: '0 6px 16px rgba(51,23,138,0.28)' }}
+        >
+          {actionLabel}
+        </button>
+      )}
     </div>
-    <h3 className="text-lg font-bold text-[#1C2833] mb-2">{title}</h3>
-    <p className="text-sm text-[#566573] mb-6 leading-relaxed">{description ?? message}</p>
-    {actionLabel && onAction && <button onClick={onAction} className="min-h-12 bg-[#5B2C6F] text-white text-sm font-medium px-5 rounded-xl hover:bg-[#4A235A] transition-colors focus-visible:outline-none">{actionLabel}</button>}
-  </div>;
+  );
 }

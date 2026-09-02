@@ -1,108 +1,48 @@
-@import "./theme.css";
 @import "tailwindcss";
-
-@theme {
-  --color-brand-primary: var(--brand-primary);
-  --color-brand-primary-hover: var(--brand-primary-hover);
-  --color-brand-surface: var(--brand-surface);
-  --color-brand-accent: var(--brand-accent);
-  --color-surface-canvas: var(--surface-canvas);
-  --color-surface-card: var(--surface-card);
-  --color-border-light: var(--border-light);
-  --color-text-primary: var(--text-primary);
-  --color-text-muted: var(--text-muted);
-  --color-clinical-normal: var(--clinical-normal);
-  --color-clinical-normal-bg: var(--clinical-normal-bg);
-  --color-clinical-warning: var(--clinical-warning);
-  --color-clinical-warning-bg: var(--clinical-warning-bg);
-  --color-clinical-danger: var(--clinical-danger);
-  --color-clinical-danger-bg: var(--clinical-danger-bg);
-  --color-haven-deep: var(--brand-primary);
-  --color-haven-orchid: var(--brand-accent);
-  --color-haven-orchid-light: #B77BCB;
-  --color-lavender-50: var(--surface-canvas);
-  --color-lavender-100: var(--brand-surface);
-  --color-lavender-200: #EADCF0;
-  --color-border-hairline: var(--border-light);
-  --color-ink-900: var(--text-primary);
-  --color-ink-600: var(--text-muted);
-  --color-ink-400: #7B8794;
-  --color-status-normal: var(--clinical-normal);
-  --color-status-normal-bg: var(--clinical-normal-bg);
-  --color-status-caution: var(--clinical-warning);
-  --color-status-caution-bg: var(--clinical-warning-bg);
-  --color-status-urgent: var(--clinical-danger);
-  --color-status-urgent-bg: var(--clinical-danger-bg);
-  --color-status-emergency: var(--clinical-danger);
-  --color-status-info: var(--brand-primary);
-  --color-status-info-bg: var(--brand-surface);
-  --font-display: var(--font-consumer);
-  --font-body: var(--font-clinical);
-  --radius-card: 6px;
-  --radius-chip: 6px;
-  --radius-input: 6px;
-}
+@import "./theme.css";
 
 @layer base {
-  body { background-color: var(--surface-canvas); color: var(--text-primary); font-family: var(--font-consumer); font-size: 14px; line-height: 1.6; -webkit-tap-highlight-color: transparent; }
-  h1, h2, h3, h4, h5, h6, .font-display, .font-consumer { font-family: var(--font-consumer); }
-  .font-body, .font-clinical { font-family: var(--font-clinical); }
-  .font-numeric, .tabular-nums { font-family: var(--font-numeric); font-variant-numeric: tabular-nums; }
-  *:focus-visible { outline: 2px solid var(--brand-primary) !important; outline-offset: 2px !important; border-radius: 6px; }
-  button, input, select, a { min-height: 48px; }
+  body {
+    background-color: var(--lavender-50);
+    color: var(--ink-900);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--ink-900);
+  }
 }
 
-@layer utilities {
-  .backdrop-blur-md, .backdrop-blur-sm, .backdrop-blur-lg { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-  .bg-white\/70, .bg-white\/80, .bg-white\/90, .bg-white\/95 { background-color: var(--surface-card) !important; }
-  .shadow-2xl { box-shadow: var(--sh-1) !important; }
-  .rounded-3xl { border-radius: 12px !important; }
-  .bg-gradient-to-r, .bg-gradient-to-l, .bg-gradient-to-br, .bg-gradient-to-bl, .bg-gradient-to-t, .bg-gradient-to-b { background-image: none !important; }
-  .bg-clip-text { background-clip: border-box !important; -webkit-background-clip: border-box !important; }
-  .text-transparent { color: var(--text-primary) !important; }
+.font-display {
+  font-family: var(--font-display);
 }
 
-/* Mother navigation: five fixed-feeling touch-safe destinations with an intentional active indicator. */
-nav[aria-label="Mother Navigation"] {
-  height: 64px !important;
-  padding: 4px 8px !important;
-  background: var(--surface-card) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border-top: 1px solid var(--border-light) !important;
-  box-shadow: none !important;
-}
-nav[aria-label="Mother Navigation"] button {
-  position: relative;
-  min-height: 48px !important;
-  min-width: 48px;
-  border-radius: 6px !important;
-}
-nav[aria-label="Mother Navigation"] button[class*="text-haven-deep"] { color: var(--brand-primary) !important; }
-nav[aria-label="Mother Navigation"] button[class*="text-haven-deep"]::before {
-  content: "";
-  position: absolute;
-  top: -4px;
-  left: 8px;
-  right: 8px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--brand-primary);
+.font-body {
+  font-family: var(--font-body);
 }
 
-/* Emergency surface remains the one intentional crimson semantic exception. */
-[role="dialog"][aria-label="Emergency"] { background: rgba(28, 40, 51, 0.72) !important; }
-[role="dialog"][aria-label="Emergency"] > div {
-  background: var(--surface-canvas) !important;
-  border: 1px solid var(--border-light) !important;
-  border-radius: 12px !important;
-  box-shadow: var(--sh-1) !important;
+.bg-haven-grad {
+  background: var(--grad-haven);
 }
-[role="dialog"][aria-label="Emergency"] header { background: var(--clinical-danger) !important; }
-[role="dialog"][aria-label="Emergency"] button { min-height: 48px; }
 
-/* Numeric clinical values must scan consistently. */
-input[type="number"], input[inputmode="numeric"], [data-clinical-value], [data-numeric] {
-  font-family: var(--font-numeric) !important;
-  font-variant-numeric: tabular-nums;
+.shadow-card-1 {
+  box-shadow: var(--sh-1);
+}
+
+.shadow-card-2 {
+  box-shadow: var(--sh-2);
+}
+
+.shadow-card-3 {
+  box-shadow: var(--sh-3);
+}
+
+.shadow-emergency {
+  box-shadow: var(--sh-emergency);
 }

@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { adminAuth, adminDb, ApiError, document, logAudit, requireActiveSession, requireClinician, serialize } from '../clinicianAccess';
+import { adminAuth, adminDb, ApiError, document, logAudit, requireActiveSession, requireClinician, serialize } from '../clinicianAccess.js';
 import { FieldValue } from 'firebase-admin/firestore';
-import { CLINICAL_RECORD_GROUPS, getPatientRecords } from '../services/patientRecordService';
+import { CLINICAL_RECORD_GROUPS, getPatientRecords } from '../services/patientRecordService.js';
 
 export const clinicianRouter = Router();
 

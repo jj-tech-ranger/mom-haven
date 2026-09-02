@@ -1,5 +1,261 @@
-import React,{useState} from 'react';
-import {ArrowLeft,Mail,Lock,Eye,EyeOff,AlertCircle,Loader2,ShieldCheck} from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Button from '../Button';
-interface CreateAccountScreenProps{onBack:()=>void;onSuccess:()=>void;onSignIn:()=>void;onGoogleSignIn:()=>Promise<void>;onEmailSignUp:(email:string,pass:string,name:string)=>Promise<void>;googleLoading?:boolean}
-export const CreateAccountScreen:React.FC<CreateAccountScreenProps>=({onBack,onSignIn,onGoogleSignIn,onEmailSignUp,googleLoading=false})=>{const[email,setEmail]=useState('');const[password,setPassword]=useState('');const[confirmPassword,setConfirmPassword]=useState('');const[agreeTerms,setAgreeTerms]=useState(false);const[showPassword,setShowPassword]=useState(false);const[showConfirm,setShowConfirm]=useState(false);const[loading,setLoading]=useState(false);const[errorMessage,setErrorMessage]=useState<string|null>(null);const[touched,setTouched]=useState({email:false,password:false,confirm:false});const validEmail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());const validPassword=password.length>=8;const validConfirm=confirmPassword.length>0&&confirmPassword===password;const submit=async(e:React.FormEvent)=>{e.preventDefault();setTouched({email:true,password:true,confirm:true});setErrorMessage(null);if(!validEmail)return setErrorMessage('Please enter a valid email address.');if(!validPassword)return setErrorMessage('Password must be at least 8 characters.');if(!validConfirm)return setErrorMessage('Passwords do not match.');if(!agreeTerms)return setErrorMessage('Please accept the Terms & Privacy Policy to continue.');setLoading(true);try{await onEmailSignUp(email.trim(),password,'')}catch(err:any){const code=err?.code||'';if(code==='auth/email-already-in-use')setErrorMessage('This email is already in use. Try signing in instead.');else if(code==='auth/weak-password')setErrorMessage('That password is too weak. Please choose a stronger password.');else setErrorMessage(err?.message||'We could not create your account. Please try again.')}finally{setLoading(false)}};const field=(bad:boolean)=>`min-h-12 w-full rounded-md border bg-surface-canvas py-3 text-sm text-text-primary outline-none ${bad?'border-clinical-danger':'border-border-light focus:border-brand-primary'}`;return <main className="mx-auto min-h-screen w-full max-w-md bg-surface-card p-6 text-text-primary"><div className="flex items-center justify-between"><button type="button" onClick={onBack} aria-label="Back to welcome" className="flex min-h-12 min-w-12 items-center justify-center rounded-md border border-border-light bg-white text-brand-primary hover:bg-brand-surface"><ArrowLeft className="h-5 w-5"/></button><span className="font-numeric text-xs font-semibold text-text-muted">CREATE ACCOUNT</span></div><div className="pt-10"><p className="font-clinical text-xs font-bold uppercase tracking-[0.14em] text-brand-primary">Step 1 of 2</p><h1 className="mt-2 font-consumer text-4xl font-bold leading-tight">Create your account</h1><p className="mt-3 text-sm leading-6 text-text-muted">Set up secure access to your MomHaven record.</p><div className="mt-6 h-1 rounded-full bg-brand-surface"><div className="h-1 w-1/2 rounded-full bg-brand-primary"/></div></div><div className="mt-8 rounded-xl border border-border-light bg-white p-5 shadow-sm">{errorMessage&&<div role="alert" className="mb-4 flex items-start gap-2.5 rounded-md border border-clinical-danger bg-clinical-danger-bg p-3 text-xs leading-5 text-clinical-danger"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0"/><span>{errorMessage}</span></div>}<form onSubmit={submit} className="space-y-5"><div><label htmlFor="create-email" className="mb-1.5 block text-sm font-semibold">Email address</label><div className="relative"><Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-text-muted"/><input id="create-email" type="email" value={email} onChange={e=>{setEmail(e.target.value);setErrorMessage(null)}} onBlur={()=>setTouched(t=>({...t,email:true}))} placeholder="you@example.com" autoComplete="email" className={`${field(touched.email&&!validEmail)} pl-10 pr-3.5`}/></div>{touched.email&&!validEmail&&<p className="mt-1 text-xs text-clinical-danger">Enter a valid email address.</p>}</div><div><label htmlFor="create-password" className="mb-1.5 block text-sm font-semibold">Password</label><div className="relative"><Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-text-muted"/><input id="create-password" type={showPassword?'text':'password'} value={password} onChange={e=>{setPassword(e.target.value);setErrorMessage(null)}} onBlur={()=>setTouched(t=>({...t,password:true}))} placeholder="At least 8 characters" autoComplete="new-password" className={`${field(touched.password&&!validPassword)} pl-10 pr-12`}/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'} className="absolute right-2 top-1 flex min-h-12 min-w-12 items-center justify-center text-text-muted">{showPassword?<EyeOff className="h-4 w-4"/>:<Eye className="h-4 w-4"/>}</button></div><p className="mt-1 text-xs text-text-muted">Use 8 or more characters.</p></div><div><label htmlFor="create-confirm" className="mb-1.5 block text-sm font-semibold">Confirm password</label><div className="relative"><Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-text-muted"/><input id="create-confirm" type={showConfirm?'text':'password'} value={confirmPassword} onChange={e=>{setConfirmPassword(e.target.value);setErrorMessage(null)}} onBlur={()=>setTouched(t=>({...t,confirm:true}))} placeholder="Repeat your password" autoComplete="new-password" className={`${field(touched.confirm&&!validConfirm)} pl-10 pr-12`}/><button type="button" onClick={()=>setShowConfirm(v=>!v)} aria-label={showConfirm?'Hide password':'Show password'} className="absolute right-2 top-1 flex min-h-12 min-w-12 items-center justify-center text-text-muted">{showConfirm?<EyeOff className="h-4 w-4"/>:<Eye className="h-4 w-4"/>}</button></div></div><label className="flex cursor-pointer items-start gap-3 rounded-md border border-border-light bg-brand-surface p-3"><input type="checkbox" checked={agreeTerms} onChange={e=>setAgreeTerms(e.target.checked)} className="mt-1 h-4 w-4 accent-brand-primary"/><span className="text-xs leading-5 text-text-muted">I agree to the <span className="font-semibold text-brand-primary underline">Terms & Privacy Policy</span>.</span></label><Button type="submit" disabled={loading||googleLoading}>{loading?<span className="flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin"/>Creating account…</span>:'Continue to Profile Setup'}</Button></form><div className="my-5 flex items-center gap-3"><span className="h-px flex-1 bg-border-light"/><span className="font-numeric text-[11px] text-text-muted">OR</span><span className="h-px flex-1 bg-border-light"/></div><button type="button" onClick={onGoogleSignIn} disabled={loading||googleLoading} className="flex min-h-12 w-full items-center justify-center gap-3 rounded-md border border-brand-primary bg-white px-5 py-3.5 text-sm font-semibold text-brand-primary hover:bg-brand-surface disabled:opacity-60"><span className="flex h-5 w-5 items-center justify-center rounded-full border border-border-light text-xs font-bold">G</span>{googleLoading?'Connecting…':'Continue with Google'}</button></div><div className="pt-6 text-center"><p className="text-sm text-text-muted">Already have an account? <button type="button" onClick={onSignIn} className="min-h-12 font-semibold text-brand-primary hover:underline">Sign in</button></p><div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-text-muted"><ShieldCheck className="h-4 w-4 text-clinical-normal"/>Your account is protected by Firebase Authentication.</div></div></main>};
+
+interface CreateAccountScreenProps {
+  onBack: () => void;
+  onNavigateToSignIn: () => void;
+  onSubmitCreate: (data: { displayName: string; email: string; phone: string; password: string }) => Promise<void>;
+  onGoogleSignIn: () => Promise<void>;
+  onGuestSignIn?: () => Promise<void>;
+}
+
+export default function CreateAccountScreen({
+  onBack,
+  onNavigateToSignIn,
+  onSubmitCreate,
+  onGoogleSignIn,
+  onGuestSignIn,
+}: CreateAccountScreenProps) {
+  const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isPasswordValid = password.length >= 8;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!displayName || !email || !password) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+    if (!isPasswordValid) {
+      setError('Password must be at least 8 characters long.');
+      return;
+    }
+    if (!agreeTerms) {
+      setError('Please agree to the Terms of Service & Privacy Policy.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const formattedPhone = phone.startsWith('0') 
+        ? `+254${phone.slice(1)}` 
+        : phone.startsWith('+') 
+        ? phone 
+        : phone ? `+254${phone}` : '';
+
+      await onSubmitCreate({
+        displayName,
+        email,
+        phone: formattedPhone,
+        password,
+      });
+    } catch (err: any) {
+      console.error('Registration failed', err);
+      setError(err?.message || 'Failed to create your account. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[var(--lavender-50)] flex flex-col justify-between p-6 sm:p-8">
+      <div className="w-full max-w-sm mx-auto">
+        {/* Top Header */}
+        <div className="flex items-center justify-between mb-5">
+          <button
+            type="button"
+            onClick={onBack}
+            className="w-10 h-10 rounded-full bg-white border border-[var(--border-hairline)] flex items-center justify-center text-[var(--ink-900)] shadow-xs hover:bg-[var(--lavender-100)] transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-1.5">
+            <img src="/assets/logo.png" alt="MomHaven" className="w-6 h-6 object-contain" referrerPolicy="no-referrer" />
+            <span className="font-display font-extrabold text-[16px] text-[var(--haven-deep)]">MomHaven</span>
+          </div>
+          <div className="w-10" />
+        </div>
+
+        {/* Title */}
+        <div className="mb-5">
+          <h2 className="font-display font-bold text-[26px] text-[var(--ink-900)] leading-tight">
+            Create your account
+          </h2>
+          <p className="font-body text-[14px] text-[var(--ink-600)] mt-1">
+            Your personal companion for you and your baby's journey.
+          </p>
+        </div>
+
+        {/* Error Notification */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-[13px] rounded-[14px] flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-3.5">
+          <div>
+            <label className="block text-[13px] font-display font-semibold text-[var(--ink-900)] mb-1">
+              Full Name
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Jane Jemutai"
+              value={displayName}
+              onChange={e => setDisplayName(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-[14px] border border-[var(--border-hairline)] bg-white focus:outline-none focus:border-[var(--haven-orchid)] text-[14px] shadow-xs text-[var(--ink-900)]"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-[13px] font-display font-semibold text-[var(--ink-900)] mb-1">
+              Email Address
+            </label>
+            <input
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-[14px] border border-[var(--border-hairline)] bg-white focus:outline-none focus:border-[var(--haven-orchid)] text-[14px] shadow-xs text-[var(--ink-900)]"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-[13px] font-display font-semibold text-[var(--ink-900)] mb-1">
+              Phone Number
+            </label>
+            <div className="flex gap-2">
+              <span className="flex items-center px-3 py-2.5 bg-white border border-[var(--border-hairline)] rounded-[14px] text-[14px] font-medium text-[var(--ink-600)] shadow-xs">
+                🇰🇪 +254
+              </span>
+              <input
+                type="tel"
+                placeholder="712 345 678"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                className="flex-1 px-4 py-2.5 rounded-[14px] border border-[var(--border-hairline)] bg-white focus:outline-none focus:border-[var(--haven-orchid)] text-[14px] shadow-xs text-[var(--ink-900)]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[13px] font-display font-semibold text-[var(--ink-900)] mb-1">
+              Create Password
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="At least 8 characters"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-[14px] border border-[var(--border-hairline)] bg-white focus:outline-none focus:border-[var(--haven-orchid)] text-[14px] shadow-xs text-[var(--ink-900)] pr-11"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--ink-400)] hover:text-[var(--ink-900)] cursor-pointer"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[var(--ink-600)]">
+              <CheckCircle2 className={`w-3.5 h-3.5 ${isPasswordValid ? 'text-emerald-600' : 'text-[var(--ink-400)]'}`} />
+              <span>Must be at least 8 characters</span>
+            </div>
+          </div>
+
+          {/* Terms checkbox */}
+          <div className="flex items-start gap-2.5 pt-1">
+            <input
+              type="checkbox"
+              id="terms"
+              checked={agreeTerms}
+              onChange={e => setAgreeTerms(e.target.checked)}
+              className="mt-1 w-4 h-4 rounded text-[var(--haven-deep)] focus:ring-[var(--haven-orchid)] border-[var(--border-hairline)] cursor-pointer"
+              required
+            />
+            <label htmlFor="terms" className="text-[12px] text-[var(--ink-600)] leading-tight cursor-pointer">
+              I agree to the <span className="text-[var(--haven-deep)] font-semibold">Terms of Service</span> and <span className="text-[var(--haven-deep)] font-semibold">Privacy Policy</span>.
+            </label>
+          </div>
+
+          <Button type="submit" variant="primary" disabled={loading} className="w-full py-3.5 mt-2">
+            {loading ? 'Creating account...' : 'Create account'}
+          </Button>
+        </form>
+
+        <div className="flex items-center gap-3 my-4">
+          <div className="h-[1px] bg-[var(--border-hairline)] flex-1" />
+          <span className="text-[12px] font-medium text-[var(--ink-400)]">or</span>
+          <div className="h-[1px] bg-[var(--border-hairline)] flex-1" />
+        </div>
+
+        {/* Google Sign In */}
+        <div className="space-y-2.5">
+          <button
+            type="button"
+            onClick={onGoogleSignIn}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 bg-white border border-[var(--border-hairline)] hover:border-[var(--haven-orchid)] text-[var(--ink-900)] font-display font-semibold text-[13px] py-3 px-4 rounded-full shadow-xs transition-all cursor-pointer"
+          >
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+              />
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+
+          {onGuestSignIn && (
+            <button
+              type="button"
+              onClick={onGuestSignIn}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 bg-[var(--lavender-100)] hover:bg-[var(--lavender-200)] text-[var(--haven-deep)] font-display font-bold text-[13px] py-3 px-4 rounded-full shadow-xs transition-all cursor-pointer border border-[var(--haven-orchid)]/30"
+            >
+              <span>Explore as Guest</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="text-center pt-4">
+        <button
+          type="button"
+          onClick={onNavigateToSignIn}
+          className="text-[13px] font-body text-[var(--ink-600)] cursor-pointer"
+        >
+          Already have an account? <strong className="font-display font-bold text-[var(--haven-deep)] hover:underline">Sign in</strong>
+        </button>
+      </div>
+    </div>
+  );
+}

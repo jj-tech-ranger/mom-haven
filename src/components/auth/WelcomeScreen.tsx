@@ -1,5 +1,98 @@
 import React from 'react';
-import { ShieldCheck, UsersRound } from 'lucide-react';
-interface WelcomeScreenProps{onCreateAccount:()=>void;onSignIn:()=>void;onGoogleSignIn:()=>void;googleLoading?:boolean;onPartner?:()=>void}
-const GoogleMark=()=> <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5"><path fill="#4285F4" d="M21.35 12.27c0-.78-.07-1.53-.22-2.27H12v4.3h5.22a4.46 4.46 0 0 1-1.94 2.93v2.42h3.14c1.84-1.7 2.93-4.2 2.93-7.38Z"/><path fill="#34A853" d="M12 21.67c2.63 0 4.84-.87 6.45-2.36l-3.14-2.42c-.87.58-1.98.92-3.31.92-2.54 0-4.69-1.72-5.46-4.03H3.3v2.5A9.74 9.74 0 0 0 12 21.67Z"/><path fill="#FBBC05" d="M6.54 13.78A5.84 5.84 0 0 1 6.23 12c0-.62.11-1.22.31-1.78v-2.5H3.3A9.74 9.74 0 0 0 2.26 12c0 1.57.38 3.05 1.04 4.28l3.24-2.5Z"/><path fill="#EA4335" d="M12 6.19c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.83 3.27 14.63 2.33 12 2.33A9.74 9.74 0 0 0 3.3 7.72l3.24 2.5C7.31 7.91 9.46 6.19 12 6.19Z"/></svg>;
-export const WelcomeScreen:React.FC<WelcomeScreenProps>=({onCreateAccount,onSignIn,onGoogleSignIn,googleLoading=false,onPartner})=><main className="relative min-h-[760px] w-full max-w-[430px] mx-auto overflow-hidden rounded-card bg-surface-canvas text-text-primary shadow-sm border border-border-light flex flex-col"><section className="relative px-7 pt-12 pb-20 text-center text-white overflow-hidden bg-brand-primary"><div className="relative flex flex-col items-center"><div className="mb-7 flex h-[88px] w-[88px] items-center justify-center overflow-hidden rounded-card border border-white/25 bg-white/10"><img src="/assets/favicon-source-800x800.png" alt="" className="h-full w-full object-cover"/></div><img src="/logo.svg" alt="MomHaven" className="h-[74px] w-auto max-w-[250px] object-contain brightness-0 invert"/><p className="mt-3 font-consumer text-[18px] font-semibold leading-tight text-white/95">Every Mother, Every Child,<br/>Every Milestone</p></div></section><section className="relative -mt-8 flex flex-1 flex-col rounded-t-card bg-surface-card px-6 pb-6 pt-7"><p className="mx-auto max-w-[330px] text-center font-clinical text-[13px] leading-6 text-text-muted">MomHaven is your companion to the Kenyan Mother &amp; Child Health Handbook — helping you keep track of your journey alongside, never instead of, clinical care.</p><div className="mt-auto space-y-3.5 pt-7"><button onClick={onCreateAccount} className="w-full rounded-card bg-brand-primary px-6 py-4 font-consumer text-[16px] font-bold text-white hover:bg-brand-primary-hover">Create account</button><button onClick={onGoogleSignIn} disabled={googleLoading} className="flex w-full items-center justify-center gap-3 rounded-card border border-brand-primary bg-white px-6 py-3.5 font-consumer text-[15px] font-semibold text-brand-primary"><GoogleMark/>{googleLoading?'Connecting…':'Continue with Google'}</button><button onClick={onSignIn} className="block w-full pt-1 text-center font-clinical text-[13px] text-text-muted">Already have an account? <span className="font-semibold text-brand-primary underline">Sign in</span></button>{onPartner&&<button onClick={onPartner} className="flex w-full items-center justify-center gap-2 rounded-card border border-border-light bg-brand-surface px-5 py-3 font-consumer text-sm font-semibold text-brand-primary"><UsersRound className="h-4 w-4"/>I’m a partner supporting a mother</button>}<div className="flex items-center justify-center gap-2 pt-2 text-[11px] text-text-muted"><ShieldCheck className="h-4 w-4 text-brand-accent"/><span>Your health information stays private and yours.</span></div></div></section></main>;
+import { Heart, Sparkles, Shield } from 'lucide-react';
+
+interface WelcomeScreenProps {
+  onCreateAccount: () => void;
+  onSignIn: () => void;
+  onGoogleSignIn: () => void;
+  loading?: boolean;
+}
+
+export default function WelcomeScreen({
+  onCreateAccount,
+  onSignIn,
+  onGoogleSignIn,
+  loading = false,
+}: WelcomeScreenProps) {
+  return (
+    <div 
+      className="min-h-screen w-full flex flex-col justify-between p-6 sm:p-8 text-white relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(180deg, #33178A 0%, #4B27A8 45%, #6B3DB8 80%, #9167C2 100%)'
+      }}
+    >
+      {/* Top subtle decorative pattern */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 left-0 w-72 h-72 bg-[#B79CDA]/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Main Centered Content */}
+      <div className="flex-1 flex flex-col items-center justify-center text-center my-auto z-10 max-w-sm mx-auto">
+        {/* Logo Container */}
+        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-[28px] bg-white/15 backdrop-blur-md p-3.5 mb-6 shadow-2xl flex items-center justify-center border border-white/20 transition-transform hover:scale-105 duration-300">
+          <img
+            src="/assets/logo.png"
+            alt="MomHaven Logo"
+            className="w-full h-full object-contain filter drop-shadow-md"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+
+        {/* Wordmark */}
+        <h1 className="font-display font-extrabold text-[36px] sm:text-[40px] text-white leading-none tracking-tight">
+          MomHaven
+        </h1>
+
+        {/* Tagline */}
+        <p className="font-display font-medium text-[16px] sm:text-[17px] text-[#E5DFF0] mt-2.5 mb-6">
+          Every Mother, Every Child, Every Milestone.
+        </p>
+
+        {/* Value Proposition Statement */}
+        <p className="font-body text-[14px] sm:text-[15px] leading-relaxed text-[#F7F3FC]/90 px-2 font-normal">
+          A companion for your pregnancy, childbirth and your child's first five years — alongside your Mother &amp; Child Health Handbook.
+        </p>
+      </div>
+
+      {/* Action Buttons & Footer */}
+      <div className="w-full max-w-sm mx-auto space-y-3.5 z-10 pb-4">
+        {/* Create Account Button */}
+        <button
+          type="button"
+          onClick={onCreateAccount}
+          disabled={loading}
+          className="w-full py-4 px-6 rounded-full bg-white text-[#241451] font-display font-bold text-[16px] shadow-lg hover:bg-white/95 active:scale-[0.98] transition-all cursor-pointer"
+        >
+          Create account
+        </button>
+
+        {/* Google Sign In Button */}
+        <button
+          type="button"
+          onClick={onGoogleSignIn}
+          disabled={loading}
+          className="w-full py-3.5 px-6 rounded-full bg-white/10 hover:bg-white/15 active:scale-[0.98] border border-white/25 text-white font-display font-semibold text-[15px] flex items-center justify-center gap-3 backdrop-blur-sm transition-all cursor-pointer"
+        >
+          <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
+          <span>Continue with Google</span>
+        </button>
+
+        {/* Sign In Link */}
+        <div className="pt-2 text-center">
+          <button
+            type="button"
+            onClick={onSignIn}
+            className="text-[14px] font-body text-[#F7F3FC] hover:text-white transition-colors cursor-pointer"
+          >
+            Already have an account? <strong className="font-display font-bold text-white underline decoration-white/40 underline-offset-4">Sign in</strong>
+          </button>
+        </div>
+
+        {/* Privacy Assurance Badge */}
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#E5DFF0]/80 pt-2">
+          <Shield className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+          <span>Your health information stays private and yours.</span>
+        </div>
+      </div>
+    </div>
+  );
+}

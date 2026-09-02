@@ -1,13 +1,35 @@
 import React from 'react';
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'brandPrimary'|'brandSecondary'|'clinicalAction'|'dangerEmergency'|'ghost'|'primary'|'secondary'|'tertiary'|'destructive'|'emergency';
-  isLoading?: boolean;
-  fullWidth?: boolean;
+export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'destructive' | 'emergency' | 'outline';
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  children: React.ReactNode;
 }
 
-export default function Button({variant='brandPrimary',children,isLoading=false,fullWidth=false,className='',disabled,...props}:ButtonProps){
-  const base='inline-flex items-center justify-center min-h-[48px] px-6 rounded-xl font-medium text-base transition-colors focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-[#5B2C6F] focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
-  const variants={brandPrimary:'bg-[#5B2C6F] text-white hover:bg-[#4A235A] active:bg-[#3B1C48]',brandSecondary:'bg-[#F5EEF8] text-[#5B2C6F] hover:bg-[#EBDDF2] border border-[#D5C2E0]',clinicalAction:'bg-slate-900 text-white hover:bg-slate-800',dangerEmergency:'bg-[#C0392B] text-white hover:bg-[#A93226] font-bold shadow-md',ghost:'bg-transparent text-[#566573] hover:bg-slate-100 hover:text-[#1C2833]',primary:'bg-[#5B2C6F] text-white hover:bg-[#4A235A] active:bg-[#3B1C48]',secondary:'bg-[#F5EEF8] text-[#5B2C6F] hover:bg-[#EBDDF2] border border-[#D5C2E0]',tertiary:'bg-transparent text-[#5B2C6F] underline-offset-2 hover:underline',destructive:'border border-[#C0392B] bg-white text-[#C0392B] hover:bg-[#FEF2F2]',emergency:'bg-[#C0392B] text-white hover:bg-[#A93226] font-bold shadow-md'};
-  return <button className={`${base} ${variants[variant]} ${fullWidth?'w-full':''} ${className}`} disabled={disabled||isLoading} {...props}>{isLoading?<span className="flex items-center gap-2"><svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg><span>Processing…</span></span>:children}</button>;
+// src/components/Button.jsx / Button.tsx
+export default function Button({ variant = 'primary', children, className = '', ...props }: ButtonProps) {
+  const base = 'font-display font-semibold text-[15px] rounded-[28px] px-6 py-3.5 w-full inline-flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
+  
+  const variants: Record<ButtonVariant, string> = {
+    primary: 'text-white active:scale-[0.99]',
+    secondary: 'bg-white text-[var(--haven-deep)] border-[1.5px] border-[var(--haven-deep)] hover:bg-[var(--lavender-50)]',
+    outline: 'bg-white text-[var(--ink-900)] border border-[var(--border-hairline)] hover:bg-[var(--lavender-50)]',
+    tertiary: 'bg-transparent text-[var(--haven-deep)] font-semibold underline-offset-2 hover:underline',
+    destructive: 'bg-white text-[var(--status-urgent)] border-[1.5px] border-[var(--status-urgent)] hover:bg-[var(--status-urgent-bg)]',
+    emergency: 'text-white active:scale-[0.99]',
+  };
+
+  const style =
+    variant === 'primary'
+      ? { background: 'var(--grad-haven)', boxShadow: '0 6px 16px rgba(51,23,138,0.28)' }
+      : variant === 'emergency'
+      ? { background: '#E11D3C', boxShadow: '0 8px 20px rgba(225,29,60,0.35)' }
+      : undefined;
+
+  return (
+    <button className={`${base} ${variants[variant]} ${className}`} style={style} {...props}>
+      {children}
+    </button>
+  );
 }
