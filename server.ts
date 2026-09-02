@@ -10,8 +10,9 @@ import { adminAuth, adminDb } from './server/clinicianAccess.js';
 
 const PORT = Number(process.env.PORT || 8080);
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mom-haven';
+const GOOGLE_CLOUD_LOCATION = process.env.GOOGLE_CLOUD_LOCATION || 'europe-west1';
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
+const ai = new GoogleGenAI({ vertexai: true, project: PROJECT_ID, location: GOOGLE_CLOUD_LOCATION });
 const SYSTEM_INSTRUCTION = `You are Haven, MomHaven's supportive companion for Kenyan mothers navigating pregnancy and their child's first five years. You are not a doctor and you do not diagnose. Never provide a diagnosis, medication dose, or prescribing instruction. Keep answers short, warm, culturally grounded, and plain language. Defer Kenyan clinical schedules, thresholds and dosing to MomHaven records and clinicians.`;
 const responseSchema = {
   type: 'object',
@@ -68,7 +69,7 @@ async function startServer() {
       if (!header.startsWith('Bearer ')) return res.status(401).json({ error: 'Sign-in required.' });
       const decoded = await adminAuth.verifyIdToken(header.slice(7));
       const uid = decoded.uid;
-      const { sessionId: requestedSessionId, message } = req.body || {};
+      const { sessionId: requestedSessionId, message, language } = req.body || {};
       const text = typeof message === 'string' ? message.trim() : '';
       if (!text || text.length > 4000) return res.status(400).json({ error: 'A valid message is required.' });
 
@@ -77,12 +78,14 @@ async function startServer() {
       if (layer === 'physical_danger' || layer === 'self_harm_or_violence') {
         return res.json({ sessionId, classification: 'emergency', responseText: '', suggestedFollowups: [], handoff: layer });
       }
-      if (!ai) return res.status(503).json({ error: 'Haven is not configured yet.' });
 
+      const languageInstruction = language === 'sw'
+        ? 'Respond in clear, natural Kenyan Kiswahili.'
+        : 'Respond in clear, warm English unless the mother writes in Kiswahili, in which case respond in Kiswahili.';
       const context = await resolveContext(uid);
       const response = await ai.models.generateContent({
         model: GEMINI_MODEL,
-        contents: `${context}\n\nMother's message:\n${text}`,
+        contents: `${context}\n\nLanguage preference: ${language === 'sw' ? 'Kiswahili' : 'English'}\n${languageInstruction}\n\nMother's message:\n${text}`,
         config: { systemInstruction: SYSTEM_INSTRUCTION, responseMimeType: 'application/json', responseSchema, temperature: 0.4, maxOutputTokens: 600 },
       });
       let result: any;
