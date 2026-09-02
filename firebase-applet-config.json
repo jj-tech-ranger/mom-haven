@@ -3,7 +3,7 @@
   "appId": "1:306450754584:web:5cdc156a69de9b0f43676d",
   "apiKey": "AIzaSyBz3-3qtnWdqcicw9uATEgn1zorB7WUQ98",
   "authDomain": "mom-haven.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-momhaven-f2316da7-8f94-4e5d-9e6f-cc82c1066c72",
+  "firestoreDatabaseId": "mom-haven",
   "storageBucket": "mom-haven.firebasestorage.app",
   "messagingSenderId": "306450754584",
   "measurementId": "",
