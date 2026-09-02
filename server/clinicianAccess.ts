@@ -13,7 +13,8 @@ function adminReady() {
 }
 
 adminReady();
-export const adminDb = getFirestore();
+const FIRESTORE_DATABASE_ID = 'mom-haven';
+export const adminDb = getFirestore(undefined, FIRESTORE_DATABASE_ID);
 export const adminAuth = getAuth();
 
 export class ApiError extends Error {
