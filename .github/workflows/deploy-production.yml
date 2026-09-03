@@ -1,16 +1,14 @@
-name: MomHaven production deploy
+name: MomHaven CI and production deploy
 
 on:
   push:
+    branches: ['main']
+  pull_request:
     branches: ['main']
 
 permissions:
   contents: read
   id-token: write
-
-concurrency:
-  group: production-deploy
-  cancel-in-progress: false
 
 env:
   NODE_VERSION: 20
@@ -26,40 +24,53 @@ jobs:
     name: TypeScript
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
-      - run: npm run lint
+      - name: Install dependencies
+        run: npm ci
+      - name: TypeScript check
+        run: npm run lint
 
   clinical:
     name: Clinical tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
-      - run: npm run test:clinical
+      - name: Install dependencies
+        run: npm ci
+      - name: Run clinical tests
+        run: npm run test:clinical
 
   build:
     name: Production build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - run: npm ci
-      - run: npm run build
+      - name: Install dependencies
+        run: npm ci
+      - name: Build application
+        run: npm run build
 
   deploy:
     name: Deploy production
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     needs: [typecheck, clinical, build]
     runs-on: ubuntu-latest
     steps:
