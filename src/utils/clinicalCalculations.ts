@@ -2,6 +2,8 @@ export interface GestationCalculation {
   lmp: string;
   edd: string;
   gestationalAgeWeeks: number;
+  /** Backwards-compatible alias used by advanced personalization. */
+  gestationalWeeks: number;
   gestationalAgeDays: number;
   trimester: 1 | 2 | 3;
   daysRemaining: number;
@@ -41,6 +43,7 @@ export function calculateGestationFromLmp(
     lmp: toDateOnly(lmpDate),
     edd: toDateOnly(eddDate),
     gestationalAgeWeeks: weeks,
+    gestationalWeeks: weeks,
     gestationalAgeDays: days,
     trimester,
     daysRemaining,
