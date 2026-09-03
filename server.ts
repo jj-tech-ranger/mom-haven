@@ -73,7 +73,12 @@ async function startServer() {
       const languageInstruction = language === 'sw'
         ? 'Respond in clear, natural Kenyan Kiswahili.'
         : 'Respond in clear, warm English unless the mother writes in Kiswahili, in which case respond in Kiswahili.';
-      const context = formatHavenContext(await buildHavenContext(uid));
+      let context = 'MomHaven context is temporarily unavailable. Answer without personalized context and do not infer missing clinical facts.';
+      try {
+        context = formatHavenContext(await buildHavenContext(uid));
+      } catch (contextError) {
+        console.warn('Haven context unavailable; continuing without personalization', contextError);
+      }
       const response = await ai.models.generateContent({
         model: GEMINI_MODEL,
         contents: `${context}\n\nLanguage preference: ${language === 'sw' ? 'Kiswahili' : 'English'}\n${languageInstruction}\n\nMother's message:\n${text}`,
