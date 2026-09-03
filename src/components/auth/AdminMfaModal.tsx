@@ -1,15 +1,7 @@
-// src/components/auth/AdminMfaModal.tsx
 import React, { useState } from 'react';
-import { 
-  ShieldAlert, 
-  KeyRound, 
-  CheckCircle2, 
-  AlertCircle, 
-  Lock, 
-  X, 
-  Sparkles 
-} from 'lucide-react';
-import Button from '../Button';
+import { EmailAuthProvider, GoogleAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup } from 'firebase/auth';
+import { LockKeyhole, ShieldCheck } from 'lucide-react';
+import { auth } from '../../lib/firebase';
 
 interface AdminMfaModalProps {
   adminEmail: string;
@@ -17,119 +9,65 @@ interface AdminMfaModalProps {
   onCancel: () => void;
 }
 
-export default function AdminMfaModal({
-  adminEmail,
-  onSuccess,
-  onCancel,
-}: AdminMfaModalProps) {
-  const [code, setCode] = useState('');
-  const [error, setError] = useState<string | null>(null);
+export default function AdminMfaModal({ adminEmail, onSuccess, onCancel }: AdminMfaModalProps) {
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const user = auth.currentUser;
+  const isGoogleUser = user?.providerData.some(provider => provider.providerId === 'google.com') ?? false;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (code.trim().length !== 6) {
-      setError('Please enter the 6-digit MOH administrative security token.');
+  const verify = async () => {
+    if (!user) {
+      setError('Your session has expired. Please sign in again.');
       return;
     }
-
     setLoading(true);
     setError(null);
-
-    // Simulate step-up TOTP verification (accept any 6-digit code or default MOH token '123456' / '254000')
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      if (isGoogleUser) {
+        await reauthenticateWithPopup(user, new GoogleAuthProvider());
+      } else if (user.email && password) {
+        await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+      } else {
+        setError('Enter your account password to continue.');
+        setLoading(false);
+        return;
+      }
       onSuccess();
-    }, 600);
+    } catch (err) {
+      console.error('Admin step-up verification failed', err);
+      setError('Verification failed. Please authenticate again and retry.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs font-body">
-      <div className="bg-white w-full max-w-md rounded-[28px] shadow-card-3 border border-[var(--border-hairline)] overflow-hidden flex flex-col">
-        
-        {/* Header */}
-        <div className="p-5 border-b border-[var(--border-hairline)] flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-900 flex items-center justify-center">
-              <Lock className="w-5 h-5 text-[var(--haven-deep)]" />
-            </div>
-            <div>
-              <h3 className="font-display font-extrabold text-[17px] text-[var(--ink-900)]">
-                Admin Step-Up MFA
-              </h3>
-              <p className="font-body text-xs text-[var(--ink-600)]">
-                MOH Security Token Verification
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-[var(--ink-600)] hover:bg-gray-200 cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 p-6">
+        <div className="w-12 h-12 rounded-2xl bg-[var(--lavender-100)] flex items-center justify-center mb-4">
+          <ShieldCheck className="w-6 h-6 text-[var(--haven-orchid)]" />
         </div>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--haven-deep)]">Administrative step-up verification</p>
+        <h2 className="text-xl font-bold text-gray-900 mt-1">Confirm your identity</h2>
+        <p className="text-sm text-gray-600 mt-2">Elevated administrative actions require fresh authentication for <strong>{adminEmail}</strong>.</p>
 
-        {/* Content */}
-        <div className="p-6 text-center space-y-4">
-          <div className="bg-purple-50 border border-purple-200 p-3.5 rounded-[16px] text-left text-xs text-purple-950 flex items-start gap-2.5">
-            <ShieldAlert className="w-4 h-4 text-purple-700 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold">Administrative Level 4 Access</p>
-              <p className="text-purple-800 text-[11px] mt-0.5">
-                Elevated privileges require a 6-digit security token sent to <strong>{adminEmail}</strong> or your MOH Authenticator.
-              </p>
+        {!isGoogleUser && (
+          <label className="block mt-5">
+            <span className="text-xs font-semibold text-gray-700">Account password</span>
+            <div className="relative mt-1.5">
+              <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input type="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" className="w-full pl-9 pr-3 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--haven-deep)]" />
             </div>
-          </div>
+          </label>
+        )}
 
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-[14px] flex items-start gap-2 text-left">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
+        {isGoogleUser && <p className="mt-5 text-xs text-gray-600 bg-gray-50 rounded-xl p-3">Continue with Google to complete the secure step-up check.</p>}
+        {error && <p className="mt-3 text-xs font-medium text-rose-700 bg-rose-50 rounded-xl p-3">{error}</p>}
 
-          <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-            <div>
-              <label className="block text-[11px] font-bold text-[var(--ink-900)] uppercase tracking-wider mb-2">
-                6-Digit MOH Security Code
-              </label>
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                placeholder="• • • • • •"
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                className="w-full text-center font-mono font-extrabold text-[26px] tracking-widest py-3 px-4 rounded-[16px] border-2 border-[var(--border-hairline)] focus:border-[var(--haven-deep)] bg-[var(--lavender-50)] focus:bg-white focus:outline-none"
-                autoFocus
-              />
-              <p className="text-[11px] text-[var(--ink-600)] mt-1.5">
-                (Demo token: enter any 6 digits e.g. <span className="font-mono font-bold text-[var(--haven-deep)]">123456</span>)
-              </p>
-            </div>
-
-            <div className="pt-2 flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
-                className="flex-1 py-3 text-xs"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={loading || code.length !== 6}
-                className="flex-1 py-3 text-xs font-display font-bold shadow-md"
-              >
-                {loading ? 'Verifying...' : 'Authorize Admin'}
-              </Button>
-            </div>
-          </form>
+        <div className="flex gap-3 mt-6">
+          <button type="button" onClick={onCancel} disabled={loading} className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700">Cancel</button>
+          <button type="button" onClick={verify} disabled={loading} className="flex-1 py-3 rounded-xl bg-[var(--haven-deep)] text-white text-sm font-semibold disabled:opacity-50">{loading ? 'Verifying…' : isGoogleUser ? 'Continue with Google' : 'Verify identity'}</button>
         </div>
       </div>
     </div>
