@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { X, Stethoscope, ShieldCheck, AlertCircle, CheckCircle2, Clock3, RefreshCw, LockKeyhole } from 'lucide-react';
 import Button from '../Button';
-import { auth, createAccountWithEmail, sendEmailVerification } from '../../lib/firebase';
+import { createAccountWithEmail } from '../../lib/firebase';
 import { checkClinicianVerification, claimApprovedClinician, getKenyaFacilities, registerClinician, KMHFLFacility } from '../../services/clinicianService';
 import { KENYA_COUNTIES } from '../../types';
 
 interface ClinicianRegisterModalProps { onClose: () => void; onSuccess: (clinicianUid: string) => void; }
-type Mode = 'register' | 'submitted' | 'status' | 'setup' | 'verify';
+type Mode = 'register' | 'submitted' | 'status' | 'setup';
 
 export default function ClinicianRegisterModal({ onClose, onSuccess }: ClinicianRegisterModalProps) {
   const [mode, setMode] = useState<Mode>('register');
@@ -37,23 +37,16 @@ export default function ClinicianRegisterModal({ onClose, onSuccess }: Clinician
     if (!name.trim() || !email.trim() || !licenseNumber.trim() || !cadre || !county || !facilityCode) { setError('Please complete all required professional and facility fields.'); return; }
     const selectedFacility = facilities.find(f => f.code === facilityCode);
     if (!selectedFacility) { setError('Please select a facility from the current Kenya facility directory.'); return; }
-    try {
-      setLoading(true); setError(null);
-      await registerClinician({ name: name.trim(), email: email.trim().toLowerCase(), licenseNumber: licenseNumber.trim().toUpperCase(), cadre: cadre.trim(), facilityId: selectedFacility.id || selectedFacility.code, facilityName: selectedFacility.name });
-      setMode('submitted');
-    } catch (err: any) { console.error('Clinician registration error', err); setError(err?.message || 'Failed to submit clinician verification. Please try again.'); }
+    try { setLoading(true); setError(null); await registerClinician({ name: name.trim(), email: email.trim().toLowerCase(), licenseNumber: licenseNumber.trim().toUpperCase(), cadre: cadre.trim(), facilityId: selectedFacility.id || selectedFacility.code, facilityName: selectedFacility.name }); setMode('submitted'); }
+    catch (err: any) { console.error('Clinician registration error', err); setError(err?.message || 'Failed to submit clinician verification. Please try again.'); }
     finally { setLoading(false); }
   };
 
   const handleStatusCheck = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) { setError('Enter the email used on your clinician application.'); return; }
-    try {
-      setLoading(true); setError(null);
-      const result = await checkClinicianVerification(email);
-      setStatus(result);
-      if (result.status === 'approved') setMode('setup'); else setMode('status');
-    } catch (err: any) { setError(err?.message || 'Unable to check verification status.'); }
+    try { setLoading(true); setError(null); const result = await checkClinicianVerification(email); setStatus(result); if (result.status === 'approved') setMode('setup'); else setMode('status'); }
+    catch (err: any) { setError(err?.message || 'Unable to check verification status.'); }
     finally { setLoading(false); }
   };
 
@@ -64,24 +57,13 @@ export default function ClinicianRegisterModal({ onClose, onSuccess }: Clinician
     try {
       setLoading(true); setError(null);
       const credential = await createAccountWithEmail(email.trim().toLowerCase(), password, status?.name || name || undefined);
-      await sendEmailVerification(credential.user);
-      setMode('verify');
+      const result = await claimApprovedClinician();
+      onSuccess(result.uid);
     } catch (err: any) {
       console.error('Clinician account creation error', err);
       if (err?.code === 'auth/email-already-in-use') setError('An account already exists for this email. Sign in with that account, then check your clinician status again.');
-      else setError(err?.message || 'Unable to create the clinician account.');
+      else setError(err?.message || 'Unable to create or activate the clinician account.');
     } finally { setLoading(false); }
-  };
-
-  const handleActivate = async () => {
-    try {
-      setLoading(true); setError(null);
-      await auth.currentUser?.reload();
-      if (!auth.currentUser?.emailVerified) { setError('Please verify the email using the link we sent, then click Activate account.'); return; }
-      const result = await claimApprovedClinician();
-      onSuccess(result.uid);
-    } catch (err: any) { setError(err?.message || 'Unable to activate the approved clinician account.'); }
-    finally { setLoading(false); }
   };
 
   const renderHeader = () => <div className="p-5 border-b border-[var(--border-hairline)] flex items-center justify-between"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-2xl bg-[var(--lavender-100)] flex items-center justify-center"><Stethoscope className="w-5 h-5 text-[var(--haven-orchid)]" /></div><div><h3 className="font-display font-extrabold text-[18px] text-[var(--ink-900)]">Healthcare Professional Access</h3><p className="font-body text-xs text-[var(--ink-600)]">KMPDC / NCK / COC Credential Verification</p></div></div><button type="button" onClick={onClose} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer"><X className="w-5 h-5" /></button></div>;
@@ -107,8 +89,6 @@ export default function ClinicianRegisterModal({ onClose, onSuccess }: Clinician
 
     {mode === 'status' && <div className="space-y-4"><div className="text-center"><RefreshCw className="w-7 h-7 text-[var(--haven-orchid)] mx-auto mb-2" /><h4 className="font-display font-extrabold text-xl">Check verification status</h4><p className="text-xs text-[var(--ink-600)] mt-1">Enter the email used on your clinician application.</p></div><form onSubmit={handleStatusCheck} className="space-y-3"><input type="email" placeholder="Professional email" value={email} onChange={e => setEmail(e.target.value)} required autoFocus className="w-full text-xs py-3 px-3.5 rounded-[14px] border border-[var(--border-hairline)] bg-[var(--lavender-50)]" /><Button type="submit" variant="primary" disabled={loading} className="w-full py-3">{loading ? 'Checking...' : 'Check status'}</Button></form>{status?.status === 'pending' && <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex gap-2"><Clock3 className="w-4 h-4 shrink-0" /><span>Your application is <strong>pending review</strong>. An administrator still needs to approve or reject your credentials.</span></div>}{status?.status === 'rejected' && <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs"><strong>Verification not approved.</strong>{status.rejectionReason ? ` ${status.rejectionReason}` : ' Please contact the MomHaven administrator if you need clarification.'}</div>}{status?.status === 'not_found' && <div className="p-4 rounded-2xl bg-[var(--lavender-50)] border border-[var(--border-hairline)] text-[var(--ink-700)] text-xs">No clinician application was found for that email.</div>}<button type="button" onClick={() => { setStatus(null); setError(null); setMode('register'); }} className="text-xs text-[var(--haven-deep)] hover:underline">Back to clinician application</button></div>}
 
-    {mode === 'setup' && <div className="space-y-4"><div className="text-center"><div className="w-14 h-14 rounded-full bg-emerald-50 mx-auto flex items-center justify-center"><CheckCircle2 className="w-7 h-7 text-emerald-600" /></div><h4 className="font-display font-extrabold text-xl mt-3">Your application is approved</h4><p className="text-xs text-[var(--ink-600)] mt-1">{status?.name || 'Clinician'}, you can now create your MomHaven clinician password.</p></div><div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs"><strong>{status?.facilityName || 'Approved facility'}</strong> · {status?.cadre || 'Clinician'}</div><form onSubmit={handleCreatePassword} className="space-y-3"><div className="relative"><LockKeyhole className="absolute left-3 top-3 w-4 h-4 text-[var(--ink-500)]" /><input type="password" placeholder="Create password (6+ characters)" value={password} onChange={e => setPassword(e.target.value)} required className="w-full text-xs py-3 pl-9 pr-3.5 rounded-[14px] border border-[var(--border-hairline)] bg-[var(--lavender-50)]" /></div><input type="password" placeholder="Confirm password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="w-full text-xs py-3 px-3.5 rounded-[14px] border border-[var(--border-hairline)] bg-[var(--lavender-50)]" /><Button type="submit" variant="primary" disabled={loading} className="w-full py-3">{loading ? 'Creating account...' : 'Create clinician account'}</Button></form><p className="text-[11px] text-[var(--ink-600)] leading-relaxed">For security, MomHaven will send a verification email before the approved application is attached to your clinician account.</p></div>}
-
-    {mode === 'verify' && <div className="text-center space-y-4 py-3"><div className="w-14 h-14 rounded-full bg-blue-50 mx-auto flex items-center justify-center"><ShieldCheck className="w-7 h-7 text-blue-600" /></div><h4 className="font-display font-extrabold text-xl">Verify your email</h4><p className="text-sm text-[var(--ink-600)] leading-relaxed">We sent a verification link to <strong>{email}</strong>. Open it, then return here and activate your approved clinician account.</p><Button type="button" variant="primary" onClick={handleActivate} disabled={loading} className="w-full py-3">{loading ? 'Activating...' : 'I verified my email — Activate account'}</Button><button type="button" onClick={() => setMode('setup')} className="text-xs text-[var(--haven-deep)] hover:underline">Back</button></div>}
+    {mode === 'setup' && <div className="space-y-4"><div className="text-center"><div className="w-14 h-14 rounded-full bg-emerald-50 mx-auto flex items-center justify-center"><CheckCircle2 className="w-7 h-7 text-emerald-600" /></div><h4 className="font-display font-extrabold text-xl mt-3">Your application is approved</h4><p className="text-xs text-[var(--ink-600)] mt-1">{status?.name || 'Clinician'}, you can now create your MomHaven clinician password.</p></div><div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs"><strong>{status?.facilityName || 'Approved facility'}</strong> · {status?.cadre || 'Clinician'}</div><form onSubmit={handleCreatePassword} className="space-y-3"><div className="relative"><LockKeyhole className="absolute left-3 top-3 w-4 h-4 text-[var(--ink-500)]" /><input type="password" placeholder="Create password (6+ characters)" value={password} onChange={e => setPassword(e.target.value)} required className="w-full text-xs py-3 pl-9 pr-3.5 rounded-[14px] border border-[var(--border-hairline)] bg-[var(--lavender-50)]" /></div><input type="password" placeholder="Confirm password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="w-full text-xs py-3 px-3.5 rounded-[14px] border border-[var(--border-hairline)] bg-[var(--lavender-50)]" /><Button type="submit" variant="primary" disabled={loading} className="w-full py-3">{loading ? 'Creating account...' : 'Create clinician account'}</Button></form><p className="text-[11px] text-[var(--ink-600)] leading-relaxed">Your password is created only after administrator approval. The new Firebase account is then linked to the approved clinician record.</p></div>}
   </div></div></div>;
 }
