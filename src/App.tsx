@@ -1,7 +1,7 @@
 // src/App.tsx
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db, ensureUserProfile, logoutUser, testConnection } from './lib/firebase';
 import { UserRole, Clinician } from './types';
 import LandingPage from './components/LandingPage';
@@ -13,13 +13,10 @@ import ClinicianPendingScreen from './components/auth/ClinicianPendingScreen';
 import AdminMfaModal from './components/auth/AdminMfaModal';
 import PremiumOnboardingWizard from './components/auth/PremiumOnboardingWizard';
 import {
-  getAnonymousContextDraft,
   clearAnonymousContextDraft,
   syncAnonymousContext,
   hasAnonymousContextDraft,
 } from './services/anonymousContextService';
-import { getHealthContext, saveHealthContext } from './services/healthContextService';
-import type { HealthContext } from './types/healthContext';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -48,53 +45,80 @@ export default function App() {
     setNeedsOnboarding(false);
 
     try {
-      const idToken = await user.getIdToken(true);
-      const response = await fetch('/api/v1/clinician/me', {
-        headers: { authorization: `Bearer ${idToken}`, 'x-firebase-id-token': idToken },
-        cache: 'no-store',
-      });
-      if (response.ok) {
-        const payload = await response.json();
-        if (requestId !== fetchRequestRef.current) return;
-        setUserRole('CLINICIAN');
-        setClinicianData(payload?.clinician ? { ...payload.clinician, uid: user.uid } as Clinician : null);
-        return;
-      }
-      if (response.status !== 404) {
-        if (requestId !== fetchRequestRef.current) return;
-        setClinicianData(null);
-        setIdentityError(response.status === 401 ? 'Your authentication session could not be verified. Please sign in again.' : 'We could not verify your portal role. For your security, no portal data will be shown.');
-        return;
-      }
-    } catch (err) {
-      if (requestId !== fetchRequestRef.current) return;
-      console.error('Clinician identity check failed', err);
-      setClinicianData(null);
-      setIdentityError('We could not verify your portal role. For your security, no portal data will be shown.');
-      return;
-    }
-
-    try {
+      // Resolve the application's role first. The clinician endpoint is deliberately
+      // restricted, so it must never be used as the gate for admins, partners, or mothers.
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (requestId !== fetchRequestRef.current) return;
       const data = userDoc.exists() ? userDoc.data() : {};
       const role = (data?.role as UserRole) || 'MOTHER';
 
+      if (role === 'ADMIN') {
+        setUserRole('ADMIN');
+        setClinicianData(null);
+        setNeedsOnboarding(false);
+        return;
+      }
+
+      if (role === 'PARTNER') {
+        setUserRole('PARTNER');
+        setClinicianData(null);
+        setNeedsOnboarding(false);
+        return;
+      }
+
+      if (role === 'CLINICIAN') {
+        try {
+          const idToken = await user.getIdToken(true);
+          const response = await fetch('/api/v1/clinician/me', {
+            headers: { authorization: `Bearer ${idToken}`, 'x-firebase-id-token': idToken },
+            cache: 'no-store',
+          });
+
+          if (response.ok) {
+            const payload = await response.json();
+            if (requestId !== fetchRequestRef.current) return;
+            setUserRole('CLINICIAN');
+            setClinicianData(payload?.clinician ? { ...payload.clinician, uid: user.uid } as Clinician : null);
+            return;
+          }
+
+          // A signed-in clinician may legitimately receive 403 while awaiting
+          // verification. The pending screen handles that state safely.
+          if (response.status === 403) {
+            if (requestId !== fetchRequestRef.current) return;
+            setUserRole('CLINICIAN');
+            setClinicianData(null);
+            setNeedsOnboarding(false);
+            return;
+          }
+
+          if (requestId !== fetchRequestRef.current) return;
+          setClinicianData(null);
+          setIdentityError(response.status === 401
+            ? 'Your authentication session could not be verified. Please sign in again.'
+            : 'We could not verify your clinician portal. Please try again.');
+          return;
+        } catch (err) {
+          if (requestId !== fetchRequestRef.current) return;
+          console.error('Clinician identity check failed', err);
+          setClinicianData(null);
+          setIdentityError('We could not verify your clinician portal. Please try again.');
+          return;
+        }
+      }
+
+      // Mothers use the ordinary Firestore-owned profile flow. A missing profile
+      // is initialized here, while role resolution above prevents admin/clinician
+      // accounts from accidentally entering the mother experience.
       if (role === 'MOTHER' && !userDoc.exists()) {
         try { await ensureUserProfile(user); } catch (err) { console.warn('Could not initialize MomHaven user profile', err); }
       }
 
-      if (role === 'MOTHER') {
-        const hydrated = await hydrateAnonymousContext(user);
-        if (requestId !== fetchRequestRef.current) return;
-        setUserRole('MOTHER');
-        setClinicianData(null);
-        setNeedsOnboarding(!hydrated && data?.onboardingVersion !== 1);
-      } else {
-        setUserRole(role);
-        setClinicianData(null);
-        setNeedsOnboarding(false);
-      }
+      const hydrated = await hydrateAnonymousContext(user);
+      if (requestId !== fetchRequestRef.current) return;
+      setUserRole('MOTHER');
+      setClinicianData(null);
+      setNeedsOnboarding(!hydrated && data?.onboardingVersion !== 1);
     } catch (err) {
       if (requestId !== fetchRequestRef.current) return;
       console.warn('Could not read user role from Firestore', err);
