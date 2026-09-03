@@ -11,6 +11,7 @@ import {
   signInWithEmailAndPassword as fbSignInWithEmailAndPassword,
   createUserWithEmailAndPassword as fbCreateUserWithEmailAndPassword,
   sendPasswordResetEmail as fbSendPasswordResetEmail,
+  sendEmailVerification as fbSendEmailVerification,
   updateProfile,
   User,
 } from 'firebase/auth';
@@ -73,18 +74,11 @@ export async function testConnection() {
   }
 }
 
-/**
- * Establish the MomHaven user profile required by role-based routing and backend authorization.
- * Existing profiles are never overwritten, so an ADMIN/PARTNER/CLINICIAN role is preserved.
- * Anonymous Haven sessions intentionally do not create user profile documents.
- */
 export async function ensureUserProfile(user: User) {
   if (user.isAnonymous) return;
-
   const userRef = doc(db, 'users', user.uid);
   const snap = await getDoc(userRef);
   if (snap.exists()) return;
-
   await setDoc(userRef, {
     displayName: user.displayName || user.email?.split('@')[0] || 'Mama',
     email: user.email || '',
@@ -95,15 +89,12 @@ export async function ensureUserProfile(user: User) {
 
 export async function signInWithGoogle() { return signInWithPopup(auth, googleProvider); }
 export async function signInAsGuest() { return fbSignInAnonymously(auth); }
-
 export async function sendMagicLink(email: string) {
   const actionCodeSettings = { url: window.location.origin + window.location.pathname, handleCodeInApp: true };
   await fbSendSignInLinkToEmail(auth, email, actionCodeSettings);
   window.localStorage.setItem('emailForSignIn', email);
 }
-
 export function isMagicLink(url: string = window.location.href) { return fbIsSignInWithEmailLink(auth, url); }
-
 export async function completeMagicLinkSignIn(emailParam?: string, url: string = window.location.href) {
   let email = emailParam || window.localStorage.getItem('emailForSignIn');
   if (!email) email = window.prompt('Please provide your email for sign-in confirmation') || '';
@@ -112,14 +103,12 @@ export async function completeMagicLinkSignIn(emailParam?: string, url: string =
   window.localStorage.removeItem('emailForSignIn');
   return result;
 }
-
 export async function signInWithEmail(email: string, pass: string) { return fbSignInWithEmailAndPassword(auth, email, pass); }
-
 export async function createAccountWithEmail(email: string, pass: string, displayName?: string) {
   const cred = await fbCreateUserWithEmailAndPassword(auth, email, pass);
   if (displayName && cred.user) await updateProfile(cred.user, { displayName });
   return cred;
 }
-
+export async function sendEmailVerification(user: User) { return fbSendEmailVerification(user); }
 export async function resetPassword(email: string) { return fbSendPasswordResetEmail(auth, email); }
 export async function logoutUser() { return fbSignOut(auth); }
