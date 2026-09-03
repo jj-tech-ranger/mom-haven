@@ -45,13 +45,41 @@ jobs:
 
       - name: Build and push production container
         run: |
+          set -euo pipefail
           IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${IMAGE_REPOSITORY}/${CLOUD_RUN_SERVICE}:${{ github.event.workflow_run.head_sha }}"
           echo "IMAGE_URI=$IMAGE_URI" >> "$GITHUB_ENV"
-          gcloud builds submit . \
+
+          BUILD_ID=$(gcloud builds submit . \
             --tag "$IMAGE_URI" \
             --project "$PROJECT_ID" \
             --region "$REGION" \
-            --suppress-logs
+            --async \
+            --format='value(id)')
+
+          echo "Cloud Build started: $BUILD_ID"
+
+          for attempt in $(seq 1 180); do
+            STATUS=$(gcloud builds describe "$BUILD_ID" \
+              --project "$PROJECT_ID" \
+              --region "$REGION" \
+              --format='value(status)')
+            echo "Cloud Build status: $STATUS (attempt $attempt/180)"
+
+            case "$STATUS" in
+              SUCCESS)
+                exit 0
+                ;;
+              FAILURE|INTERNAL_ERROR|TIMEOUT|CANCELLED|EXPIRED)
+                echo "Cloud Build failed with status: $STATUS"
+                exit 1
+                ;;
+            esac
+
+            sleep 5
+          done
+
+          echo "Cloud Build did not finish within 15 minutes"
+          exit 1
 
       - name: Deploy backend to Cloud Run
         run: |
