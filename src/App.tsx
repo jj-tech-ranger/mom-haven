@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db, ensureUserProfile, logoutUser, testConnection } from './lib/firebase';
@@ -20,26 +20,45 @@ export default function App() {
     return sessionStorage.getItem('admin_mfa_verified') === 'true';
   });
   const [loading, setLoading] = useState(true);
+  const fetchRequestRef = useRef(0);
 
   const fetchUserData = useCallback(async (user: User) => {
+    const requestId = ++fetchRequestRef.current;
+
+    // Clinician authorization is server-authoritative. This avoids relying on the
+    // client Firestore read of /clinicians/{uid}, which is intentionally restricted
+    // by Firestore rules, and also resolves the account-activation race where the
+    // generic profile may briefly exist with the MOTHER role.
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch('/api/v1/clinician/me', {
+        headers: { authorization: `Bearer ${idToken}` },
+      });
+      if (response.ok) {
+        const payload = await response.json();
+        if (requestId !== fetchRequestRef.current) return;
+        setUserRole('CLINICIAN');
+        setClinicianData(payload?.clinician ? { ...payload.clinician, uid: user.uid } as Clinician : null);
+        return;
+      }
+    } catch (err) {
+      console.warn('Clinician identity check unavailable; falling back to user profile.', err);
+    }
+
     try {
       const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (requestId !== fetchRequestRef.current) return;
       if (userDoc.exists()) {
         const data = userDoc.data();
         const role = (data?.role as UserRole) || 'MOTHER';
         setUserRole(role);
-
-        if (role === 'CLINICIAN') {
-          const clinDoc = await getDoc(doc(db, 'clinicians', user.uid));
-          setClinicianData(clinDoc.exists() ? { ...clinDoc.data(), uid: user.uid } as Clinician : null);
-        } else {
-          setClinicianData(null);
-        }
+        setClinicianData(null);
       } else {
         setUserRole('MOTHER');
         setClinicianData(null);
       }
     } catch (err) {
+      if (requestId !== fetchRequestRef.current) return;
       console.warn('Could not read user role from Firestore, defaulting to MOTHER', err);
       setUserRole('MOTHER');
       setClinicianData(null);
@@ -144,7 +163,7 @@ export default function App() {
         <LandingPage
           onSignedIn={() => {
             if (auth.currentUser) {
-              fetchUserData(auth.currentUser);
+              void fetchUserData(auth.currentUser);
             }
           }}
           onPartnerConnected={(partnerId, partnerName, motherInfo) => {
