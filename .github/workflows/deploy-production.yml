@@ -22,34 +22,45 @@ env:
   WIF_AUDIENCE: https://iam.googleapis.com/projects/306450754584/locations/global/workloadIdentityPools/github/providers/mom-haven
 
 jobs:
-  verify:
-    name: Verify release
+  typecheck:
+    name: TypeScript
     runs-on: ubuntu-latest
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+      - run: npm ci
+      - run: npm run lint
 
-      - name: Install dependencies
-        run: npm ci
+  clinical:
+    name: Clinical tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run test:clinical
 
-      - name: TypeScript check
-        run: npm run lint
-
-      - name: Clinical tests
-        run: npm run test:clinical
-
-      - name: Production build
-        run: npm run build
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build
 
   deploy:
     name: Deploy production
-    needs: verify
+    needs: [typecheck, clinical, build]
     runs-on: ubuntu-latest
     steps:
       - name: Check out verified commit
