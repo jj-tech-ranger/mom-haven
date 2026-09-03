@@ -20,7 +20,46 @@ async function motherName(motherId: string) {
 }
 
 clinicianRouter.get('/me', async (req,res)=>{ try { const token=await auth(req); const c=await requireClinician(token.uid); res.json({uid:token.uid,clinician:serialize(c.clinician)}); } catch(e){sendError(res,e);} });
-clinicianRouter.post('/verification', async (req,res)=>{ try { const token=await auth(req); if (!token.uid) throw new ApiError(401,'Sign-in required.'); const {licenseNumber,cadre,facilityId,facilityName}=req.body||{}; if(!String(licenseNumber||'').trim()||!String(cadre||'').trim()) throw new ApiError(400,'License number and cadre are required.'); await adminDb.doc(`users/${token.uid}`).set({role:'CLINICIAN'}, {merge:true}); await adminDb.doc(`clinicians/${token.uid}`).set({uid:token.uid,licenseNumber:String(licenseNumber).trim(),cadre:String(cadre).trim(),facilityId:facilityId||null,facilityName:facilityName||null,verificationStatus:'pending',updatedAt:FieldValue.serverTimestamp()},{merge:true}); res.json({success:true,status:'pending'}); }catch(e){sendError(res,e);} });
+
+clinicianRouter.post('/verification', async (req,res)=>{
+  try {
+    const token = await auth(req);
+    if (!token.uid) throw new ApiError(401, 'Sign-in required.');
+    const { licenseNumber, cadre, facilityId, facilityName } = req.body || {};
+    if (!String(licenseNumber || '').trim() || !String(cadre || '').trim()) throw new ApiError(400, 'License number and cadre are required.');
+
+    const userRef = adminDb.doc(`users/${token.uid}`);
+    const userSnap = await userRef.get();
+    const existingRole = userSnap.exists ? String(userSnap.data()?.role || '') : '';
+    if (existingRole === 'ADMIN') throw new ApiError(403, 'An administrator account cannot be converted into a clinician account. Use a separate Google account for clinician access.');
+
+    if (facilityId) {
+      const facilitySnap = await adminDb.doc(`facilities/${facilityId}`).get();
+      if (!facilitySnap.exists) throw new ApiError(400, 'The selected facility is not available in the MomHaven facility directory.');
+    }
+
+    const now = FieldValue.serverTimestamp();
+    await userRef.set({
+      displayName: token.name || token.email?.split('@')[0] || 'Clinician',
+      email: token.email || '',
+      role: 'CLINICIAN',
+      updatedAt: now,
+    }, { merge: true });
+    await adminDb.doc(`clinicians/${token.uid}`).set({
+      uid: token.uid,
+      name: token.name || token.email?.split('@')[0] || 'Clinician',
+      email: token.email || '',
+      licenseNumber: String(licenseNumber).trim().toUpperCase(),
+      cadre: String(cadre).trim(),
+      facilityId: facilityId || null,
+      facilityName: facilityName || null,
+      verificationStatus: 'pending',
+      createdAt: now,
+      updatedAt: now,
+    }, { merge: true });
+    res.json({ success: true, status: 'pending' });
+  } catch(e) { sendError(res,e); }
+});
 
 clinicianRouter.get('/dashboard', async(req,res)=>{try{const token=await clinician(req); const sessions=await adminDb.collection('clinicianAccessSessions').where('clinicianId','==',token.uid).limit(100).get(); const active=sessions.docs.filter(d=>d.data().status==='active'&&d.data().expiresAt?.toDate?.()>new Date()).length; const expiring=sessions.docs.filter(d=>d.data().status==='active'&&d.data().expiresAt?.toDate?.()<=new Date(Date.now()+120000)).length; const audits=await adminDb.collection('auditEvents').where('actorId','==',token.uid).orderBy('timestamp','desc').limit(20).get().catch(()=>null); res.json({stats:{activeAccessSessions:active,pendingVerificationItems:0,encountersToday:0,alerts:expiring},activity:(audits?.docs||[]).map(d=>document(d.id,d.data()))});}catch(e){sendError(res,e);}});
 clinicianRouter.get('/access-sessions', async(req,res)=>{try{const token=await clinician(req); const s=await adminDb.collection('clinicianAccessSessions').where('clinicianId','==',token.uid).limit(100).get(); res.json({items:await Promise.all(s.docs.map(async d=>document(d.id,{...d.data(),motherName:await motherName(String(d.data().motherId))})))});}catch(e){sendError(res,e);}});
