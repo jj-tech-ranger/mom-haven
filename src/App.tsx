@@ -11,11 +11,13 @@ import ClinicianShell from './components/ClinicianShell';
 import AdminShell from './components/AdminShell';
 import ClinicianPendingScreen from './components/auth/ClinicianPendingScreen';
 import AdminMfaModal from './components/auth/AdminMfaModal';
+import PremiumOnboardingWizard from './components/auth/PremiumOnboardingWizard';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<UserRole>('MOTHER');
   const [clinicianData, setClinicianData] = useState<Clinician | null>(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [adminMfaVerified, setAdminMfaVerified] = useState<boolean>(() => sessionStorage.getItem('admin_mfa_verified') === 'true');
   const [loading, setLoading] = useState(true);
   const [identityError, setIdentityError] = useState<string | null>(null);
@@ -24,6 +26,7 @@ export default function App() {
   const fetchUserData = useCallback(async (user: User) => {
     const requestId = ++fetchRequestRef.current;
     setIdentityError(null);
+    setNeedsOnboarding(false);
 
     try {
       const idToken = await user.getIdToken(true);
@@ -38,8 +41,6 @@ export default function App() {
         setClinicianData(payload?.clinician ? { ...payload.clinician, uid: user.uid } as Clinician : null);
         return;
       }
-      // A 404 is the explicit backend signal that this authenticated account
-      // is not a clinician. Only then may we resolve the normal user role.
       if (response.status !== 404) {
         if (requestId !== fetchRequestRef.current) return;
         setClinicianData(null);
@@ -62,9 +63,11 @@ export default function App() {
         const role = (data?.role as UserRole) || 'MOTHER';
         setUserRole(role);
         setClinicianData(null);
+        setNeedsOnboarding(role === 'MOTHER' && data?.onboardingVersion !== 1);
       } else {
         setUserRole('MOTHER');
         setClinicianData(null);
+        setNeedsOnboarding(true);
       }
     } catch (err) {
       if (requestId !== fetchRequestRef.current) return;
@@ -80,11 +83,10 @@ export default function App() {
       setCurrentUser(user);
       if (user) {
         await fetchUserData(user);
-        // Only initialize a generic profile after role resolution. An approved
-        // clinician must never be silently provisioned or displayed as a mother.
         try { await ensureUserProfile(user); } catch (err) { console.warn('Could not initialize MomHaven user profile', err); }
       } else {
         setClinicianData(null);
+        setNeedsOnboarding(false);
         setIdentityError(null);
         setAdminMfaVerified(false);
         sessionStorage.removeItem('admin_mfa_verified');
@@ -100,6 +102,10 @@ export default function App() {
   if (loading) return <div className="min-h-screen bg-[var(--lavender-50)] flex flex-col items-center justify-center p-4 font-body"><div className="w-16 h-16 rounded-2xl bg-white shadow-card-1 p-3 mb-4 flex items-center justify-center animate-pulse"><img src="/assets/logo.png" alt="MomHaven" className="w-full h-full object-contain" referrerPolicy="no-referrer" /></div><p className="font-display font-bold text-[16px] text-[var(--haven-deep)]">Loading MomHaven...</p></div>;
 
   if (currentUser && identityError) return <div className="min-h-screen bg-[var(--lavender-50)] flex items-center justify-center p-6"><div className="max-w-lg w-full bg-white rounded-3xl border border-[var(--border-hairline)] shadow-card-1 p-8 text-center"><div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[var(--lavender-50)] flex items-center justify-center"><span aria-hidden="true">🔒</span></div><h1 className="font-display font-extrabold text-xl text-[var(--haven-deep)]">Portal access could not be verified</h1><p className="mt-3 text-sm text-[var(--ink-500)]">{identityError}</p><button type="button" onClick={handleSignOut} className="mt-6 px-5 py-3 rounded-xl bg-[var(--haven-deep)] text-white font-display font-bold">Sign out</button></div></div>;
+
+  if (currentUser && userRole === 'MOTHER' && needsOnboarding) {
+    return <PremiumOnboardingWizard userId={currentUser.uid} initialDisplayName={currentUser.displayName || ''} onCompleted={() => { setNeedsOnboarding(false); void fetchUserData(currentUser); }} />;
+  }
 
   const renderCurrentShell = () => {
     switch (userRole) {
