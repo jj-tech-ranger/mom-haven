@@ -71,6 +71,8 @@ export interface RankedResource {
     priority: number;
   };
   relevanceReasons: string[];
+  /** Backwards-compatible alias for older advanced-personalization consumers. */
+  reasons?: string[];
   primaryReason: string;
   isFallback?: boolean;
 }
