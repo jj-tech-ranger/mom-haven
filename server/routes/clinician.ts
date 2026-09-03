@@ -5,7 +5,18 @@ import { CLINICAL_RECORD_GROUPS, getPatientRecords } from '../services/patientRe
 
 export const clinicianRouter = Router();
 const DEVELOPMENT_FACILITY_IDS = new Set(['MEADOWCARE-DEMO-001']);
-async function auth(req: Request) { const header = String(req.headers.authorization || ''); if (!header.startsWith('Bearer ')) throw new ApiError(401, 'Sign-in required.'); try { return await adminAuth.verifyIdToken(header.slice(7)); } catch { throw new ApiError(401, 'Sign-in required.'); } }
+
+// Firebase Hosting/Cloud Run normally preserves Authorization, but some hosting,
+// proxy and browser configurations can drop it. Accept a dedicated header as a
+// transport fallback while still requiring a valid Firebase ID token.
+async function auth(req: Request) {
+  const authorization = String(req.headers.authorization || '');
+  const fallbackToken = String(req.headers['x-firebase-id-token'] || '');
+  const token = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : fallbackToken.trim();
+  if (!token) throw new ApiError(401, 'Sign-in required.');
+  try { return await adminAuth.verifyIdToken(token); }
+  catch { throw new ApiError(401, 'Sign-in required.'); }
+}
 function sendError(res: Response, e: any) { const status = e instanceof ApiError ? e.status : 500; res.status(status).json({ error: e?.message || 'Unable to complete request.' }); }
 async function clinician(req: Request) { const token = await auth(req); await requireClinician(token.uid); return token; }
 async function motherName(motherId: string) { const p = await adminDb.doc(`motherProfiles/${motherId}`).get(); if (p.exists && p.data()?.fullName) return String(p.data()!.fullName); const u = await adminDb.doc(`users/${motherId}`).get(); return String(u.data()?.displayName || u.data()?.email || 'Mother'); }
@@ -37,15 +48,18 @@ clinicianRouter.post('/claim-approved', async(req,res)=>{
   try {
     const token=await auth(req); if(!token.email)throw new ApiError(400,'The clinician account must have an email address.');
     const email=String(token.email).trim().toLowerCase();
-    // Avoid a composite-index dependency here as well; approval is filtered in memory.
     const q=await adminDb.collection('clinicians').where('email','==',email).limit(20).get();
     const application=q.docs.find(d=>!d.data()?.uid && String(d.data()?.verificationStatus||'').toLowerCase()==='approved');
     if(!application)throw new ApiError(403,'No approved clinician application was found for this email.');
     const source=application.data(), uid=token.uid, now=FieldValue.serverTimestamp();
-    await adminDb.doc(`users/${uid}`).set({displayName:String(source.name||token.name||email.split('@')[0]),email,role:'CLINICIAN',createdAt:now,updatedAt:now},{merge:true});
-    await adminDb.doc(`clinicians/${uid}`).set({...source,uid,email,name:String(source.name||token.name||email.split('@')[0]),verificationStatus:'approved',applicationId:application.id,activatedAt:now,updatedAt:now},{merge:true});
-    await adminDb.doc(`users/${application.id}`).delete(); if(application.id!==uid)await application.ref.delete();
-    await logAudit(uid,'CLINICIAN','CLINICIAN_ACCOUNT_ACTIVATED','clinicians',uid,source.facilityId||null); res.json({success:true,status:'approved',uid});
+    const clinicianData={...source,uid,email,name:String(source.name||token.name||email.split('@')[0]),verificationStatus:'approved',applicationId:application.id,activatedAt:now,updatedAt:now};
+    await adminDb.doc(`users/${uid}`).set({displayName:clinicianData.name,email,role:'CLINICIAN',updatedAt:now},{merge:true});
+    await adminDb.doc(`clinicians/${uid}`).set(clinicianData,{merge:true});
+    await adminDb.doc(`users/${application.id}`).delete();
+    await application.ref.delete();
+    await logAudit(uid,'CLINICIAN','CLINICIAN_ACCOUNT_ACTIVATED','clinicians',uid,source.facilityId||null);
+    const activated=await adminDb.doc(`clinicians/${uid}`).get();
+    res.json({success:true,status:'approved',uid,clinician:serialize(activated.data()||clinicianData)});
   } catch(e){sendError(res,e);}
 });
 
