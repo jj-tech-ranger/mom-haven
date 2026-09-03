@@ -5,6 +5,8 @@ import { CLINICAL_RECORD_GROUPS, getPatientRecords } from '../services/patientRe
 
 export const clinicianRouter = Router();
 
+const DEVELOPMENT_FACILITY_IDS = new Set(['MEADOWCARE-DEMO-001']);
+
 async function auth(req: Request) {
   const header = String(req.headers.authorization || '');
   if (!header.startsWith('Bearer ')) throw new ApiError(401, 'Sign-in required.');
@@ -33,7 +35,7 @@ clinicianRouter.post('/verification', async (req,res)=>{
     const existingRole = userSnap.exists ? String(userSnap.data()?.role || '') : '';
     if (existingRole === 'ADMIN') throw new ApiError(403, 'An administrator account cannot be converted into a clinician account. Use a separate Google account for clinician access.');
 
-    if (facilityId) {
+    if (facilityId && !DEVELOPMENT_FACILITY_IDS.has(String(facilityId))) {
       const facilitySnap = await adminDb.doc(`facilities/${facilityId}`).get();
       if (!facilitySnap.exists) throw new ApiError(400, 'The selected facility is not available in the MomHaven facility directory.');
     }
