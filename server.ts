@@ -7,13 +7,14 @@ import { clinicianRouter } from './server/routes/clinician.js';
 import { adminRouter } from './server/routes/admin.js';
 import { classifyLayerOneRemote } from './server/safetyConfig.js';
 import { adminAuth, adminDb } from './server/clinicianAccess.js';
+import { buildHavenContext, formatHavenContext } from './server/services/havenContextBuilder.js';
 
 const PORT = Number(process.env.PORT || 8080);
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mom-haven';
 const GOOGLE_CLOUD_LOCATION = process.env.GOOGLE_CLOUD_LOCATION || 'europe-west1';
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const ai = new GoogleGenAI({ vertexai: true, project: PROJECT_ID, location: GOOGLE_CLOUD_LOCATION });
-const SYSTEM_INSTRUCTION = `You are Haven, MomHaven's supportive companion for Kenyan mothers navigating pregnancy and their child's first five years. You are not a doctor and you do not diagnose. Never provide a diagnosis, medication dose, or prescribing instruction. Keep answers short, warm, culturally grounded, and plain language. Defer Kenyan clinical schedules, thresholds and dosing to MomHaven records and clinicians.`;
+const SYSTEM_INSTRUCTION = `You are Haven, MomHaven's supportive companion for Kenyan mothers navigating pregnancy and their child's first five years. You are not a doctor and you do not diagnose. Never provide a diagnosis, medication dose, or prescribing instruction. Keep answers short, warm, culturally grounded, and plain language. Defer Kenyan clinical schedules, thresholds and dosing to MomHaven records and clinicians. Use the supplied MomHaven context to make answers relevant, but respect provenance: user-reported personalization is not clinical confirmation. Never invent missing clinical facts.`;
 const responseSchema = {
   type: 'object',
   properties: {
@@ -26,16 +27,6 @@ const responseSchema = {
 
 function doseLikeText(text: string) {
   return /\b\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml|mL|milligrams?|micrograms?|grams?)\b/i.test(text);
-}
-
-async function resolveContext(uid: string) {
-  const [pregnancySnapshot, childSnapshot] = await Promise.all([
-    adminDb.collection('pregnancies').where('motherId', '==', uid).where('status', '==', 'active').limit(1).get(),
-    adminDb.collection('children').where('motherId', '==', uid).limit(1).get(),
-  ]);
-  if (!pregnancySnapshot.empty) return 'This mother has an active pregnancy on record.';
-  if (!childSnapshot.empty) return 'This mother has a child on record.';
-  return 'No active pregnancy or child context is currently recorded.';
 }
 
 async function getOrCreateSession(uid: string, requestedSessionId?: string) {
@@ -82,7 +73,7 @@ async function startServer() {
       const languageInstruction = language === 'sw'
         ? 'Respond in clear, natural Kenyan Kiswahili.'
         : 'Respond in clear, warm English unless the mother writes in Kiswahili, in which case respond in Kiswahili.';
-      const context = await resolveContext(uid);
+      const context = formatHavenContext(await buildHavenContext(uid));
       const response = await ai.models.generateContent({
         model: GEMINI_MODEL,
         contents: `${context}\n\nLanguage preference: ${language === 'sw' ? 'Kiswahili' : 'English'}\n${languageInstruction}\n\nMother's message:\n${text}`,
