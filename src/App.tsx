@@ -18,22 +18,17 @@ export default function App() {
   const [clinicianData, setClinicianData] = useState<Clinician | null>(null);
   const [adminMfaVerified, setAdminMfaVerified] = useState<boolean>(() => sessionStorage.getItem('admin_mfa_verified') === 'true');
   const [loading, setLoading] = useState(true);
+  const [identityError, setIdentityError] = useState<string | null>(null);
   const fetchRequestRef = useRef(0);
 
   const fetchUserData = useCallback(async (user: User) => {
     const requestId = ++fetchRequestRef.current;
+    setIdentityError(null);
 
-    // Clinician identity is server-authoritative. Send the Firebase ID token in
-    // both the standard Authorization header and a dedicated fallback header so
-    // Firebase Hosting/proxies that strip Authorization cannot turn an approved
-    // clinician into a normal mother session.
     try {
       const idToken = await user.getIdToken(true);
       const response = await fetch('/api/v1/clinician/me', {
-        headers: {
-          authorization: `Bearer ${idToken}`,
-          'x-firebase-id-token': idToken,
-        },
+        headers: { authorization: `Bearer ${idToken}`, 'x-firebase-id-token': idToken },
         cache: 'no-store',
       });
       if (response.ok) {
@@ -43,8 +38,20 @@ export default function App() {
         setClinicianData(payload?.clinician ? { ...payload.clinician, uid: user.uid } as Clinician : null);
         return;
       }
+      // A 404 is the explicit backend signal that this authenticated account
+      // is not a clinician. Only then may we resolve the normal user role.
+      if (response.status !== 404) {
+        if (requestId !== fetchRequestRef.current) return;
+        setClinicianData(null);
+        setIdentityError(response.status === 401 ? 'Your authentication session could not be verified. Please sign in again.' : 'We could not verify your portal role. For your security, no portal data will be shown.');
+        return;
+      }
     } catch (err) {
-      console.warn('Clinician identity check unavailable; falling back to user profile.', err);
+      if (requestId !== fetchRequestRef.current) return;
+      console.error('Clinician identity check failed', err);
+      setClinicianData(null);
+      setIdentityError('We could not verify your portal role. For your security, no portal data will be shown.');
+      return;
     }
 
     try {
@@ -61,9 +68,9 @@ export default function App() {
       }
     } catch (err) {
       if (requestId !== fetchRequestRef.current) return;
-      console.warn('Could not read user role from Firestore, defaulting to MOTHER', err);
-      setUserRole('MOTHER');
+      console.warn('Could not read user role from Firestore', err);
       setClinicianData(null);
+      setIdentityError('We could not verify your portal role. For your security, no portal data will be shown.');
     }
   }, []);
 
@@ -72,13 +79,13 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
-        // Do not let generic profile initialization decide clinician identity.
-        // The server-authoritative clinician check runs first and repairs an
-        // approved account even when users/{uid} still says MOTHER.
         await fetchUserData(user);
+        // Only initialize a generic profile after role resolution. An approved
+        // clinician must never be silently provisioned or displayed as a mother.
         try { await ensureUserProfile(user); } catch (err) { console.warn('Could not initialize MomHaven user profile', err); }
       } else {
         setClinicianData(null);
+        setIdentityError(null);
         setAdminMfaVerified(false);
         sessionStorage.removeItem('admin_mfa_verified');
       }
@@ -87,18 +94,12 @@ export default function App() {
     return () => unsubscribe();
   }, [fetchUserData]);
 
-  const handleSignOut = async () => {
-    sessionStorage.removeItem('admin_mfa_verified');
-    setAdminMfaVerified(false);
-    await logoutUser();
-  };
-
-  const handleAdminMfaSuccess = () => {
-    sessionStorage.setItem('admin_mfa_verified', 'true');
-    setAdminMfaVerified(true);
-  };
+  const handleSignOut = async () => { sessionStorage.removeItem('admin_mfa_verified'); setAdminMfaVerified(false); await logoutUser(); };
+  const handleAdminMfaSuccess = () => { sessionStorage.setItem('admin_mfa_verified', 'true'); setAdminMfaVerified(true); };
 
   if (loading) return <div className="min-h-screen bg-[var(--lavender-50)] flex flex-col items-center justify-center p-4 font-body"><div className="w-16 h-16 rounded-2xl bg-white shadow-card-1 p-3 mb-4 flex items-center justify-center animate-pulse"><img src="/assets/logo.png" alt="MomHaven" className="w-full h-full object-contain" referrerPolicy="no-referrer" /></div><p className="font-display font-bold text-[16px] text-[var(--haven-deep)]">Loading MomHaven...</p></div>;
+
+  if (currentUser && identityError) return <div className="min-h-screen bg-[var(--lavender-50)] flex items-center justify-center p-6"><div className="max-w-lg w-full bg-white rounded-3xl border border-[var(--border-hairline)] shadow-card-1 p-8 text-center"><div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[var(--lavender-50)] flex items-center justify-center"><span aria-hidden="true">🔒</span></div><h1 className="font-display font-extrabold text-xl text-[var(--haven-deep)]">Portal access could not be verified</h1><p className="mt-3 text-sm text-[var(--ink-500)]">{identityError}</p><button type="button" onClick={handleSignOut} className="mt-6 px-5 py-3 rounded-xl bg-[var(--haven-deep)] text-white font-display font-bold">Sign out</button></div></div>;
 
   const renderCurrentShell = () => {
     switch (userRole) {
