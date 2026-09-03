@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, KeyRound, Stethoscope, ClipboardList, LogOut } from 'lucide-react';
+import { LayoutDashboard, KeyRound, Stethoscope, ClipboardList, LogOut, type LucideIcon } from 'lucide-react';
 import EmptyState from './EmptyState';
 
 type ClinicianTab = 'dashboard' | 'access' | 'workspace' | 'audit';
 interface ClinicianShellProps { clinicianId?: string; clinicianName?: string; facilityName?: string; onSignOut?: () => void; }
-const tabs: { id: ClinicianTab; label: string; icon: React.ElementType }[] = [{ id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard }, { id: 'access', label: 'Patient Access', icon: KeyRound }, { id: 'workspace', label: 'Workspace', icon: Stethoscope }, { id: 'audit', label: 'Audit', icon: ClipboardList }];
+const tabs: { id: ClinicianTab; label: string; icon: LucideIcon }[] = [{ id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard }, { id: 'access', label: 'Patient Access', icon: KeyRound }, { id: 'workspace', label: 'Workspace', icon: Stethoscope }, { id: 'audit', label: 'Audit', icon: ClipboardList }];
 
 export default function ClinicianShell({ clinicianName, facilityName, onSignOut }: ClinicianShellProps) {
   const [activeTab, setActiveTab] = useState<ClinicianTab>('dashboard'); const current = tabs.find(t => t.id === activeTab) || tabs[0]; const Icon = current.icon;
