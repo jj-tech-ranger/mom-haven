@@ -1,10 +1,8 @@
 name: MomHaven production deploy
 
 on:
-  workflow_run:
-    workflows: ["MomHaven checks"]
-    types: [completed]
-    branches: [main]
+  push:
+    branches: ['main']
 
 permissions:
   contents: read
@@ -15,6 +13,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  NODE_VERSION: 20
   PROJECT_ID: mom-haven
   REGION: europe-west1
   CLOUD_RUN_SERVICE: momhaven-api
@@ -23,19 +22,43 @@ env:
   WIF_AUDIENCE: https://iam.googleapis.com/projects/306450754584/locations/global/workloadIdentityPools/github/providers/mom-haven
 
 jobs:
-  deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
+  verify:
+    name: Verify release
     runs-on: ubuntu-latest
     steps:
-      - name: Check out tested commit
+      - name: Check out code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Clinical tests
+        run: npm run test:clinical
+
+      - name: Production build
+        run: npm run build
+
+  deploy:
+    name: Deploy production
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out verified commit
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
       - name: Install dependencies
