@@ -22,81 +22,15 @@ export class ApiError extends Error {
   constructor(status: number, message: string) { super(message); this.status = status; }
 }
 
-async function repairApprovedClinicianAccount(uid: string) {
-  const authUser = await adminAuth.getUser(uid);
-  const email = String(authUser.email || '').trim().toLowerCase();
-  if (!email) return null;
-
-  const existingClinician = await adminDb.doc(`clinicians/${uid}`).get();
-  if (existingClinician.exists && existingClinician.data()?.verificationStatus === 'approved') {
-    const now = FieldValue.serverTimestamp();
-    await adminDb.doc(`users/${uid}`).set({
-      displayName: String(existingClinician.data()?.name || authUser.displayName || email.split('@')[0]),
-      email,
-      role: 'CLINICIAN',
-      updatedAt: now,
-    }, { merge: true });
-    return { uid, clinician: existingClinician.data()! };
-  }
-
-  // Query only by email so account repair does not depend on a Firestore
-  // composite index for email + verificationStatus.
-  const q = await adminDb.collection('clinicians')
-    .where('email', '==', email)
-    .limit(20)
-    .get();
-  const application = q.docs.find(d =>
-    !d.data()?.uid && String(d.data()?.verificationStatus || '').toLowerCase() === 'approved'
-  );
-  if (!application) return null;
-
-  const source = application.data();
-  const now = FieldValue.serverTimestamp();
-  const clinicianData = {
-    ...source,
-    uid,
-    email,
-    name: String(source.name || authUser.displayName || email.split('@')[0]),
-    verificationStatus: 'approved',
-    applicationId: application.id,
-    activatedAt: now,
-    updatedAt: now,
-  };
-
-  await adminDb.doc(`users/${uid}`).set({
-    displayName: clinicianData.name,
-    email,
-    role: 'CLINICIAN',
-    updatedAt: now,
-  }, { merge: true });
-  await adminDb.doc(`clinicians/${uid}`).set(clinicianData, { merge: true });
-  await adminDb.doc(`users/${application.id}`).delete();
-  await application.ref.delete();
-  await logAudit(uid, 'CLINICIAN', 'CLINICIAN_ACCOUNT_ACTIVATED', 'clinicians', uid, source.facilityId || null);
-
-  // Return the persisted document so serverTimestamp sentinels never leak into
-  // the response consumed by the frontend.
-  const activated = await adminDb.doc(`clinicians/${uid}`).get();
-  return { uid, clinician: activated.data() || clinicianData };
-}
-
 export async function requireClinician(uid: string) {
   const user = await adminDb.doc(`users/${uid}`).get();
-  let userData = user.exists ? user.data() : null;
-
-  if (userData?.role !== 'CLINICIAN') {
-    const repaired = await repairApprovedClinicianAccount(uid);
-    if (repaired) return repaired;
-    userData = (await adminDb.doc(`users/${uid}`).get()).data() || null;
-  }
-
-  if (!userData || userData.role !== 'CLINICIAN') throw new ApiError(403, 'Clinician access required.');
+  if (!user.exists || user.data()?.role !== 'CLINICIAN') throw new ApiError(403, 'Clinician access required.');
   const clinician = await adminDb.doc(`clinicians/${uid}`).get();
   if (!clinician.exists || clinician.data()?.verificationStatus !== 'approved') throw new ApiError(403, 'Your clinician account is awaiting verification.');
   return { uid, clinician: clinician.data()! };
 }
 
-export async function requireActiveSession(clinicianId: string, motherId: string) {
+export async function requireActiveSession(clinicianId: string, motherId: string): Promise<Record<string, any>> {
   const snapshot = await adminDb.collection('clinicianAccessSessions')
     .where('clinicianId', '==', clinicianId).where('motherId', '==', motherId).where('status', '==', 'active').limit(1).get();
   if (snapshot.empty) throw new ApiError(403, 'No active access session for this patient.');

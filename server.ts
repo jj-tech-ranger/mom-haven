@@ -5,6 +5,7 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import { clinicianRouter } from './server/routes/clinician.js';
 import { adminRouter } from './server/routes/admin.js';
+import { contextSyncRouter } from './server/routes/contextSync.js';
 import { classifyLayerOneRemote } from './server/safetyConfig.js';
 import { adminAuth, adminDb } from './server/clinicianAccess.js';
 import { buildHavenContext, formatHavenContext } from './server/services/havenContextBuilder.js';
@@ -53,6 +54,7 @@ async function startServer() {
   app.get('/api/health', (_req, res) => res.json({ status: 'ok', project: PROJECT_ID, time: new Date().toISOString() }));
   app.use('/api/v1/clinician', clinicianRouter);
   app.use('/api/v1/admin', adminRouter);
+  app.use('/api/v1/context', contextSyncRouter);
 
   app.post('/api/v1/chat', async (req, res) => {
     try {
@@ -73,9 +75,15 @@ async function startServer() {
       const languageInstruction = language === 'sw'
         ? 'Respond in clear, natural Kenyan Kiswahili.'
         : 'Respond in clear, warm English unless the mother writes in Kiswahili, in which case respond in Kiswahili.';
+      const isAnonymous = (decoded as any)?.firebase?.sign_in_provider === 'anonymous';
       let context = 'MomHaven context is temporarily unavailable. Answer without personalized context and do not infer missing clinical facts.';
       try {
-        context = formatHavenContext(await buildHavenContext(uid));
+        const havenContext = await buildHavenContext(uid, {
+          isAnonymous,
+          language: language === 'sw' ? 'sw' : 'en',
+          contextMode: req.body?.contextMode,
+        });
+        context = formatHavenContext(havenContext);
       } catch (contextError) {
         console.warn('Haven context unavailable; continuing without personalization', contextError);
       }

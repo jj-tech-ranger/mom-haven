@@ -10,7 +10,14 @@
     "preview": "vite preview",
     "clean": "rm -rf dist build",
     "lint": "tsc --noEmit",
-    "test:clinical": "tsx src/utils/clinicalCalculations.test.ts"
+    "test": "npm run test:clinical && npm run test:context && npm run test:anonymous && npm run test:haven-context && npm run test:today && npm run test:resources && npm run test:summary",
+    "test:clinical": "tsx src/utils/clinicalCalculations.test.ts",
+    "test:context": "tsx src/services/healthContextService.test.ts",
+    "test:anonymous": "tsx src/services/anonymousContextService.test.ts",
+    "test:haven-context": "tsx server/services/havenContextBuilder.test.ts",
+    "test:today": "tsx src/services/todayContextService.test.ts && tsx src/components/today/TodayDashboard.test.ts",
+    "test:resources": "tsx src/services/resourceRecommendationService.test.ts",
+    "test:summary": "tsx server/services/healthSummaryService.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

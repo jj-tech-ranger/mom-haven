@@ -1,76 +1,243 @@
-import { adminDb } from '../clinicianAccess.js';
-import { getHealthContextForUser } from './healthContextService.js';
-import type { HavenContext, HavenContextFact } from '../types/havenContext.js';
+import {
+  fetchUserContext,
+  fetchPersonalizationContext,
+  fetchClinicalPregnancyContext,
+  fetchClinicalChildrenContext,
+  resolvePregnancyContext,
+  resolveChildrenContext,
+} from './contextSources.js';
+import type {
+  HavenContext,
+  HavenContextFact,
+  HavenContextRequest,
+  HavenContextProvenance,
+} from '../types/havenContext.js';
 
-const reported = <T>(value: T): HavenContextFact<T> => ({ value, provenance: 'USER_REPORTED' });
-const verified = <T>(value: T): HavenContextFact<T> => ({ value, provenance: 'VERIFIED' });
+const fact = <T>(value: T, provenance: HavenContextProvenance, source?: string): HavenContextFact<T> => ({
+  value,
+  provenance,
+  source,
+});
 
-export async function buildHavenContext(uid: string): Promise<HavenContext> {
-  const [context, pregnancySnapshot, childrenSnapshot] = await Promise.all([
-    getHealthContextForUser(uid),
-    adminDb.collection('pregnancies').where('motherId', '==', uid).where('status', '==', 'active').limit(1).get(),
-    adminDb.collection('children').where('motherId', '==', uid).limit(10).get(),
-  ]);
+/**
+ * Builds a deterministic, provenance-labeled Haven context object for a given user.
+ * Strictly enforces:
+ * 1. Trust Hierarchy: Verified > Authoritative > System-Derived > User-Reported > Anonymous
+ * 2. Context Minimization: Strips PII (phone, national ID, email) and clinician private notes
+ * 3. Safe Fallback: Returns a valid, minimal context even if database reads fail
+ */
+export async function buildHavenContext(
+  uid: string,
+  options: Partial<HavenContextRequest> = {},
+): Promise<HavenContext> {
+  const isAnonymous = Boolean(options.isAnonymous);
 
-  const activePregnancy = pregnancySnapshot.empty ? null : pregnancySnapshot.docs[0];
-  const pregnancyData = activePregnancy?.data();
-
-  const result: HavenContext = {
-    interests: reported(context?.interests || []),
-    children: childrenSnapshot.docs.map((doc) => verified({
-      id: doc.id,
-      name: typeof doc.data().name === 'string' ? doc.data().name : undefined,
-      dateOfBirth: typeof doc.data().dateOfBirth === 'string' ? doc.data().dateOfBirth : undefined,
-      sex: typeof doc.data().sex === 'string' ? doc.data().sex : undefined,
-    })),
+  // Safe fallback base context
+  const fallbackContext: HavenContext = {
+    userMode: fact(isAnonymous ? 'anonymous' : 'authenticated', isAnonymous ? 'ANONYMOUS' : 'USER_REPORTED'),
+    interests: fact([], isAnonymous ? 'ANONYMOUS' : 'USER_REPORTED'),
+    children: [],
   };
 
-  if (context?.lifecycleStage) result.lifecycleStage = reported(context.lifecycleStage);
-  if (context?.preferredName) result.preferredName = reported(context.preferredName);
-  if (context?.language) result.language = reported(context.language);
-  if (context?.county || context?.subcounty) result.location = reported({ county: context.county, subcounty: context.subcounty });
-  if (context?.havenResponseStyle) result.havenResponseStyle = reported(context.havenResponseStyle);
-
-  if (activePregnancy) {
-    result.pregnancy = verified({
-      id: activePregnancy.id,
-      lmp: typeof pregnancyData?.lmp === 'string' ? pregnancyData.lmp : undefined,
-      edd: typeof pregnancyData?.edd === 'string' ? pregnancyData.edd : undefined,
-      gestationalAgeWeeks: typeof pregnancyData?.gestationalAgeWeeks === 'number' ? pregnancyData.gestationalAgeWeeks : undefined,
-      status: typeof pregnancyData?.status === 'string' ? pregnancyData.status : 'active',
-      gravida: typeof pregnancyData?.gravida === 'number' ? pregnancyData.gravida : undefined,
-      parity: typeof pregnancyData?.parity === 'number' ? pregnancyData.parity : undefined,
-      multiplePregnancy: context?.pregnancy?.multiplePregnancy,
-    });
+  if (!uid) {
+    return fallbackContext;
   }
 
-  return result;
+  try {
+    const [userRes, personalizationRes, pregnancyRes, childrenRes] = await Promise.allSettled([
+      fetchUserContext(uid),
+      fetchPersonalizationContext(uid),
+      fetchClinicalPregnancyContext(uid),
+      fetchClinicalChildrenContext(uid),
+    ]);
+
+    const user = userRes.status === 'fulfilled' ? userRes.value : null;
+    const personalization = personalizationRes.status === 'fulfilled' ? personalizationRes.value : null;
+    const clinicalPregnancy = pregnancyRes.status === 'fulfilled' ? pregnancyRes.value : null;
+    const clinicalChildren = childrenRes.status === 'fulfilled' ? childrenRes.value : [];
+
+    const defaultProvenance: HavenContextProvenance = isAnonymous ? 'ANONYMOUS' : 'USER_REPORTED';
+
+    const result: HavenContext = {
+      userMode: fact(
+        isAnonymous ? 'anonymous' : 'authenticated',
+        isAnonymous ? 'ANONYMOUS' : 'VERIFIED',
+        'auth',
+      ),
+      interests: fact(
+        personalization?.interests && personalization.interests.length > 0 ? personalization.interests : [],
+        defaultProvenance,
+        'healthContexts.interests',
+      ),
+      children: resolveChildrenContext(clinicalChildren, personalization),
+    };
+
+    // Lifecycle stage
+    const lifecycleStage = personalization?.lifecycleStage || (options.contextMode === 'CHILD' ? 'postpartum' : 'pregnancy');
+    result.lifecycleStage = fact(lifecycleStage, defaultProvenance, 'healthContexts.lifecycleStage');
+
+    // Preferred name (context minimization: avoid full legal names if preferred name exists)
+    const preferredName = personalization?.preferredName || user?.displayName;
+    if (preferredName) {
+      result.preferredName = fact(preferredName, defaultProvenance, 'healthContexts.preferredName');
+    }
+
+    // Language
+    const language = personalization?.language || options.language;
+    if (language === 'en' || language === 'sw') {
+      result.language = fact(language, defaultProvenance, 'healthContexts.language');
+    }
+
+    // Location (county / subcounty only, no street or GPS)
+    const county = personalization?.county || personalization?.location?.county;
+    const subcounty = personalization?.subcounty || personalization?.location?.subcounty;
+    if (county || subcounty) {
+      result.location = fact({ county, subcounty }, defaultProvenance, 'healthContexts.location');
+    }
+
+    // Dietary preferences
+    if (personalization?.dietaryPreferences && personalization.dietaryPreferences.length > 0) {
+      result.dietaryPreferences = fact(
+        personalization.dietaryPreferences,
+        defaultProvenance,
+        'healthContexts.dietaryPreferences',
+      );
+    }
+
+    // Haven response style
+    if (personalization?.havenResponseStyle) {
+      result.havenResponseStyle = fact(
+        personalization.havenResponseStyle,
+        defaultProvenance,
+        'healthContexts.havenResponseStyle',
+      );
+    }
+
+    // Resolve pregnancy facts and derived timing using trust hierarchy
+    const { pregnancyFact, derivedTimingFact } = resolvePregnancyContext(clinicalPregnancy, personalization);
+    if (pregnancyFact) {
+      result.pregnancy = pregnancyFact;
+    }
+    if (derivedTimingFact) {
+      result.derivedTiming = derivedTimingFact;
+    }
+
+    return result;
+  } catch (error) {
+    console.warn(`[HavenContextBuilder] Failed to build context for ${uid}; returning safe fallback:`, error);
+    return fallbackContext;
+  }
 }
 
+/**
+ * Deterministically formats the HavenContext for injection into the Gemini system/user prompt.
+ * Strictly labels every single fact with its provenance tag.
+ */
 export function formatHavenContext(context: HavenContext): string {
-  const lines: string[] = ['MomHaven context (use only to personalize; never treat personalization as a diagnosis):'];
+  const lines: string[] = [
+    'MomHaven context (use only to personalize tone, language, and clinical relevance; never treat personalization as a diagnosis):',
+  ];
 
-  if (context.preferredName) lines.push(`- Preferred name: ${context.preferredName.value} [${context.preferredName.provenance}]`);
-  if (context.lifecycleStage) lines.push(`- Lifecycle stage: ${context.lifecycleStage.value} [${context.lifecycleStage.provenance}]`);
-  if (context.language) lines.push(`- Language: ${context.language.value} [${context.language.provenance}]`);
-  if (context.location) lines.push(`- Location: ${context.location.value.county || 'unknown county'}${context.location.value.subcounty ? `, ${context.location.value.subcounty}` : ''} [${context.location.provenance}]`);
-  if (context.interests.value.length) lines.push(`- Interests: ${context.interests.value.join(', ')} [${context.interests.provenance}]`);
-  if (context.havenResponseStyle) lines.push(`- Haven response preference: ${context.havenResponseStyle.value} [${context.havenResponseStyle.provenance}]`);
-
-  if (context.pregnancy) {
-    const pregnancy = context.pregnancy.value;
-    lines.push(`- Active pregnancy: week ${pregnancy.gestationalAgeWeeks ?? 'unknown'}, EDD ${pregnancy.edd ?? 'unknown'}, gravida ${pregnancy.gravida ?? 'unknown'}, parity ${pregnancy.parity ?? 'unknown'} [${context.pregnancy.provenance}]`);
-    if (pregnancy.multiplePregnancy !== undefined) lines.push(`- Multiple pregnancy preference signal: ${pregnancy.multiplePregnancy ? 'yes' : 'no'} [USER_REPORTED]`);
+  if (context.userMode) {
+    lines.push(`- User session: ${context.userMode.value === 'anonymous' ? 'Anonymous Guest' : 'Authenticated Mother'} [${context.userMode.provenance}]`);
   }
 
-  if (context.children.length) {
+  if (context.preferredName) {
+    lines.push(`- Preferred name: ${context.preferredName.value} [${context.preferredName.provenance}]`);
+  }
+
+  if (context.lifecycleStage) {
+    lines.push(`- Lifecycle stage: ${context.lifecycleStage.value} [${context.lifecycleStage.provenance}]`);
+  }
+
+  if (context.language) {
+    lines.push(`- Language preference: ${context.language.value === 'sw' ? 'Kiswahili' : 'English'} [${context.language.provenance}]`);
+  }
+
+  if (context.location) {
+    const loc = context.location.value;
+    const locStr = [loc.county, loc.subcounty].filter(Boolean).join(', ') || 'Kenya';
+    lines.push(`- Location: ${locStr} [${context.location.provenance}]`);
+  }
+
+  if (context.interests?.value?.length) {
+    lines.push(`- Interests: ${context.interests.value.join(', ')} [${context.interests.provenance}]`);
+  }
+
+  if (context.dietaryPreferences?.value?.length) {
+    lines.push(`- Dietary preferences: ${context.dietaryPreferences.value.join(', ')} [${context.dietaryPreferences.provenance}]`);
+  }
+
+  if (context.havenResponseStyle) {
+    lines.push(`- Haven response style preference: ${context.havenResponseStyle.value} [${context.havenResponseStyle.provenance}]`);
+  }
+
+  if (context.pregnancy) {
+    const p = context.pregnancy.value;
+    const parts: string[] = [];
+    if (p.gestationalAgeWeeks !== undefined) {
+      parts.push(`week ${p.gestationalAgeWeeks}`);
+    }
+    if (p.trimester) {
+      parts.push(`trimester ${p.trimester}`);
+    }
+    if (p.edd) {
+      parts.push(`EDD ${p.edd}`);
+    }
+    if (p.gravida !== undefined) {
+      parts.push(`gravida ${p.gravida}`);
+    }
+    if (p.parity !== undefined) {
+      parts.push(`parity ${p.parity}`);
+    }
+    const details = parts.length > 0 ? parts.join(', ') : `status ${p.status}`;
+    lines.push(`- Active pregnancy: ${details} [${context.pregnancy.provenance}]`);
+
+    if (p.multiplePregnancy !== undefined) {
+      lines.push(`- Multiple pregnancy preference signal: ${p.multiplePregnancy ? 'yes' : 'no'} [USER_REPORTED]`);
+    }
+  }
+
+  if (context.derivedTiming?.value) {
+    const timing = context.derivedTiming.value;
+    const timingParts: string[] = [];
+    if (timing.currentGestationalWeeks !== undefined) {
+      timingParts.push(`${timing.currentGestationalWeeks} weeks gestational age`);
+    }
+    if (timing.trimester) {
+      timingParts.push(`trimester ${timing.trimester}`);
+    }
+    if (timing.daysRemainingToEdd !== undefined) {
+      timingParts.push(`${timing.daysRemainingToEdd} days remaining to EDD`);
+    }
+    if (timingParts.length > 0) {
+      lines.push(`- Derived gestational timing: ${timingParts.join(', ')} [${context.derivedTiming.provenance}]`);
+    }
+  }
+
+  if (context.children && context.children.length > 0) {
     lines.push(`- Children on record: ${context.children.length} [VERIFIED]`);
     context.children.slice(0, 5).forEach((child, index) => {
-      const value = child.value;
-      lines.push(`  - Child ${index + 1}: ${value.name || 'unnamed'}, DOB ${value.dateOfBirth || 'unknown'} [${child.provenance}]`);
+      const c = child.value;
+      const descParts: string[] = [];
+      if (c.name) descParts.push(c.name);
+      if (c.ageFormatted) descParts.push(c.ageFormatted);
+      if (c.dateOfBirth) descParts.push(`DOB ${c.dateOfBirth}`);
+      if (c.sex) descParts.push(c.sex);
+      const desc = descParts.length > 0 ? descParts.join(', ') : 'unnamed child';
+      lines.push(`  - Child ${index + 1}: ${desc} [${child.provenance}]`);
     });
   }
 
-  lines.push('- Provenance rule: USER_REPORTED is what the mother told MomHaven; VERIFIED comes from clinical records. Do not imply a user-reported fact was clinically confirmed.');
+  lines.push(
+    '- Provenance rules:\n' +
+    '  * [VERIFIED]: Authoritative clinical record from healthcare facilities.\n' +
+    '  * [AUTHORITATIVE]: Clinical schedule or facility guideline.\n' +
+    '  * [SYSTEM_DERIVED]: Computed mathematically by MomHaven from verified dates.\n' +
+    '  * [USER_REPORTED]: Self-reported by the mother; never treat as clinical diagnosis or confirmation.\n' +
+    '  * [ANONYMOUS]: Ephemeral draft from an unauthenticated session.\n' +
+    '  * NEVER invent missing clinical data. Defer clinical diagnosis and medication dosing to healthcare providers.'
+  );
+
   return lines.join('\n');
 }

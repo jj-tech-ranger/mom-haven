@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Home, Milestone, MessageSquare, FileText, User, LogOut, type LucideIcon } from 'lucide-react';
 import EmptyState from './EmptyState';
 import PersonalizedToday from './today/PersonalizedToday';
+import HealthTrends from './health/HealthTrends';
+import MotherRecordsView from './records/MotherRecordsView';
 
 type MotherTab = 'today' | 'journey' | 'haven' | 'records' | 'profile';
 interface MotherShellProps { userId?: string; userEmail?: string; userName?: string; onSignOut?: () => void; }
@@ -29,7 +31,19 @@ export default function MotherShell({ userId, userName, userEmail, onSignOut }: 
     </header>
 
     <main className="mx-auto max-w-lg p-4 sm:p-5">
-      {activeTab === 'today' && userId ? <PersonalizedToday userId={userId} userName={userName} onNavigate={navigate} /> : activeTab === 'today' ? <EmptyState icon={Icon} title="Sign in to see your journey" message="Your personalized MomHaven home appears after your account is connected." /> : <div className="overflow-hidden rounded-2xl border border-[var(--border-hairline)] bg-white shadow-card-1"><EmptyState icon={Icon} title={`No ${current.label.toLowerCase()} data yet`} message="Your records and connected health information will appear here as you add or connect them." /></div>}
+      {activeTab === 'today' && userId ? (
+        <PersonalizedToday userId={userId} userName={userName} onNavigate={navigate} />
+      ) : activeTab === 'today' ? (
+        <EmptyState icon={Icon} title="Sign in to see your journey" message="Your personalized MomHaven home appears after your account is connected." />
+      ) : activeTab === 'journey' && userId ? (
+        <HealthTrends userId={userId} />
+      ) : activeTab === 'records' && userId ? (
+        <MotherRecordsView userId={userId} userName={userName} />
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-[var(--border-hairline)] bg-white shadow-card-1">
+          <EmptyState icon={Icon} title={`No ${current.label.toLowerCase()} data yet`} message="Your records and connected health information will appear here as you add or connect them." />
+        </div>
+      )}
     </main>
 
     <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-[var(--border-hairline)] bg-white/95 backdrop-blur" aria-label="Main navigation"><div className="mx-auto flex h-16 max-w-lg items-center justify-around">{tabs.map(tab => { const TabIcon = tab.icon; const active = activeTab === tab.id; return <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} aria-current={active ? 'page' : undefined} className={`flex min-w-[56px] flex-col items-center gap-1 rounded-xl px-3 py-2 transition-colors ${active ? 'text-[var(--haven-deep)]' : 'text-[var(--ink-400)] hover:text-[var(--ink-700)]'}`}><TabIcon className="h-5 w-5" /><span className="text-[10px] font-display font-bold">{tab.label}</span></button>; })}</div></nav>

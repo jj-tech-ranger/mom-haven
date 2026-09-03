@@ -12,7 +12,12 @@ import AdminShell from './components/AdminShell';
 import ClinicianPendingScreen from './components/auth/ClinicianPendingScreen';
 import AdminMfaModal from './components/auth/AdminMfaModal';
 import PremiumOnboardingWizard from './components/auth/PremiumOnboardingWizard';
-import { getAnonymousContextDraft, clearAnonymousContextDraft } from './services/anonymousContextService';
+import {
+  getAnonymousContextDraft,
+  clearAnonymousContextDraft,
+  syncAnonymousContext,
+  hasAnonymousContextDraft,
+} from './services/anonymousContextService';
 import { getHealthContext, saveHealthContext } from './services/healthContextService';
 import type { HealthContext } from './types/healthContext';
 
@@ -27,42 +32,12 @@ export default function App() {
   const fetchRequestRef = useRef(0);
 
   const hydrateAnonymousContext = useCallback(async (user: User) => {
-    const draft = getAnonymousContextDraft();
-    if (!draft) return false;
+    if (!hasAnonymousContextDraft()) return false;
     try {
-      const existing = await getHealthContext(user.uid);
-      if (existing) {
-        // Never overwrite an established account context with anonymous-device data.
-        clearAnonymousContextDraft();
-        return false;
-      }
-
-      const context: Omit<HealthContext, 'version' | 'updatedAt'> = {
-        lifecycleStage: draft.lifecycleStage,
-        userMode: 'authenticated',
-        preferredName: user.displayName || 'Mama',
-        language: draft.language,
-        pregnancy: draft.lifecycleStage === 'pregnancy' ? {
-          pregnancyWeek: draft.pregnancyWeek,
-          dueDate: draft.dueDate,
-          dueDateSource: draft.dueDate ? 'LMP' : 'UNKNOWN',
-        } : undefined,
-        interests: draft.interests,
-        dietaryPreferences: [],
-        havenResponseStyle: draft.havenResponseStyle,
-        onboardingCompletedAt: new Date().toISOString(),
-      };
-      await saveHealthContext(user.uid, context, 'context_sync');
-      await setDoc(doc(db, 'users', user.uid), {
-        onboarded: true,
-        onboardingVersion: 1,
-        onboardingSource: 'anonymous_context_sync',
-        onboardingCompletedAt: serverTimestamp(),
-      }, { merge: true });
-      clearAnonymousContextDraft();
-      return true;
+      const syncResult = await syncAnonymousContext(user);
+      return syncResult.success;
     } catch (error) {
-      console.warn('Anonymous context hydration failed; continuing with normal onboarding', error);
+      console.warn('Anonymous context synchronization failed; continuing with normal onboarding', error);
       return false;
     }
   }, []);
@@ -162,7 +137,17 @@ export default function App() {
     switch (userRole) {
       case 'PARTNER': return <PartnerShell partnerId={currentUser?.uid} partnerName={currentUser?.displayName || undefined} onSignOut={handleSignOut} />;
       case 'CLINICIAN':
-        if (!clinicianData || clinicianData.verificationStatus !== 'approved') return <ClinicianPendingScreen clinicianName={currentUser?.displayName || clinicianData?.name} clinicianData={clinicianData} onRefresh={() => currentUser ? fetchUserData(currentUser) : Promise.resolve()} onSignOut={handleSignOut} />;
+        if (!clinicianData || clinicianData.verificationStatus !== 'approved') {
+          return (
+            <ClinicianPendingScreen
+              clinicianId={currentUser?.uid || 'pending-clinician'}
+              clinicianName={currentUser?.displayName || clinicianData?.name}
+              clinicianData={clinicianData}
+              onRefresh={() => { if (currentUser) void fetchUserData(currentUser); }}
+              onSignOut={() => { void handleSignOut(); }}
+            />
+          );
+        }
         return <ClinicianShell clinicianId={currentUser?.uid} clinicianName={currentUser?.displayName || clinicianData?.name} facilityName={clinicianData?.facilityName} onSignOut={handleSignOut} />;
       case 'ADMIN':
         if (!adminMfaVerified) return <div className="min-h-screen bg-[var(--lavender-50)] flex items-center justify-center p-4"><AdminMfaModal adminEmail={currentUser?.email || ''} onSuccess={handleAdminMfaSuccess} onCancel={handleSignOut} /></div>;

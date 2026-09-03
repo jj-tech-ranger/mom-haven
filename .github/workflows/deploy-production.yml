@@ -1,15 +1,20 @@
-name: MomHaven production
+name: MomHaven production deploy
 
 on:
-  push:
-    branches: ['main']
+  workflow_run:
+    workflows: ["MomHaven checks"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
   id-token: write
 
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
 env:
-  NODE_VERSION: 20
   PROJECT_ID: mom-haven
   REGION: europe-west1
   CLOUD_RUN_SERVICE: momhaven-api
@@ -18,66 +23,19 @@ env:
   WIF_AUDIENCE: https://iam.googleapis.com/projects/306450754584/locations/global/workloadIdentityPools/github/providers/mom-haven
 
 jobs:
-  typecheck:
-    name: TypeScript
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - name: Install dependencies
-        run: npm ci
-      - name: TypeScript check
-        run: npm run lint
-
-  clinical:
-    name: Clinical tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - name: Install dependencies
-        run: npm ci
-      - name: Run clinical tests
-        run: npm run test:clinical
-
-  build:
-    name: Production build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - name: Install dependencies
-        run: npm ci
-      - name: Build application
-        run: npm run build
-
   deploy:
-    name: Deploy production
-    needs: [typecheck, clinical, build]
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Check out verified commit
+      - name: Check out tested commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: 20
           cache: npm
 
       - name: Install dependencies
@@ -113,5 +71,5 @@ jobs:
       - name: Install Firebase CLI
         run: npm install --global firebase-tools
 
-      - name: Deploy Firestore rules and Firebase Hosting
-        run: firebase deploy --only firestore,hosting --project "$PROJECT_ID" --non-interactive
+      - name: Deploy Firebase Hosting
+        run: firebase deploy --only hosting --project "$PROJECT_ID" --non-interactive
