@@ -2,22 +2,33 @@ import { collection, doc, getDocs, getDoc, updateDoc, query, where, orderBy, add
 import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Clinician, ClinicianAccessSession, ClinicianPrivateNote, AuditEvent, MotherProfile, Provenance } from '../types';
 
-export interface KMHFLFacility { code: string; name: string; county: string; subcounty: string; type: string; level: string; }
+export interface KMHFLFacility { id?: string; code: string; name: string; county: string; subcounty: string; type: string; level: string; }
 
 /**
  * Static fallback kept for deployments that intentionally bundle facility data.
- * The production registration flow reads the authoritative Firestore facilities
- * collection first, so newly provisioned facilities become available without a rebuild.
+ * Meadowcare is a temporary development facility entry for exercising the full
+ * clinician registration/approval flow and must be removed before production.
  */
-export const KENYA_KMHFL_FACILITIES: KMHFLFacility[] = [];
+export const KENYA_KMHFL_FACILITIES: KMHFLFacility[] = [
+  {
+    id: 'MEADOWCARE-DEMO-001',
+    code: 'MEADOWCARE-DEMO-001',
+    name: 'Meadowcare Hospital',
+    county: 'Nairobi',
+    subcounty: 'Westlands',
+    type: 'Hospital',
+    level: 'Level 4',
+  },
+];
 
 export async function getKenyaFacilities(): Promise<KMHFLFacility[]> {
   try {
     const snap = await getDocs(collection(db, 'facilities'));
-    const facilities = snap.docs.map(d => {
+    const firestoreFacilities = snap.docs.map(d => {
       const data = d.data() as Record<string, any>;
       return {
-        code: String(data.kmhflCode || data.code || data.id || d.id),
+        id: d.id,
+        code: String(data.kmhflCode || data.code || d.id),
         name: String(data.name || ''),
         county: String(data.county || ''),
         subcounty: String(data.subcounty || ''),
@@ -26,9 +37,11 @@ export async function getKenyaFacilities(): Promise<KMHFLFacility[]> {
       } satisfies KMHFLFacility;
     }).filter(f => f.code && f.name);
 
-    return facilities.length ? facilities : KENYA_KMHFL_FACILITIES;
+    const byId = new Map<string, KMHFLFacility>();
+    [...firestoreFacilities, ...KENYA_KMHFL_FACILITIES].forEach(f => byId.set(f.id || f.code, f));
+    return Array.from(byId.values());
   } catch (err) {
-    handleFirestoreError(err, OperationType.LIST, 'facilities');
+    console.warn('Facility directory read failed; using bundled fallback.', err);
     return KENYA_KMHFL_FACILITIES;
   }
 }
@@ -101,11 +114,8 @@ export async function getClinicianAuditEvents(actorId: string): Promise<AuditEve
 }
 
 export async function stampRecordVerification(recordPath: string, clinicianUid: string, clinicianName: string, facilityName: string, adjustments?: Record<string, any>): Promise<void> {
-  try {
-    const docRef = doc(db, recordPath); const provenanceUpdate: Provenance = { status: 'VERIFIED', enteredBy: 'system', enteredAt: new Date().toISOString(), verifiedBy: `${clinicianName} (${facilityName})`, verifiedAt: new Date().toISOString() };
-    await updateDoc(docRef, { provenance: provenanceUpdate, updatedAt: new Date().toISOString(), ...(adjustments || {}) });
-    await logAuditEvent({ actorId: clinicianUid, actorRole: 'CLINICIAN', action: 'RECORD_VERIFIED', objectType: recordPath.split('/')[0] || 'record', objectId: docRef.id, timestamp: new Date().toISOString(), facilityId: facilityName, details: { recordPath, adjustments: adjustments || null } });
-  } catch (err) { handleFirestoreError(err, OperationType.WRITE, recordPath); throw err; }
+  try { const docRef = doc(db, recordPath); const provenanceUpdate: Provenance = { status: 'VERIFIED', enteredBy: 'system', enteredAt: new Date().toISOString(), verifiedBy: `${clinicianName} (${facilityName})`, verifiedAt: new Date().toISOString() }; await updateDoc(docRef, { provenance: provenanceUpdate, updatedAt: new Date().toISOString(), ...(adjustments || {}) }); await logAuditEvent({ actorId: clinicianUid, actorRole: 'CLINICIAN', action: 'RECORD_VERIFIED', objectType: recordPath.split('/')[0] || 'record', objectId: docRef.id, timestamp: new Date().toISOString(), facilityId: facilityName, details: { recordPath, adjustments: adjustments || null } }); }
+  catch (err) { handleFirestoreError(err, OperationType.WRITE, recordPath); throw err; }
 }
 
 export async function addClinicianPrivateNote(motherId: string, clinicianId: string, text: string, childId?: string | null): Promise<string> {
