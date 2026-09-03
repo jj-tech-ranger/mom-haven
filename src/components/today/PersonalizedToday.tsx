@@ -29,6 +29,9 @@ export default function PersonalizedToday({ userId, userName, onNavigate }: Prop
         setContext(nextContext);
         setPregnancy(nextPregnancy);
       })
+      .catch(() => {
+        if (mounted) { setContext(null); setPregnancy(null); }
+      })
       .finally(() => { if (mounted) setLoading(false); });
     return () => { mounted = false; };
   }, [userId]);
@@ -54,6 +57,6 @@ export default function PersonalizedToday({ userId, userName, onNavigate }: Prop
       <button type="button" onClick={() => onNavigate('records')} className="group rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-4 text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-card-1"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--haven-deep)]"><CalendarDays className="h-4 w-4" /></div><h3 className="mt-3 font-display font-bold">Keep records close</h3><p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">Clinical records stay authoritative and separate from personalization preferences.</p><ChevronRight className="mt-2 h-4 w-4 text-[var(--ink-400)]" /></button>
     </div>
 
-    {(context?.location?.county || context?.interests?.length) ? <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-4"><div className="flex items-center gap-2 text-xs font-display font-bold text-[var(--text-secondary)]"><Sparkles className="h-4 w-4 text-[var(--haven-orchid)]" /> Your personalization</div><div className="mt-3 flex flex-wrap gap-2">{context.location?.county && <span className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-xs"><MapPin className="h-3.5 w-3.5" /> {context.location.county}</span>}{context.interests.slice(0, 6).map(interest => <span key={interest} className="rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-xs capitalize">{interest.replaceAll('_', ' ')}</span>)}</div></section> : null}
+    {(context?.county || context?.interests?.length) ? <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-4"><div className="flex items-center gap-2 text-xs font-display font-bold text-[var(--text-secondary)]"><Sparkles className="h-4 w-4 text-[var(--haven-orchid)]" /> Your personalization</div><div className="mt-3 flex flex-wrap gap-2">{context.county && <span className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-xs"><MapPin className="h-3.5 w-3.5" /> {context.county}</span>}{context.interests.slice(0, 6).map(interest => <span key={interest} className="rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-xs capitalize">{interest.replaceAll('_', ' ')}</span>)}</div></section> : null}
   </div>;
 }
