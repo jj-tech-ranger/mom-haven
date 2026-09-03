@@ -1,22 +1,78 @@
-import { collection, doc, getDocs, getDoc, setDoc, updateDoc, query, where, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { collection, doc, getDocs, getDoc, updateDoc, query, where, orderBy, addDoc } from 'firebase/firestore';
+import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Clinician, ClinicianAccessSession, ClinicianPrivateNote, AuditEvent, MotherProfile, Provenance } from '../types';
 
 export interface KMHFLFacility { code: string; name: string; county: string; subcounty: string; type: string; level: string; }
 
-// Production starts empty. Populate from the authoritative live facility source.
+/**
+ * Static fallback kept for deployments that intentionally bundle facility data.
+ * The production registration flow reads the authoritative Firestore facilities
+ * collection first, so newly provisioned facilities become available without a rebuild.
+ */
 export const KENYA_KMHFL_FACILITIES: KMHFLFacility[] = [];
+
+export async function getKenyaFacilities(): Promise<KMHFLFacility[]> {
+  try {
+    const snap = await getDocs(collection(db, 'facilities'));
+    const facilities = snap.docs.map(d => {
+      const data = d.data() as Record<string, any>;
+      return {
+        code: String(data.kmhflCode || data.code || data.id || d.id),
+        name: String(data.name || ''),
+        county: String(data.county || ''),
+        subcounty: String(data.subcounty || ''),
+        type: String(data.type || ''),
+        level: String(data.level || ''),
+      } satisfies KMHFLFacility;
+    }).filter(f => f.code && f.name);
+
+    return facilities.length ? facilities : KENYA_KMHFL_FACILITIES;
+  } catch (err) {
+    handleFirestoreError(err, OperationType.LIST, 'facilities');
+    return KENYA_KMHFL_FACILITIES;
+  }
+}
 
 export async function getClinicianProfile(uid: string): Promise<Clinician | null> {
   try { const snap = await getDoc(doc(db, 'clinicians', uid)); return snap.exists() ? { ...snap.data(), uid: snap.id } as Clinician : null; }
   catch (err) { handleFirestoreError(err, OperationType.GET, `clinicians/${uid}`); return null; }
 }
 
-export async function registerClinician(uid: string, data: { name: string; email: string; licenseNumber: string; cadre: string; facilityId: string; facilityName: string; }): Promise<void> {
-  try {
-    await setDoc(doc(db, 'clinicians', uid), { ...data, verificationStatus: 'pending', createdAt: new Date().toISOString() });
-    await setDoc(doc(db, 'users', uid), { displayName: data.name, email: data.email, role: 'CLINICIAN', updatedAt: serverTimestamp() }, { merge: true });
-  } catch (err) { handleFirestoreError(err, OperationType.WRITE, `clinicians/${uid}`); throw err; }
+/**
+ * Submit clinician credentialing using the Firebase Auth user's real UID.
+ * The server is the only writer for clinician records; this prevents a client
+ * from manufacturing a clinician UID or self-approving a credential record.
+ */
+export async function registerClinician(data: {
+  licenseNumber: string;
+  cadre: string;
+  facilityId: string;
+  facilityName: string;
+}): Promise<{ uid: string; status: 'pending' }> {
+  const user = auth.currentUser;
+  if (!user || user.isAnonymous) throw new Error('Please continue with Google before submitting clinician access.');
+
+  const idToken = await user.getIdToken();
+  const response = await fetch('/api/v1/clinician/verification', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${idToken}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    let message = 'Failed to submit clinician verification. Please try again.';
+    try {
+      const payload = await response.json();
+      if (payload?.error) message = String(payload.error);
+    } catch { /* keep the safe fallback message */ }
+    throw new Error(message);
+  }
+
+  const result = await response.json();
+  return { uid: user.uid, status: result.status === 'pending' ? 'pending' : 'pending' };
 }
 
 export async function redeemClinicShareCode(clinicianUid: string, clinicianName: string, facilityName: string, rawCode: string): Promise<{ success: boolean; session?: ClinicianAccessSession; motherProfile?: MotherProfile; message: string }> {
