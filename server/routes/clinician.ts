@@ -23,43 +23,92 @@ async function motherName(motherId: string) {
 
 clinicianRouter.get('/me', async (req,res)=>{ try { const token=await auth(req); const c=await requireClinician(token.uid); res.json({uid:token.uid,clinician:serialize(c.clinician)}); } catch(e){sendError(res,e);} });
 
+/**
+ * Public clinician application. No Firebase account is created at this stage.
+ * The submitted professional details become a pending admin-review record.
+ */
 clinicianRouter.post('/verification', async (req,res)=>{
   try {
-    const token = await auth(req);
-    if (!token.uid) throw new ApiError(401, 'Sign-in required.');
-    const { licenseNumber, cadre, facilityId, facilityName } = req.body || {};
-    if (!String(licenseNumber || '').trim() || !String(cadre || '').trim()) throw new ApiError(400, 'License number and cadre are required.');
+    const { name, email, licenseNumber, cadre, facilityId, facilityName } = req.body || {};
+    const cleanName = String(name || '').trim();
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    const cleanLicense = String(licenseNumber || '').trim().toUpperCase();
+    const cleanCadre = String(cadre || '').trim();
+    const cleanFacilityId = String(facilityId || '').trim();
+    const cleanFacilityName = String(facilityName || '').trim();
+    if (!cleanName || !cleanEmail || !cleanLicense || !cleanCadre || !cleanFacilityId || !cleanFacilityName) throw new ApiError(400, 'Name, email, license number, cadre and facility are required.');
+    if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) throw new ApiError(400, 'Enter a valid professional email address.');
 
-    const userRef = adminDb.doc(`users/${token.uid}`);
-    const userSnap = await userRef.get();
-    const existingRole = userSnap.exists ? String(userSnap.data()?.role || '') : '';
-    if (existingRole === 'ADMIN') throw new ApiError(403, 'An administrator account cannot be converted into a clinician account. Use a separate Google account for clinician access.');
-
-    if (facilityId && !DEVELOPMENT_FACILITY_IDS.has(String(facilityId))) {
-      const facilitySnap = await adminDb.doc(`facilities/${facilityId}`).get();
+    if (!DEVELOPMENT_FACILITY_IDS.has(cleanFacilityId)) {
+      const facilitySnap = await adminDb.doc(`facilities/${cleanFacilityId}`).get();
       if (!facilitySnap.exists) throw new ApiError(400, 'The selected facility is not available in the MomHaven facility directory.');
     }
 
+    const existing = await adminDb.collection('clinicians').where('email', '==', cleanEmail).limit(10).get();
+    const active = existing.docs.find(d => ['pending','approved','suspended'].includes(String(d.data()?.verificationStatus || '').toLowerCase()));
+    if (active) throw new ApiError(409, 'A clinician application already exists for this email. Use Check verification status to view it.');
+
+    const ref = adminDb.collection('clinicians').doc();
     const now = FieldValue.serverTimestamp();
-    await userRef.set({
-      displayName: token.name || token.email?.split('@')[0] || 'Clinician',
-      email: token.email || '',
-      role: 'CLINICIAN',
-      updatedAt: now,
-    }, { merge: true });
-    await adminDb.doc(`clinicians/${token.uid}`).set({
-      uid: token.uid,
-      name: token.name || token.email?.split('@')[0] || 'Clinician',
-      email: token.email || '',
-      licenseNumber: String(licenseNumber).trim().toUpperCase(),
-      cadre: String(cadre).trim(),
-      facilityId: facilityId || null,
-      facilityName: facilityName || null,
+    await ref.set({
+      uid: null,
+      applicationId: ref.id,
+      name: cleanName,
+      email: cleanEmail,
+      licenseNumber: cleanLicense,
+      cadre: cleanCadre,
+      facilityId: cleanFacilityId,
+      facilityName: cleanFacilityName,
       verificationStatus: 'pending',
       createdAt: now,
       updatedAt: now,
-    }, { merge: true });
-    res.json({ success: true, status: 'pending' });
+    });
+    // This temporary profile exists only so the existing admin queue can display the application.
+    await adminDb.doc(`users/${ref.id}`).set({ displayName: cleanName, email: cleanEmail, role: 'CLINICIAN', applicationOnly: true, createdAt: now, updatedAt: now });
+    res.status(201).json({ success: true, status: 'pending' });
+  } catch(e) { sendError(res,e); }
+});
+
+/** Public, minimal status lookup for a clinician who has not created an account yet. */
+clinicianRouter.get('/verification-status', async (req,res)=>{
+  try {
+    const email = String(req.query.email || '').trim().toLowerCase();
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) throw new ApiError(400, 'Enter the email used on your clinician application.');
+    const q = await adminDb.collection('clinicians').where('email', '==', email).limit(10).get();
+    const app = q.docs.sort((a,b) => String(b.data()?.createdAt?.toMillis?.() || '').localeCompare(String(a.data()?.createdAt?.toMillis?.() || '')))[0];
+    if (!app) return res.json({ status: 'not_found' });
+    const c = app.data();
+    res.json({ status: String(c.verificationStatus || 'pending'), name: String(c.name || ''), email, facilityName: c.facilityName || null, cadre: c.cadre || '', rejectionReason: c.rejectionReason || undefined });
+  } catch(e) { sendError(res,e); }
+});
+
+/**
+ * After admin approval, the clinician creates an email/password Firebase account.
+ * The email must be verified before the approved application is attached to the new UID.
+ */
+clinicianRouter.post('/claim-approved', async (req,res)=>{
+  try {
+    const token = await auth(req);
+    if (!token.email) throw new ApiError(400, 'The clinician account must have an email address.');
+    if (!(token as any).email_verified) throw new ApiError(403, 'Verify your email address first, then return here to activate your clinician account.');
+
+    const email = String(token.email).trim().toLowerCase();
+    const q = await adminDb.collection('clinicians').where('email', '==', email).where('verificationStatus', '==', 'approved').limit(10).get();
+    const application = q.docs.find(d => !d.data()?.uid);
+    if (!application) throw new ApiError(403, 'No approved clinician application was found for this email.');
+
+    const source = application.data();
+    const uid = token.uid;
+    const now = FieldValue.serverTimestamp();
+    const userRef = adminDb.doc(`users/${uid}`);
+    const clinicianRef = adminDb.doc(`clinicians/${uid}`);
+
+    await userRef.set({ displayName: String(source.name || token.name || email.split('@')[0]), email, role: 'CLINICIAN', createdAt: now, updatedAt: now }, { merge: true });
+    await clinicianRef.set({ ...source, uid, email, name: String(source.name || token.name || email.split('@')[0]), verificationStatus: 'approved', applicationId: application.id, activatedAt: now, updatedAt: now }, { merge: true });
+    await adminDb.doc(`users/${application.id}`).delete();
+    if (application.id !== uid) await application.ref.delete();
+    await logAudit(uid,'CLINICIAN','CLINICIAN_ACCOUNT_ACTIVATED','clinicians',uid,source.facilityId||null);
+    res.json({ success: true, status: 'approved', uid });
   } catch(e) { sendError(res,e); }
 });
 
