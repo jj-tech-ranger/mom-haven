@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Home, HeartPulse, ClipboardList, AlertTriangle, User, LogOut } from 'lucide-react';
+import { Home, HeartPulse, ClipboardList, AlertTriangle, User, LogOut, type LucideIcon } from 'lucide-react';
 import EmptyState from './EmptyState';
 
 interface PartnerShellProps { partnerId?: string; partnerName?: string; onSignOut?: () => void; }
 type PartnerTab = 'home' | 'support' | 'birthplan' | 'emergency' | 'profile';
-const tabs: { id: PartnerTab; label: string; icon: React.ElementType }[] = [{ id: 'home', label: 'Home', icon: Home }, { id: 'support', label: 'Support', icon: HeartPulse }, { id: 'birthplan', label: 'Birth plan', icon: ClipboardList }, { id: 'emergency', label: 'Emergency', icon: AlertTriangle }, { id: 'profile', label: 'Profile', icon: User }];
+const tabs: { id: PartnerTab; label: string; icon: LucideIcon }[] = [{ id: 'home', label: 'Home', icon: Home }, { id: 'support', label: 'Support', icon: HeartPulse }, { id: 'birthplan', label: 'Birth plan', icon: ClipboardList }, { id: 'emergency', label: 'Emergency', icon: AlertTriangle }, { id: 'profile', label: 'Profile', icon: User }];
 
 export default function PartnerShell({ partnerName, onSignOut }: PartnerShellProps) {
   const [activeTab, setActiveTab] = useState<PartnerTab>('home'); const current = tabs.find(t => t.id === activeTab) || tabs[0]; const Icon = current.icon;
