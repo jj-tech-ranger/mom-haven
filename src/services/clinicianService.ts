@@ -5,11 +5,16 @@ import { KENYA_FACILITIES, MEADOWCARE_DEMO_FACILITY } from '../data/kenyaFacilit
 
 export interface KMHFLFacility { id?: string; code: string; name: string; county: string; subcounty: string; type: string; level: string; }
 
-/**
- * Static fallback kept for deployments that intentionally bundle facility data.
- * Meadowcare is a temporary development facility entry for exercising the full
- * clinician registration/approval flow and must be removed before production.
- */
+export interface ClinicianVerificationStatus {
+  status: 'pending' | 'approved' | 'rejected' | 'not_found';
+  name?: string;
+  email?: string;
+  facilityName?: string | null;
+  cadre?: string;
+  rejectionReason?: string;
+}
+
+/** Temporary bundled directory entry for development/testing. Remove Meadowcare before production. */
 export const KENYA_KMHFL_FACILITIES: KMHFLFacility[] = [
   ...KENYA_FACILITIES.map(f => ({
     id: f.id,
@@ -20,8 +25,6 @@ export const KENYA_KMHFL_FACILITIES: KMHFLFacility[] = [
     type: f.type,
     level: f.level || '',
   })),
-  // Explicit guard so the demo facility remains visible even if the seeded
-  // array is changed while testing. Remove this entry before production.
   {
     id: MEADOWCARE_DEMO_FACILITY.id,
     code: MEADOWCARE_DEMO_FACILITY.code || MEADOWCARE_DEMO_FACILITY.id,
@@ -48,9 +51,6 @@ export async function getKenyaFacilities(): Promise<KMHFLFacility[]> {
         level: String(data.level || ''),
       } satisfies KMHFLFacility;
     }).filter(f => f.code && f.name);
-
-    // Always append the bundled test directory and dedupe by facility code.
-    // This guarantees Meadowcare is present even when Firestore has no facility seed.
     const byCode = new Map<string, KMHFLFacility>();
     [...firestoreFacilities, ...KENYA_KMHFL_FACILITIES].forEach(f => byCode.set(f.code, f));
     return Array.from(byCode.values());
@@ -65,41 +65,56 @@ export async function getClinicianProfile(uid: string): Promise<Clinician | null
   catch (err) { handleFirestoreError(err, OperationType.GET, `clinicians/${uid}`); return null; }
 }
 
-/**
- * Submit clinician credentialing using the Firebase Auth user's real UID.
- * The server is the only writer for clinician records; this prevents a client
- * from manufacturing a clinician UID or self-approving a credential record.
- */
+/** Submit the initial clinician application without creating an authenticated account. */
 export async function registerClinician(data: {
+  name: string;
+  email: string;
   licenseNumber: string;
   cadre: string;
   facilityId: string;
   facilityName: string;
-}): Promise<{ uid: string; status: 'pending' }> {
-  const user = auth.currentUser;
-  if (!user || user.isAnonymous) throw new Error('Please continue with Google before submitting clinician access.');
-
-  const idToken = await user.getIdToken();
+}): Promise<{ status: 'pending' }> {
   const response = await fetch('/api/v1/clinician/verification', {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${idToken}`,
-    },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(data),
   });
-
   if (!response.ok) {
     let message = 'Failed to submit clinician verification. Please try again.';
-    try {
-      const payload = await response.json();
-      if (payload?.error) message = String(payload.error);
-    } catch { /* keep the safe fallback message */ }
+    try { const payload = await response.json(); if (payload?.error) message = String(payload.error); } catch { /* safe fallback */ }
     throw new Error(message);
   }
-
   const result = await response.json();
-  return { uid: user.uid, status: result.status === 'pending' ? 'pending' : 'pending' };
+  return { status: result.status === 'pending' ? 'pending' : 'pending' };
+}
+
+/** Public status lookup used only by the clinician verification screen. */
+export async function checkClinicianVerification(email: string): Promise<ClinicianVerificationStatus> {
+  const response = await fetch(`/api/v1/clinician/verification-status?email=${encodeURIComponent(email.trim().toLowerCase())}`);
+  if (!response.ok) {
+    let message = 'Unable to check verification status.';
+    try { const payload = await response.json(); if (payload?.error) message = String(payload.error); } catch { /* safe fallback */ }
+    throw new Error(message);
+  }
+  return response.json();
+}
+
+/** Attach the approved application to the newly-created Firebase email/password account. */
+export async function claimApprovedClinician(): Promise<{ uid: string; status: 'approved' }> {
+  const user = auth.currentUser;
+  if (!user || user.isAnonymous || !user.email) throw new Error('Please create your clinician account first.');
+  const idToken = await user.getIdToken(true);
+  const response = await fetch('/api/v1/clinician/claim-approved', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${idToken}` },
+  });
+  if (!response.ok) {
+    let message = 'Unable to activate the approved clinician account.';
+    try { const payload = await response.json(); if (payload?.error) message = String(payload.error); } catch { /* safe fallback */ }
+    throw new Error(message);
+  }
+  const result = await response.json();
+  return { uid: user.uid, status: result.status === 'approved' ? 'approved' : 'approved' };
 }
 
 export async function redeemClinicShareCode(clinicianUid: string, clinicianName: string, facilityName: string, rawCode: string): Promise<{ success: boolean; session?: ClinicianAccessSession; motherProfile?: MotherProfile; message: string }> {
