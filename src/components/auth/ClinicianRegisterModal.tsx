@@ -89,7 +89,7 @@ export default function ClinicianRegisterModal({ onClose, onSuccess }: Clinician
       const result = await registerClinician({
         licenseNumber: licenseNumber.trim().toUpperCase(),
         cadre: cadre.trim(),
-        facilityId: selectedFacility.code,
+        facilityId: selectedFacility.id || selectedFacility.code,
         facilityName: selectedFacility.name,
       });
       onSuccess(result.uid);
@@ -107,7 +107,7 @@ export default function ClinicianRegisterModal({ onClose, onSuccess }: Clinician
         <div className="p-5 border-b border-[var(--border-hairline)] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[var(--lavender-100)] flex items-center justify-center"><Stethoscope className="w-5 h-5 text-[var(--haven-orchid)]" /></div>
-            <div><h3 className="font-display font-extrabold text-[18px] text-[var(--ink-900)]">Healthcare Professional Access</h3><p className="font-body text-xs text-[var(--ink-600)]">Credential verification request</p></div>
+            <div><h3 className="font-display font-extrabold text-[18px] text-[var(--ink-900)]">Healthcare Professional Access</h3><p className="font-body text-xs text-[var(--ink-600)]">KMPDC / NCK / COC Credential Verification</p></div>
           </div>
           <button type="button" onClick={onClose} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer"><X className="w-5 h-5" /></button>
         </div>
@@ -115,7 +115,7 @@ export default function ClinicianRegisterModal({ onClose, onSuccess }: Clinician
         <div className="p-6 overflow-y-auto space-y-4">
           <div className="bg-[var(--lavender-50)] border border-[var(--border-hairline)] p-3.5 rounded-[16px] text-xs text-[var(--ink-900)] flex items-start gap-2.5">
             <ShieldCheck className="w-4 h-4 text-[var(--haven-deep)] shrink-0 mt-0.5" />
-            <span><strong>Verified clinicians only:</strong> your Google account provides the real Firebase identity used for credential review. Access remains pending until an administrator approves you.</span>
+            <span><strong>Verified Clinicians Only:</strong> Access to patient ANC, immunization, and growth charts is strictly audited and remains pending until an administrator approves the verification request.</span>
           </div>
 
           {error && <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-[14px] flex items-start gap-2"><AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /><span>{error}</span></div>}
@@ -138,12 +138,11 @@ export default function ClinicianRegisterModal({ onClose, onSuccess }: Clinician
           )}
 
           <form onSubmit={handleSubmit} className="space-y-3.5 text-left">
-            <input type="text" placeholder="Full official name" value={name} onChange={e => setName(e.target.value)} required disabled={!authenticated} className="w-full text-xs py-3 px-3.5 rounded-[14px] border border-[var(--border-hairline)] bg-[var(--lavender-50)] disabled:opacity-60" />
-            <input type="email" placeholder="Professional email" value={email} onChange={e => setEmail(e.target.value)} required disabled={!authenticated} className="w-full text-xs py-3 px-3.5 rounded-[14px] border border-[var(--border-hairline)] bg-[var(--lavender-50)] disabled:opacity-60" />
+            <input type="text" placeholder="Full official name (as on Council License)" value={name} onChange={e => setName(e.target.value)} required disabled={!authenticated} className="w-full text-xs py-3 px-3.5 rounded-[14px] border border-[var(--border-hairline)] bg-[var(--lavender-50)] disabled:opacity-60" />
+            <input type="email" placeholder="Official email (Hospital / MOH / Personal)" value={email} onChange={e => setEmail(e.target.value)} required disabled={!authenticated} className="w-full text-xs py-3 px-3.5 rounded-[14px] border border-[var(--border-hairline)] bg-[var(--lavender-50)] disabled:opacity-60" />
             <input type="text" placeholder="Council license number" value={licenseNumber} onChange={e => setLicenseNumber(e.target.value)} required disabled={!authenticated} className="w-full text-xs py-3 px-3.5 rounded-[14px] border border-[var(--border-hairline)] bg-[var(--lavender-50)] font-mono uppercase disabled:opacity-60" />
             <select value={cadre} onChange={e => setCadre(e.target.value)} required disabled={!authenticated} className="w-full text-xs py-3 px-3 rounded-[14px] border border-[var(--border-hairline)] bg-[var(--lavender-50)] disabled:opacity-60">
               <option value="">Select professional cadre</option>
-              <option value="Doctor">Doctor</option>
               <option value="Medical Officer (MO)">Medical Officer (MO)</option>
               <option value="Consultant Obstetrician/Gynaecologist">Consultant Obstetrician/Gynaecologist</option>
               <option value="Registered Midwife (KRCHN)">Registered Midwife (KRCHN)</option>
@@ -156,14 +155,14 @@ export default function ClinicianRegisterModal({ onClose, onSuccess }: Clinician
             </select>
             <select value={facilityCode} onChange={e => setFacilityCode(e.target.value)} required disabled={!authenticated || loadingFacilities || countyFacilities.length === 0} className="w-full text-xs py-3 px-3 rounded-[14px] border border-[var(--border-hairline)] bg-[var(--lavender-50)] disabled:opacity-60">
               <option value="">{loadingFacilities ? 'Loading Kenya facilities...' : countyFacilities.length ? 'Select facility' : county ? 'No facilities listed for this county' : 'Select a county first'}</option>
-              {countyFacilities.map(f => <option key={f.code} value={f.code}>{f.name} — {f.subcounty || f.county}</option>)}
+              {countyFacilities.map(f => <option key={f.id || f.code} value={f.code}>{f.name} — {f.subcounty || f.county}{f.level ? ` (${f.level})` : ''}</option>)}
             </select>
             <Button type="submit" variant="primary" disabled={!authenticated || loading || loadingFacilities || !countyFacilities.length} className="w-full py-3.5 text-xs font-display font-bold">
               {loading ? 'Submitting...' : 'Submit Verification Request'}
             </Button>
           </form>
 
-          <p className="text-[11px] text-[var(--ink-600)] leading-relaxed">A license number is required for credential review. Do not enter a made-up number; if you do not have it yet, you can sign in with Google first and return once you have the required professional credential.</p>
+          <p className="text-[11px] text-[var(--ink-600)] leading-relaxed">A license number is required for credential review. The request remains pending until an administrator completes the verification decision.</p>
         </div>
       </div>
     </div>
