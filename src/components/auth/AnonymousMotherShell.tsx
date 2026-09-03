@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Home, Milestone, MessageSquare, FileText, User, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Home, Milestone, MessageSquare, FileText, User, ArrowLeft, ShieldCheck, type LucideIcon } from 'lucide-react';
 import EmptyState from '../EmptyState';
 
 type MotherTab = 'today' | 'journey' | 'haven' | 'records' | 'profile';
-interface AnonymousMotherShellProps { onBackToLanding: () => void; onCreateAccount: () => void; initialTab?: MotherTab; }
+interface AnonymousMotherShellProps { onBackToLanding: () => void; onCreateAccount: () => void; initialTab?: MotherTab; initialPrompt?: string; }
 
-const tabs: { id: MotherTab; label: string; icon: React.ElementType }[] = [
+const tabs: { id: MotherTab; label: string; icon: LucideIcon }[] = [
   { id: 'today', label: 'Today', icon: Home }, { id: 'journey', label: 'Journey', icon: Milestone }, { id: 'haven', label: 'Haven', icon: MessageSquare }, { id: 'records', label: 'Records', icon: FileText }, { id: 'profile', label: 'Profile', icon: User },
 ];
 
