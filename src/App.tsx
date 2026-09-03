@@ -31,28 +31,18 @@ export default function App() {
 
         if (role === 'CLINICIAN') {
           const clinDoc = await getDoc(doc(db, 'clinicians', user.uid));
-          if (clinDoc.exists()) {
-            setClinicianData({ ...clinDoc.data(), uid: user.uid } as Clinician);
-          } else {
-            // Default pending profile if clinician record doesn't exist yet
-            setClinicianData({
-              uid: user.uid,
-              name: data.displayName || 'Healthcare Professional',
-              email: data.email || '',
-              licenseNumber: 'KMPDC A-14920',
-              cadre: 'Medical Officer (ObsGyn)',
-              facilityId: '13000',
-              facilityName: 'Kenyatta National Hospital (Level 6)',
-              verificationStatus: 'pending',
-            });
-          }
+          setClinicianData(clinDoc.exists() ? { ...clinDoc.data(), uid: user.uid } as Clinician : null);
+        } else {
+          setClinicianData(null);
         }
       } else {
         setUserRole('MOTHER');
+        setClinicianData(null);
       }
     } catch (err) {
       console.warn('Could not read user role from Firestore, defaulting to MOTHER', err);
       setUserRole('MOTHER');
+      setClinicianData(null);
     }
   }, []);
 
@@ -104,28 +94,15 @@ export default function App() {
   const renderCurrentShell = () => {
     switch (userRole) {
       case 'PARTNER':
-        return (
-          <PartnerShell
-            partnerId={currentUser?.uid || 'partner-user'}
-            partnerName={currentUser?.displayName || 'Partner Support'}
-            onSignOut={handleSignOut}
-          />
-        );
+        return <PartnerShell partnerId={currentUser?.uid} partnerName={currentUser?.displayName || undefined} onSignOut={handleSignOut} />;
 
       case 'CLINICIAN':
-        // Check verification status: if pending or not approved, enforce boundary
         if (!clinicianData || clinicianData.verificationStatus !== 'approved') {
           return (
             <ClinicianPendingScreen
-              clinicianId={currentUser?.uid || 'clinician-user'}
-              clinicianName={currentUser?.displayName || clinicianData?.name || 'Healthcare Professional'}
+              clinicianName={currentUser?.displayName || clinicianData?.name}
               clinicianData={clinicianData}
-              onRefresh={() => currentUser && fetchUserData(currentUser)}
-              onInstantApprove={() => {
-                if (clinicianData) {
-                  setClinicianData({ ...clinicianData, verificationStatus: 'approved' });
-                }
-              }}
+              onRefresh={() => currentUser ? fetchUserData(currentUser) : Promise.resolve()}
               onSignOut={handleSignOut}
             />
           );
@@ -133,20 +110,19 @@ export default function App() {
 
         return (
           <ClinicianShell
-            clinicianId={currentUser?.uid || 'clinician-dr-sarah'}
-            clinicianName={currentUser?.displayName || clinicianData?.name || 'Dr. Sarah Kimani (MO ObsGyn)'}
-            facilityName={clinicianData?.facilityName || 'Kenyatta National Hospital (Level 6)'}
+            clinicianId={currentUser?.uid}
+            clinicianName={currentUser?.displayName || clinicianData?.name}
+            facilityName={clinicianData?.facilityName}
             onSignOut={handleSignOut}
           />
         );
 
       case 'ADMIN':
-        // Check MFA Step-up for administrative clearance
         if (!adminMfaVerified) {
           return (
             <div className="min-h-screen bg-[var(--lavender-50)] flex items-center justify-center p-4">
               <AdminMfaModal
-                adminEmail={currentUser?.email || 'admin@health.go.ke'}
+                adminEmail={currentUser?.email || ''}
                 onSuccess={handleAdminMfaSuccess}
                 onCancel={handleSignOut}
               />
@@ -158,14 +134,7 @@ export default function App() {
 
       case 'MOTHER':
       default:
-        return (
-          <MotherShell
-            userId={currentUser?.uid || 'guest-user'}
-            userEmail={currentUser?.email || 'mama@example.com'}
-            userName={currentUser?.displayName || 'Mama Jemimah'}
-            onSignOut={handleSignOut}
-          />
-        );
+        return <MotherShell userId={currentUser?.uid} userEmail={currentUser?.email || undefined} userName={currentUser?.displayName || undefined} onSignOut={handleSignOut} />;
     }
   };
 
