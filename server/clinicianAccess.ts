@@ -39,12 +39,15 @@ async function repairApprovedClinicianAccount(uid: string) {
     return { uid, clinician: existingClinician.data()! };
   }
 
+  // Query only by email so account repair does not depend on a Firestore
+  // composite index for email + verificationStatus.
   const q = await adminDb.collection('clinicians')
     .where('email', '==', email)
-    .where('verificationStatus', '==', 'approved')
-    .limit(10)
+    .limit(20)
     .get();
-  const application = q.docs.find(d => !d.data()?.uid);
+  const application = q.docs.find(d =>
+    !d.data()?.uid && String(d.data()?.verificationStatus || '').toLowerCase() === 'approved'
+  );
   if (!application) return null;
 
   const source = application.data();
@@ -70,7 +73,11 @@ async function repairApprovedClinicianAccount(uid: string) {
   await adminDb.doc(`users/${application.id}`).delete();
   await application.ref.delete();
   await logAudit(uid, 'CLINICIAN', 'CLINICIAN_ACCOUNT_ACTIVATED', 'clinicians', uid, source.facilityId || null);
-  return { uid, clinician: clinicianData };
+
+  // Return the persisted document so serverTimestamp sentinels never leak into
+  // the response consumed by the frontend.
+  const activated = await adminDb.doc(`clinicians/${uid}`).get();
+  return { uid, clinician: activated.data() || clinicianData };
 }
 
 export async function requireClinician(uid: string) {
