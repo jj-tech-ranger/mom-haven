@@ -10,17 +10,15 @@ permissions:
   contents: read
   id-token: write
 
-concurrency:
-  group: production-deploy
-  cancel-in-progress: false
-
 env:
   PROJECT_ID: mom-haven
   REGION: europe-west1
   CLOUD_RUN_SERVICE: momhaven-api
   DEPLOY_SERVICE_ACCOUNT: momhaven-deploy@mom-haven.iam.gserviceaccount.com
+  RUNTIME_SERVICE_ACCOUNT: momhaven-runtime@mom-haven.iam.gserviceaccount.com
   WIF_PROVIDER: projects/306450754584/locations/global/workloadIdentityPools/github/providers/mom-haven
   WIF_AUDIENCE: https://iam.googleapis.com/projects/306450754584/locations/global/workloadIdentityPools/github/providers/mom-haven
+  IMAGE_REPOSITORY: cloud-run-source-deploy
 
 jobs:
   deploy:
@@ -31,15 +29,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
@@ -54,14 +43,23 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Build and push production container
+        run: |
+          IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${IMAGE_REPOSITORY}/${CLOUD_RUN_SERVICE}:${{ github.event.workflow_run.head_sha }}"
+          echo "IMAGE_URI=$IMAGE_URI" >> "$GITHUB_ENV"
+          gcloud builds submit . \
+            --tag "$IMAGE_URI" \
+            --project "$PROJECT_ID" \
+            --region "$REGION"
+
       - name: Deploy backend to Cloud Run
         run: |
           gcloud run deploy "$CLOUD_RUN_SERVICE" \
-            --source . \
+            --image "$IMAGE_URI" \
             --region "$REGION" \
             --project "$PROJECT_ID" \
             --allow-unauthenticated \
-            --service-account momhaven-runtime@mom-haven.iam.gserviceaccount.com
+            --service-account "$RUNTIME_SERVICE_ACCOUNT"
 
       - name: Verify backend health
         run: |
