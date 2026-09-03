@@ -1,7 +1,7 @@
 // src/App.tsx
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, ensureUserProfile, logoutUser, testConnection } from './lib/firebase';
 import { UserRole, Clinician } from './types';
 import LandingPage from './components/LandingPage';
@@ -12,6 +12,9 @@ import AdminShell from './components/AdminShell';
 import ClinicianPendingScreen from './components/auth/ClinicianPendingScreen';
 import AdminMfaModal from './components/auth/AdminMfaModal';
 import PremiumOnboardingWizard from './components/auth/PremiumOnboardingWizard';
+import { getAnonymousContextDraft, clearAnonymousContextDraft } from './services/anonymousContextService';
+import { getHealthContext, saveHealthContext } from './services/healthContextService';
+import type { HealthContext } from './types/healthContext';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -22,6 +25,47 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [identityError, setIdentityError] = useState<string | null>(null);
   const fetchRequestRef = useRef(0);
+
+  const hydrateAnonymousContext = useCallback(async (user: User) => {
+    const draft = getAnonymousContextDraft();
+    if (!draft) return false;
+    try {
+      const existing = await getHealthContext(user.uid);
+      if (existing) {
+        // Never overwrite an established account context with anonymous-device data.
+        clearAnonymousContextDraft();
+        return false;
+      }
+
+      const context: Omit<HealthContext, 'version' | 'updatedAt'> = {
+        lifecycleStage: draft.lifecycleStage,
+        userMode: 'authenticated',
+        preferredName: user.displayName || 'Mama',
+        language: draft.language,
+        pregnancy: draft.lifecycleStage === 'pregnancy' ? {
+          pregnancyWeek: draft.pregnancyWeek,
+          dueDate: draft.dueDate,
+          dueDateSource: draft.dueDate ? 'LMP' : 'UNKNOWN',
+        } : undefined,
+        interests: draft.interests,
+        dietaryPreferences: [],
+        havenResponseStyle: draft.havenResponseStyle,
+        onboardingCompletedAt: new Date().toISOString(),
+      };
+      await saveHealthContext(user.uid, context, 'context_sync');
+      await setDoc(doc(db, 'users', user.uid), {
+        onboarded: true,
+        onboardingVersion: 1,
+        onboardingSource: 'anonymous_context_sync',
+        onboardingCompletedAt: serverTimestamp(),
+      }, { merge: true });
+      clearAnonymousContextDraft();
+      return true;
+    } catch (error) {
+      console.warn('Anonymous context hydration failed; continuing with normal onboarding', error);
+      return false;
+    }
+  }, []);
 
   const fetchUserData = useCallback(async (user: User) => {
     const requestId = ++fetchRequestRef.current;
@@ -58,16 +102,23 @@ export default function App() {
     try {
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (requestId !== fetchRequestRef.current) return;
-      if (userDoc.exists()) {
-        const data = userDoc.data();
-        const role = (data?.role as UserRole) || 'MOTHER';
-        setUserRole(role);
-        setClinicianData(null);
-        setNeedsOnboarding(role === 'MOTHER' && data?.onboardingVersion !== 1);
-      } else {
+      const data = userDoc.exists() ? userDoc.data() : {};
+      const role = (data?.role as UserRole) || 'MOTHER';
+
+      if (role === 'MOTHER' && !userDoc.exists()) {
+        try { await ensureUserProfile(user); } catch (err) { console.warn('Could not initialize MomHaven user profile', err); }
+      }
+
+      if (role === 'MOTHER') {
+        const hydrated = await hydrateAnonymousContext(user);
+        if (requestId !== fetchRequestRef.current) return;
         setUserRole('MOTHER');
         setClinicianData(null);
-        setNeedsOnboarding(true);
+        setNeedsOnboarding(!hydrated && data?.onboardingVersion !== 1);
+      } else {
+        setUserRole(role);
+        setClinicianData(null);
+        setNeedsOnboarding(false);
       }
     } catch (err) {
       if (requestId !== fetchRequestRef.current) return;
@@ -75,7 +126,7 @@ export default function App() {
       setClinicianData(null);
       setIdentityError('We could not verify your portal role. For your security, no portal data will be shown.');
     }
-  }, []);
+  }, [hydrateAnonymousContext]);
 
   useEffect(() => {
     testConnection();
