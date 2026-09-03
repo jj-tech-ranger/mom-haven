@@ -1,9 +1,7 @@
-name: MomHaven CI and production deploy
+name: MomHaven production
 
 on:
   push:
-    branches: ['main']
-  pull_request:
     branches: ['main']
 
 permissions:
@@ -70,7 +68,6 @@ jobs:
 
   deploy:
     name: Deploy production
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     needs: [typecheck, clinical, build]
     runs-on: ubuntu-latest
     steps:
