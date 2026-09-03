@@ -50,7 +50,8 @@ jobs:
           gcloud builds submit . \
             --tag "$IMAGE_URI" \
             --project "$PROJECT_ID" \
-            --region "$REGION"
+            --region "$REGION" \
+            --suppress-logs
 
       - name: Deploy backend to Cloud Run
         run: |
