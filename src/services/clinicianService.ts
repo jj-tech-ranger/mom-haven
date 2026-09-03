@@ -1,6 +1,7 @@
 import { collection, doc, getDocs, getDoc, updateDoc, query, where, orderBy, addDoc } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Clinician, ClinicianAccessSession, ClinicianPrivateNote, AuditEvent, MotherProfile, Provenance } from '../types';
+import { KENYA_FACILITIES, MEADOWCARE_DEMO_FACILITY } from '../data/kenyaFacilities';
 
 export interface KMHFLFacility { id?: string; code: string; name: string; county: string; subcounty: string; type: string; level: string; }
 
@@ -10,14 +11,25 @@ export interface KMHFLFacility { id?: string; code: string; name: string; county
  * clinician registration/approval flow and must be removed before production.
  */
 export const KENYA_KMHFL_FACILITIES: KMHFLFacility[] = [
+  ...KENYA_FACILITIES.map(f => ({
+    id: f.id,
+    code: f.code || f.id,
+    name: f.name,
+    county: f.county,
+    subcounty: f.subcounty,
+    type: f.type,
+    level: f.level || '',
+  })),
+  // Explicit guard so the demo facility remains visible even if the seeded
+  // array is changed while testing. Remove this entry before production.
   {
-    id: 'MEADOWCARE-DEMO-001',
-    code: 'MEADOWCARE-DEMO-001',
-    name: 'Meadowcare Hospital',
-    county: 'Nairobi',
-    subcounty: 'Westlands',
-    type: 'Hospital',
-    level: 'Level 4',
+    id: MEADOWCARE_DEMO_FACILITY.id,
+    code: MEADOWCARE_DEMO_FACILITY.code || MEADOWCARE_DEMO_FACILITY.id,
+    name: MEADOWCARE_DEMO_FACILITY.name,
+    county: MEADOWCARE_DEMO_FACILITY.county,
+    subcounty: MEADOWCARE_DEMO_FACILITY.subcounty,
+    type: MEADOWCARE_DEMO_FACILITY.type,
+    level: MEADOWCARE_DEMO_FACILITY.level || '',
   },
 ];
 
@@ -37,9 +49,11 @@ export async function getKenyaFacilities(): Promise<KMHFLFacility[]> {
       } satisfies KMHFLFacility;
     }).filter(f => f.code && f.name);
 
-    const byId = new Map<string, KMHFLFacility>();
-    [...firestoreFacilities, ...KENYA_KMHFL_FACILITIES].forEach(f => byId.set(f.id || f.code, f));
-    return Array.from(byId.values());
+    // Always append the bundled test directory and dedupe by facility code.
+    // This guarantees Meadowcare is present even when Firestore has no facility seed.
+    const byCode = new Map<string, KMHFLFacility>();
+    [...firestoreFacilities, ...KENYA_KMHFL_FACILITIES].forEach(f => byCode.set(f.code, f));
+    return Array.from(byCode.values());
   } catch (err) {
     console.warn('Facility directory read failed; using bundled fallback.', err);
     return KENYA_KMHFL_FACILITIES;
