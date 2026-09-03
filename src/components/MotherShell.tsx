@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Home, Milestone, MessageSquare, FileText, User, LogOut } from 'lucide-react';
+import { Home, Milestone, MessageSquare, FileText, User, LogOut, type LucideIcon } from 'lucide-react';
 import EmptyState from './EmptyState';
 
 type MotherTab = 'today' | 'journey' | 'haven' | 'records' | 'profile';
 interface MotherShellProps { userId?: string; userEmail?: string; userName?: string; onSignOut?: () => void; }
 
-const tabs: { id: MotherTab; label: string; icon: React.ElementType }[] = [
+const tabs: { id: MotherTab; label: string; icon: LucideIcon }[] = [
   { id: 'today', label: 'Today', icon: Home }, { id: 'journey', label: 'Journey', icon: Milestone }, { id: 'haven', label: 'Haven', icon: MessageSquare }, { id: 'records', label: 'Records', icon: FileText }, { id: 'profile', label: 'Profile', icon: User },
 ];
 
