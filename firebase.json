@@ -21,5 +21,9 @@
         "destination": "/index.html"
       }
     ]
+  },
+  "firestore": {
+    "database": "mom-haven",
+    "rules": "firestore.rules"
   }
 }
