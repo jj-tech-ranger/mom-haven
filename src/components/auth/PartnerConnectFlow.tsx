@@ -88,24 +88,11 @@ export default function PartnerConnectFlow({ onBack, onConnected }: PartnerConne
           });
         }, 800);
       } else {
-        // For demonstration or fallback if pairing without active code in test mode
-        if (codeToRedeem.includes('HAVEN') || codeToRedeem.length >= 4) {
-          const fallbackMother = { motherId: 'mother-jemimah-01', motherName: 'Mama Jemimah' };
-          localStorage.setItem('momhaven_partner_link', JSON.stringify(fallbackMother));
-          setSuccessMsg(`Successfully connected to ${fallbackMother.motherName}!`);
-          setTimeout(() => {
-            onConnected(partnerUid, name.trim(), fallbackMother);
-          }, 800);
-        } else {
-          setError(res.message || 'Invalid or expired connection code. Please verify with the mother.');
-        }
+        setError(res.message || 'Invalid or expired connection code. Please verify the code generated in the mother’s app.');
       }
     } catch (err: any) {
       console.error('Partner redemption error', err);
-      // Helpful fallback
-      const fallbackMother = { motherId: 'mother-jemimah-01', motherName: 'Mama Jemimah' };
-      localStorage.setItem('momhaven_partner_link', JSON.stringify(fallbackMother));
-      onConnected(`partner-${Date.now()}`, name.trim() || 'Partner', fallbackMother);
+      setError('Unable to verify connection code. Please check network connection and try again.');
     } finally {
       setLoading(false);
     }

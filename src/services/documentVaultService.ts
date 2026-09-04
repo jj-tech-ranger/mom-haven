@@ -117,6 +117,24 @@ export async function addVaultDocument(docData: Omit<DocumentRecord, 'id'>): Pro
   }
 }
 
+export async function getVaultDocuments(userId: string): Promise<DocumentRecord[]> {
+  try {
+    const colRef = collection(db, 'documents');
+    const q = query(
+      colRef, 
+      where('userId', '==', userId)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({
+      ...d.data(),
+      id: d.id,
+    } as DocumentRecord));
+  } catch (err) {
+    handleFirestoreError(err, OperationType.LIST, 'documents');
+    return [];
+  }
+}
+
 export async function getVaultDocumentsByCategory(
   userId: string, 
   category: string

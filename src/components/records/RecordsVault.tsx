@@ -18,68 +18,15 @@ import ProvenanceBadge from '../common/ProvenanceBadge';
 import Button from '../Button';
 
 interface RecordsVaultProps {
-  records: DocumentRecord[];
+  records?: DocumentRecord[];
   onOpenUpload: () => void;
   onOpenRecordDetail: (record: DocumentRecord) => void;
   onOpenShareCode: () => void;
   onOpenExportReport: () => void;
 }
 
-const SAMPLE_RECORDS: DocumentRecord[] = [
-  {
-    id: 'doc-1',
-    userId: 'user',
-    title: 'Mid-Trimester Anomaly Ultrasound Scan Report',
-    category: 'Ultrasound',
-    date: '2026-02-14',
-    facilityName: 'Pumwani Maternity Hospital',
-    fileUrl: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
-    fileType: 'image/jpeg',
-    provenance: {
-      status: 'VERIFIED',
-      enteredBy: 'user',
-      enteredAt: '2026-02-14T12:00:00Z',
-      verifiedBy: 'Dr. K. Mutua (Radiologist)',
-      verifiedAt: '2026-02-14T14:30:00Z',
-    },
-    notes: 'Single live intrauterine fetus in cephalic presentation. Normal amniotic fluid index and placenta position.',
-  },
-  {
-    id: 'doc-2',
-    userId: 'user',
-    title: 'MOH 216 Antenatal Profile Baseline Labs',
-    category: 'Lab Results',
-    date: '2026-01-10',
-    facilityName: 'Kariokor Health Centre',
-    fileType: 'application/pdf',
-    provenance: {
-      status: 'VERIFIED',
-      enteredBy: 'user',
-      enteredAt: '2026-01-10T09:00:00Z',
-      verifiedBy: 'Nurse A. Wanjiru',
-      verifiedAt: '2026-01-10T11:00:00Z',
-    },
-    notes: 'Hb: 12.4 g/dL, Blood Group: O Rh+, VDRL: Non-reactive, HIV: Negative, Hep B: Negative.',
-  },
-  {
-    id: 'doc-3',
-    userId: 'user',
-    title: 'Home Blood Pressure & Glucose Log',
-    category: 'Clinical Notes',
-    date: '2026-02-28',
-    facilityName: 'Self Record',
-    fileType: 'text/plain',
-    provenance: {
-      status: 'REPORTED',
-      enteredBy: 'user',
-      enteredAt: '2026-02-28T08:00:00Z',
-    },
-    notes: 'Morning fasting blood glucose: 4.8 mmol/L. BP: 114/72 mmHg.',
-  },
-];
-
 export default function RecordsVault({
-  records = SAMPLE_RECORDS,
+  records = [],
   onOpenUpload,
   onOpenRecordDetail,
   onOpenShareCode,
@@ -89,9 +36,7 @@ export default function RecordsVault({
   const [provenanceFilter, setProvenanceFilter] = useState<'All' | 'VERIFIED' | 'REPORTED'>('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const displayRecords = records.length > 0 ? records : SAMPLE_RECORDS;
-
-  const filtered = displayRecords.filter(r => {
+  const filtered = records.filter(r => {
     if (activeCategory !== 'All' && r.category !== activeCategory) return false;
     if (provenanceFilter !== 'All' && r.provenance?.status !== provenanceFilter) return false;
     if (searchQuery.trim()) {
@@ -202,48 +147,93 @@ export default function RecordsVault({
       </div>
 
       {/* Record Cards Feed */}
-      <div className="space-y-3">
-        {filtered.map(record => (
-          <div
-            key={record.id}
-            onClick={() => onOpenRecordDetail(record)}
-            className="bg-white p-4 rounded-[22px] border border-[var(--border-hairline)] shadow-card-1 hover:shadow-card-2 hover:border-[var(--haven-orchid)] transition-all cursor-pointer space-y-2.5"
+      {records.length === 0 ? (
+        <div className="bg-white rounded-[24px] p-6 sm:p-8 border border-[var(--border-hairline)] text-center space-y-4 shadow-card-1">
+          <div className="w-14 h-14 rounded-full bg-[var(--lavender-100)] text-[var(--haven-deep)] flex items-center justify-center mx-auto">
+            <ShieldCheck className="w-7 h-7 text-[var(--haven-orchid)]" />
+          </div>
+          <div>
+            <h3 className="font-display font-extrabold text-[18px] text-[var(--ink-900)]">
+              Your Digital Vault is Empty
+            </h3>
+            <p className="font-body text-xs text-[var(--ink-600)] max-w-sm mx-auto mt-1 leading-relaxed">
+              Upload photos or PDFs of ultrasound scans, laboratory reports, immunization cards, or prescription records to keep them safe and organized.
+            </p>
+          </div>
+          <Button
+            variant="primary"
+            onClick={onOpenUpload}
+            className="py-3 px-6 text-xs mx-auto shadow-xs"
           >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[var(--lavender-100)] text-[var(--haven-deep)] flex items-center justify-center shrink-0">
-                  <FileText className="w-5 h-5" />
+            <Plus className="w-3.5 h-3.5 mr-1" />
+            Upload Your First Document
+          </Button>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="bg-white rounded-[22px] p-6 border border-[var(--border-hairline)] text-center space-y-2">
+          <FileText className="w-8 h-8 text-[var(--ink-400)] mx-auto opacity-60" />
+          <h4 className="font-display font-bold text-sm text-[var(--ink-800)]">
+            No matching documents found
+          </h4>
+          <p className="text-xs text-[var(--ink-500)]">
+            Try adjusting your search query or selected category filter.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveCategory('All');
+              setProvenanceFilter('All');
+              setSearchQuery('');
+            }}
+            className="text-xs font-bold text-[var(--haven-deep)] hover:underline mt-2 inline-block cursor-pointer"
+          >
+            Clear all filters
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map(record => (
+            <div
+              key={record.id}
+              onClick={() => onOpenRecordDetail(record)}
+              className="bg-white p-4 rounded-[22px] border border-[var(--border-hairline)] shadow-card-1 hover:shadow-card-2 hover:border-[var(--haven-orchid)] transition-all cursor-pointer space-y-2.5"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--lavender-100)] text-[var(--haven-deep)] flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-[14px] text-[var(--ink-900)] leading-tight">
+                      {record.title}
+                    </h3>
+                    <span className="text-[11px] text-[var(--ink-500)] mt-0.5 block">
+                      {new Date(record.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {record.facilityName ? ` · ${record.facilityName}` : ''}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-display font-bold text-[14px] text-[var(--ink-900)] leading-tight">
-                    {record.title}
-                  </h3>
-                  <span className="text-[11px] text-[var(--ink-500)] mt-0.5 block">
-                    {new Date(record.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    {record.facilityName ? ` · ${record.facilityName}` : ''}
-                  </span>
-                </div>
+
+                <ProvenanceBadge provenance={record.provenance} />
               </div>
 
-              <ProvenanceBadge provenance={record.provenance} />
-            </div>
+              {record.notes && (
+                <p className="font-body text-[12px] text-[var(--ink-600)] line-clamp-2 bg-[var(--lavender-50)]/50 p-2.5 rounded-[12px]">
+                  {record.notes}
+                </p>
+              )}
 
-            {record.notes && (
-              <p className="font-body text-[12px] text-[var(--ink-600)] line-clamp-2 bg-[var(--lavender-50)]/50 p-2.5 rounded-[12px]">
-                {record.notes}
-              </p>
-            )}
-
-            <div className="flex items-center justify-between text-[11px] text-[var(--haven-orchid)] font-display font-semibold pt-1 border-t border-[var(--border-hairline)]/60">
-              <span>Category: {record.category}</span>
-              <span className="flex items-center gap-1 text-[var(--haven-deep)]">
-                <Eye className="w-3.5 h-3.5" />
-                View details
-              </span>
+              <div className="flex items-center justify-between text-[11px] text-[var(--haven-orchid)] font-display font-semibold pt-1 border-t border-[var(--border-hairline)]/60">
+                <span>Category: {record.category}</span>
+                <span className="flex items-center gap-1 text-[var(--haven-deep)]">
+                  <Eye className="w-3.5 h-3.5" />
+                  View details
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Quick Upload Floating Action */}
       <div className="pt-2">

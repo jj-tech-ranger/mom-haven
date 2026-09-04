@@ -35,11 +35,11 @@ interface PartnerBirthPlanViewProps {
 
 export default function PartnerBirthPlanView({
   motherName = 'Mother',
-  initialHospital = 'Pumwani Maternity Hospital (Level 5)',
-  initialDriverName = 'John Mwangi (Taxi / Boda)',
-  initialDriverPhone = '+254 712 345 678',
-  initialBackupDriver = 'Uncle Peter (Private Vehicle)',
-  initialBackupPhone = '+254 722 987 654',
+  initialHospital = '',
+  initialDriverName = '',
+  initialDriverPhone = '',
+  initialBackupDriver = '',
+  initialBackupPhone = '',
   initialTransportMode = 'Taxi / Uber / Private Cab',
   onSaveTransportPlan
 }: PartnerBirthPlanViewProps) {
@@ -53,13 +53,13 @@ export default function PartnerBirthPlanView({
 
   // Hospital bag items
   const [bagItems, setBagItems] = useState([
-    { id: '1', label: 'Mother & Baby Clothes + Shawl / Leso', packed: true },
-    { id: '2', label: 'MOH 216 Mother & Child Health Handbook', packed: true },
-    { id: '3', label: 'National ID & NHIF / SHA Card / Number', packed: true },
-    { id: '4', label: 'Maternity sanitary pads & cotton wool', packed: true },
-    { id: '5', label: 'Newborn diapers & baby petroleum jelly', packed: true },
+    { id: '1', label: 'Mother & Baby Clothes + Shawl / Leso', packed: false },
+    { id: '2', label: 'MOH 216 Mother & Child Health Handbook', packed: false },
+    { id: '3', label: 'National ID & NHIF / SHA Card / Number', packed: false },
+    { id: '4', label: 'Maternity sanitary pads & cotton wool', packed: false },
+    { id: '5', label: 'Newborn diapers & baby petroleum jelly', packed: false },
     { id: '6', label: 'Flask for warm drinking water / porridge', packed: false },
-    { id: '7', label: 'Phone charger & backup battery powerbank', packed: true },
+    { id: '7', label: 'Phone charger & backup battery powerbank', packed: false },
   ]);
 
   const toggleBagItem = (id: string) => {
@@ -129,6 +129,7 @@ export default function PartnerBirthPlanView({
               type="text"
               value={hospital}
               onChange={(e) => setHospital(e.target.value)}
+              placeholder="e.g. Pumwani Maternity Hospital or local facility"
               className="w-full px-3.5 py-2.5 rounded-[12px] border border-[var(--border-hairline)] bg-[var(--lavender-50)] text-[var(--ink-900)] font-semibold text-[13px] focus:outline-none focus:border-[var(--haven-orchid)]"
               required
             />
@@ -160,6 +161,7 @@ export default function PartnerBirthPlanView({
                 type="text"
                 value={driverName}
                 onChange={(e) => setDriverName(e.target.value)}
+                placeholder="e.g. Primary driver name"
                 className="w-full px-3.5 py-2.5 rounded-[12px] border border-[var(--border-hairline)] bg-white text-[var(--ink-900)] text-[12px] focus:outline-none focus:border-[var(--haven-orchid)]"
                 required
               />
@@ -175,6 +177,7 @@ export default function PartnerBirthPlanView({
                 type="text"
                 value={driverPhone}
                 onChange={(e) => setDriverPhone(e.target.value)}
+                placeholder="e.g. +254 7XX XXX XXX"
                 className="w-full px-3.5 py-2.5 rounded-[12px] border border-[var(--border-hairline)] bg-white text-[var(--ink-900)] text-[12px] focus:outline-none focus:border-[var(--haven-orchid)]"
                 required
               />
@@ -186,12 +189,13 @@ export default function PartnerBirthPlanView({
               </label>
               <input
                 type="text"
-                value={`${backupDriver} · ${backupPhone}`}
+                value={backupDriver || backupPhone ? `${backupDriver}${backupPhone ? ` · ${backupPhone}` : ''}` : ''}
                 onChange={(e) => {
                   const parts = e.target.value.split('·');
                   setBackupDriver(parts[0] ? parts[0].trim() : '');
                   setBackupPhone(parts[1] ? parts[1].trim() : '');
                 }}
+                placeholder="e.g. Backup contact · +254 7XX XXX XXX"
                 className="w-full px-3.5 py-2.5 rounded-[12px] border border-[var(--border-hairline)] bg-white text-[var(--ink-900)] text-[12px] focus:outline-none focus:border-[var(--haven-orchid)]"
               />
             </div>

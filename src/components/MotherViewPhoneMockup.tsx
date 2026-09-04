@@ -130,7 +130,7 @@ export default function MotherViewPhoneMockup({ onExplore, language = 'en' }: Mo
                         {isSw ? 'Ziara ya ANC 5 — Mwezi huu' : 'ANC visit 5 — due this month'}
                       </div>
                       <div className="font-body text-[9px] text-[#8A8199] truncate max-w-[170px]">
-                        IPTp-SP & lab review · Kariokor Clinic
+                        {isSw ? 'Uchunguzi wa kliniki & IPTp-SP' : 'IPTp-SP & lab review · Health clinic'}
                       </div>
                     </div>
                   </div>

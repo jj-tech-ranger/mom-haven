@@ -19,7 +19,7 @@ export default function DocumentUploadModal({
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<'Ultrasound' | 'Lab Results' | 'Immunization' | 'Clinical Notes' | 'Prescriptions'>('Lab Results');
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [facilityName, setFacilityName] = useState('Kariokor Health Centre');
+  const [facilityName, setFacilityName] = useState('');
   const [notes, setNotes] = useState('');
   const [fileSelected, setFileSelected] = useState<string | null>(null);
 

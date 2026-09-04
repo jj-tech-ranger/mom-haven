@@ -129,7 +129,7 @@ export default function PartnerShell({
       .then((rel) => {
         if (!isMounted) return;
         if (rel && rel.status === 'active' && rel.motherId) {
-          const linkData = { motherId: rel.motherId, motherName: rel.motherName || 'Mama Jemimah' };
+          const linkData = { motherId: rel.motherId, motherName: rel.motherName || 'Mother' };
           setLinkedMother(linkData);
           localStorage.setItem('momhaven_partner_link', JSON.stringify(linkData));
         } else if (rel && rel.status === 'revoked') {
@@ -153,7 +153,7 @@ export default function PartnerShell({
     try {
       const result = await redeemPartnerConnectionCode(partnerId, partnerName, connectionCode);
       if (result.success && result.motherId) {
-        const linkData = { motherId: result.motherId, motherName: result.motherName || 'Mama Jemimah' };
+        const linkData = { motherId: result.motherId, motherName: result.motherName || 'Mother' };
         setLinkedMother(linkData);
         localStorage.setItem('momhaven_partner_link', JSON.stringify(linkData));
         setRedeemSuccess(result.message);

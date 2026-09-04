@@ -1,21 +1,73 @@
-import React from 'react';
-import { X, Printer, Download, CheckCircle2, ShieldCheck, FileText } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Printer, ShieldCheck, FileText, AlertCircle } from 'lucide-react';
 import Button from '../Button';
+import { getActivePregnancy, getAncEncounters } from '../../services/pregnancyService';
 
 interface PrintExportModalProps {
   motherName: string;
-  pregnancySummary: any;
+  userId?: string;
+  pregnancySummary?: any;
   onClose: () => void;
 }
 
 export default function PrintExportModal({
   motherName,
+  userId,
   pregnancySummary,
   onClose,
 }: PrintExportModalProps) {
+  const [loading, setLoading] = useState(!pregnancySummary && !!userId);
+  const [activePregnancy, setActivePregnancy] = useState<any>(pregnancySummary?.pregnancy || null);
+  const [encounters, setEncounters] = useState<any[]>(pregnancySummary?.pregnancy?.ancSummary?.encounters || []);
+
+  useEffect(() => {
+    if (pregnancySummary) {
+      setActivePregnancy(pregnancySummary.pregnancy);
+      setEncounters(pregnancySummary.pregnancy?.ancSummary?.encounters || []);
+      return;
+    }
+
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    async function loadData() {
+      try {
+        setLoading(true);
+        const preg = await getActivePregnancy(userId!);
+        if (isMounted && preg) {
+          setActivePregnancy(preg);
+          if (preg.id) {
+            const encs = await getAncEncounters(preg.id);
+            if (isMounted) setEncounters(encs);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load clinical export data:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, [userId, pregnancySummary]);
+
   const handlePrint = () => {
     window.print();
   };
+
+  const latestEncounter = encounters[0];
+  const gestationalAge = activePregnancy?.gestationalAgeWeeks 
+    ? `Week ${activePregnancy.gestationalAgeWeeks}${activePregnancy.edd ? ` (EDD: ${new Date(activePregnancy.edd).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })})` : ''}`
+    : 'Not recorded';
+  const bloodGroup = activePregnancy?.bloodGroup || 'Not recorded';
+  const latestBp = latestEncounter?.bloodPressure || 
+    (latestEncounter?.systolicBp && latestEncounter?.diastolicBp ? `${latestEncounter.systolicBp}/${latestEncounter.diastolicBp} mmHg` : 'Not recorded');
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -55,52 +107,59 @@ export default function PrintExportModal({
               <strong>Patient:</strong> {motherName}
             </div>
             <div>
-              <strong>Gestational Age:</strong> Week 24 (EDD: 15 Nov 2026)
+              <strong>Gestational Age:</strong> {gestationalAge}
             </div>
             <div>
-              <strong>Blood Group &amp; Rh:</strong> O Positive (Rh+)
+              <strong>Blood Group &amp; Rh:</strong> {bloodGroup}
             </div>
             <div>
-              <strong>Latest Blood Pressure:</strong> 118 / 76 mmHg
+              <strong>Latest Blood Pressure:</strong> {latestBp}
             </div>
           </div>
 
           <div className="border-t border-slate-200 pt-3 space-y-2">
             <h4 className="font-bold text-slate-900">ANC Contact Summary:</h4>
-            <table className="w-full text-left text-[11px] border-collapse">
-              <thead>
-                <tr className="bg-slate-100 text-slate-700">
-                  <th className="p-1.5">Visit</th>
-                  <th className="p-1.5">Date</th>
-                  <th className="p-1.5">Facility</th>
-                  <th className="p-1.5">BP</th>
-                  <th className="p-1.5">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                <tr>
-                  <td className="p-1.5">Contact 1</td>
-                  <td className="p-1.5">10 Jan 2026</td>
-                  <td className="p-1.5">Kariokor HC</td>
-                  <td className="p-1.5">110/70</td>
-                  <td className="p-1.5 text-emerald-700 font-bold">Verified</td>
-                </tr>
-                <tr>
-                  <td className="p-1.5">Contact 2</td>
-                  <td className="p-1.5">14 Feb 2026</td>
-                  <td className="p-1.5">Kariokor HC</td>
-                  <td className="p-1.5">114/72</td>
-                  <td className="p-1.5 text-emerald-700 font-bold">Verified</td>
-                </tr>
-                <tr>
-                  <td className="p-1.5">Contact 3</td>
-                  <td className="p-1.5">28 Feb 2026</td>
-                  <td className="p-1.5">Kariokor HC</td>
-                  <td className="p-1.5">118/76</td>
-                  <td className="p-1.5 text-amber-700 font-bold">Reported</td>
-                </tr>
-              </tbody>
-            </table>
+            {loading ? (
+              <p className="text-xs text-slate-500 italic py-2">Loading clinical encounter history...</p>
+            ) : (
+              <table className="w-full text-left text-[11px] border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-700">
+                    <th className="p-1.5">Visit</th>
+                    <th className="p-1.5">Date</th>
+                    <th className="p-1.5">Facility</th>
+                    <th className="p-1.5">BP</th>
+                    <th className="p-1.5">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {encounters.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-3 text-center text-slate-500 italic">
+                        No antenatal encounters recorded yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    encounters.map((enc: any, idx: number) => {
+                      const isVerified = enc.provenance?.status === 'VERIFIED';
+                      return (
+                        <tr key={enc.id || idx}>
+                          <td className="p-1.5 font-medium">Contact {enc.visitNumber || idx + 1}</td>
+                          <td className="p-1.5">
+                            {enc.date ? new Date(enc.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                          </td>
+                          <td className="p-1.5">{enc.facilityName || enc.facility || 'Self-Reported'}</td>
+                          <td className="p-1.5">{enc.bloodPressure || (enc.systolicBp && enc.diastolicBp ? `${enc.systolicBp}/${enc.diastolicBp}` : '—')}</td>
+                          <td className={`p-1.5 font-bold ${isVerified ? 'text-emerald-700' : 'text-amber-700'}`}>
+                            {isVerified ? 'Verified' : 'Reported'}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 

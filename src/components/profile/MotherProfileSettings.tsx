@@ -60,8 +60,8 @@ interface MotherProfileSettingsProps {
 
 export default function MotherProfileSettings({
   userId,
-  motherName = 'Mama Jemimah',
-  email = 'jemutaijemimah@gmail.com',
+  motherName = 'Mama',
+  email = '',
   phone: propPhone,
   county: propCounty,
   onOpenPinSetup,
@@ -69,10 +69,10 @@ export default function MotherProfileSettings({
   onOpenExportData,
   onSignOut,
 }: MotherProfileSettingsProps) {
-  const [partnerInviteCode, setPartnerInviteCode] = useState('HAVEN-7892');
+  const [partnerInviteCode, setPartnerInviteCode] = useState('');
   const [copied, setCopied] = useState(false);
-  const [phone, setPhone] = useState(propPhone || '+254 712 345 678');
-  const [county, setCounty] = useState(propCounty || 'Nairobi');
+  const [phone, setPhone] = useState(propPhone || '');
+  const [county, setCounty] = useState(propCounty || '');
 
   // Connected Partners State (Audit P6.1, P7.2)
   const [partners, setPartners] = useState<PartnerRelationship[]>([]);
@@ -615,19 +615,30 @@ export default function MotherProfileSettings({
               </div>
             </div>
 
-            <div className="p-2.5 bg-white rounded-[14px] border border-[var(--border-hairline)] flex items-center justify-between">
-              <span className="font-mono font-bold text-sm tracking-wider text-[var(--haven-deep)] px-2">
-                {partnerInviteCode}
-              </span>
+            {partnerInviteCode ? (
+              <div className="p-2.5 bg-white rounded-[14px] border border-[var(--border-hairline)] flex items-center justify-between">
+                <span className="font-mono font-bold text-sm tracking-wider text-[var(--haven-deep)] px-2">
+                  {partnerInviteCode}
+                </span>
+                <button
+                  type="button"
+                  onClick={copyInvite}
+                  className="px-3 py-1 text-xs font-display font-bold rounded-lg bg-[var(--lavender-50)] text-[var(--haven-deep)] hover:bg-[var(--lavender-100)] flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copied ? 'Copied' : 'Copy'}</span>
+                </button>
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={copyInvite}
-                className="px-3 py-1 text-xs font-display font-bold rounded-lg bg-[var(--lavender-50)] text-[var(--haven-deep)] hover:bg-[var(--lavender-100)] flex items-center gap-1.5 transition-colors cursor-pointer"
+                onClick={onOpenPartnerShare}
+                className="w-full py-2.5 px-3 bg-white border border-[var(--border-hairline)] hover:border-[var(--haven-orchid)] rounded-[14px] text-xs font-display font-bold text-[var(--haven-deep)] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? 'Copied' : 'Copy'}</span>
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Generate Partner Connection Code</span>
               </button>
-            </div>
+            )}
           </div>
         )}
 

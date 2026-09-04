@@ -172,6 +172,7 @@ export default function MotherShell({ userId, userName, userEmail, onSignOut }: 
     {showExportModal && (
       <PrintExportModal
         motherName={userName || 'Mama'}
+        userId={userId}
         pregnancySummary={null}
         onClose={() => setShowExportModal(false)}
       />

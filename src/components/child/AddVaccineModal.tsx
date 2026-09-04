@@ -167,7 +167,7 @@ export default function AddVaccineModal({
               list="facilities-list-vac"
               value={facilityName}
               onChange={e => setFacilityName(e.target.value)}
-              placeholder="e.g. Kariokor Health Centre"
+              placeholder="e.g. Pumwani Maternity Hospital"
               className="w-full px-3 py-2 rounded-[14px] border border-[var(--border-hairline)] bg-white text-[13px]"
               required
             />

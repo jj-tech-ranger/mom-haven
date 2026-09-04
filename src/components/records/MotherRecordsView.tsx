@@ -14,13 +14,18 @@ import {
 import HealthSummary from './HealthSummary';
 import RecordsVault from './RecordsVault';
 import SharingCodeModal from './SharingCodeModal';
+import DocumentUploadModal from './DocumentUploadModal';
+import RecordDetailModal from './RecordDetailModal';
 import type { MomHavenHealthSummary, ClinicianHealthLogEntry, ChildHealthSummary } from '../../types/healthSummary';
 import { auth, db } from '../../lib/firebase';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { getHealthLogs } from '../../services/healthLogService';
 import { getActivePregnancy, getAncEncounters } from '../../services/pregnancyService';
 import { getChildren, getImmunizationRecords, getGrowthMeasurements, calculateChildAge } from '../../services/childService';
+import { getVaultDocuments } from '../../services/documentVaultService';
+import { getUpcomingReminders } from '../../services/reminderService';
 import { DailyHealthLog } from '../../types/healthLog';
+import { DocumentRecord } from '../../types';
 import Button from '../Button';
 
 interface MotherRecordsViewProps {
@@ -31,6 +36,9 @@ interface MotherRecordsViewProps {
 export default function MotherRecordsView({ userId, userName }: MotherRecordsViewProps) {
   const [activeSubTab, setActiveSubTab] = useState<'summary' | 'vault'>('summary');
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<DocumentRecord | null>(null);
+  const [vaultRecords, setVaultRecords] = useState<DocumentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [newQuestion, setNewQuestion] = useState('');
   const [summary, setSummary] = useState<MomHavenHealthSummary | null>(null);
@@ -253,6 +261,65 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
           };
         }
 
+        // Fetch real Vault Documents
+        let docs: DocumentRecord[] = [];
+        try {
+          docs = await getVaultDocuments(userId);
+          setVaultRecords(docs);
+        } catch {
+          docs = [];
+        }
+
+        // Fetch real appointments / reminders
+        let realAppointments: any[] = [];
+        try {
+          const reminders = await getUpcomingReminders(userId);
+          realAppointments = reminders
+            .filter((r) => !r.completed && r.dueDate)
+            .map((r: any) => ({
+              id: r.id,
+              date: r.dueDate,
+              type: r.title,
+              facilityName: r.facilityName || '',
+              status: 'SCHEDULED' as const,
+              provenance: r.provenance?.status === 'VERIFIED' ? 'VERIFIED' as const : 'USER_REPORTED' as const,
+            }));
+        } catch {
+          realAppointments = [];
+        }
+
+        // Calculate verified clinical stats
+        const verifiedAncContactsCount = realEncounters.filter((e) => e.provenance?.status === 'VERIFIED').length;
+        const totalVerifiedVaccines = mappedChildren.reduce(
+          (acc, c) => acc + (c.immunizations?.verifiedCount || 0),
+          0
+        );
+        const verifiedLabReportsCount = docs.filter(
+          (d) => d.category === 'Lab Results' && d.provenance?.status === 'VERIFIED'
+        ).length;
+        const verifiedUltrasoundCount = docs.filter(
+          (d) => d.category === 'Ultrasound' && d.provenance?.status === 'VERIFIED'
+        ).length;
+
+        const allVerified = [
+          ...realEncounters
+            .filter((e) => e.provenance?.status === 'VERIFIED')
+            .map((e) => ({
+              date: e.provenance?.verifiedAt || e.date,
+              by: e.provenance?.verifiedBy || e.facilityName,
+            })),
+          ...docs
+            .filter((d) => d.provenance?.status === 'VERIFIED')
+            .map((d) => ({
+              date: d.provenance?.verifiedAt || d.date,
+              by: d.provenance?.verifiedBy || d.facilityName,
+            })),
+        ]
+          .filter((v) => !!v.date)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+        const latestVerification = allVerified[0];
+
         // Construct client-side MomHavenHealthSummary
         const builtSummary: MomHavenHealthSummary = {
           summaryId: `summary-${userId}`,
@@ -315,24 +382,15 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
           },
           children: mappedChildren,
           recentHealthLogs: formattedLogs,
-          appointments: [
-            {
-              id: 'apt-next',
-              date: '2025-02-28',
-              type: 'ANC Contact #4 (32 Weeks)',
-              facilityName: 'Kariokor Health Centre',
-              status: 'SCHEDULED',
-              provenance: 'VERIFIED',
-            },
-          ],
+          appointments: realAppointments,
           verifiedHighlights: {
-            hasVerifiedPregnancy: true,
-            verifiedAncContactsCount: 2,
-            verifiedVaccinesCount: 0,
-            verifiedLabReportsCount: 2,
-            verifiedUltrasoundCount: 1,
-            lastClinicalVerificationDate: '2025-01-22T10:30:00Z',
-            verifiedBy: 'Kariokor Health Centre',
+            hasVerifiedPregnancy: Boolean(activePreg?.provenance?.status === 'VERIFIED'),
+            verifiedAncContactsCount,
+            verifiedVaccinesCount: totalVerifiedVaccines,
+            verifiedLabReportsCount,
+            verifiedUltrasoundCount,
+            lastClinicalVerificationDate: latestVerification?.date,
+            verifiedBy: latestVerification?.by,
           },
           questionsForClinician: questions,
           reproductiveScreening: cancerScreeningsList.length > 0 ? {
@@ -546,9 +604,9 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
 
       {activeSubTab === 'vault' && (
         <RecordsVault
-          records={[]}
-          onOpenUpload={() => {}}
-          onOpenRecordDetail={() => {}}
+          records={vaultRecords}
+          onOpenUpload={() => setShowUploadModal(true)}
+          onOpenRecordDetail={(record) => setSelectedRecord(record)}
           onOpenShareCode={() => setShowShareModal(true)}
           onOpenExportReport={() => window.print()}
         />
@@ -557,6 +615,31 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
       {/* Fast Share Modal */}
       {showShareModal && (
         <SharingCodeModal onClose={() => setShowShareModal(false)} />
+      )}
+
+      {/* Upload Document Modal */}
+      {showUploadModal && (
+        <DocumentUploadModal
+          userId={userId}
+          onClose={() => setShowUploadModal(false)}
+          onUploaded={async () => {
+            setShowUploadModal(false);
+            const docs = await getVaultDocuments(userId);
+            setVaultRecords(docs);
+          }}
+        />
+      )}
+
+      {/* Document Detail Modal */}
+      {selectedRecord && (
+        <RecordDetailModal
+          record={selectedRecord}
+          onClose={() => setSelectedRecord(null)}
+          onShareWithClinician={() => {
+            setSelectedRecord(null);
+            setShowShareModal(true);
+          }}
+        />
       )}
     </div>
   );
