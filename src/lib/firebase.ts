@@ -36,30 +36,85 @@ const FIRESTORE_DATABASE_ID = 'mom-haven';
 let firestoreDb: Firestore;
 try {
   firestoreDb = initializeFirestore(app, {
-    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager(),
+    }),
   }, FIRESTORE_DATABASE_ID);
-} catch {
+} catch (err) {
   firestoreDb = getFirestore(app, FIRESTORE_DATABASE_ID);
 }
+
 export const db = firestoreDb;
 export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
 
 export enum OperationType {
-  GET = 'GET',
-  CREATE = 'CREATE',
-  UPDATE = 'UPDATE',
-  WRITE = 'WRITE',
-  DELETE = 'DELETE',
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
 }
 
-export function handleFirestoreError(err: unknown, operation: OperationType, path: string): never {
-  console.error('Firestore operation failed', { operation, path, error: err });
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: { providerId?: string | null; email?: string | null }[];
+  };
+}
+
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null): never {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData?.map(provider => ({ providerId: provider.providerId, email: provider.email })) || [],
+    },
+    operationType,
+    path,
+  };
+  console.error('Firestore Error:', JSON.stringify(errInfo));
   throw new Error('We could not save your information. Please try again.');
 }
 
-export async function signInWithGoogle() {
-  const provider = new GoogleAuthProvider();
-  return signInWithPopup(auth, provider);
+export async function testConnection() {
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('the client is offline')) console.error('Please check your Firebase configuration.');
+  }
+}
+
+export async function signInWithGoogle() { return signInWithPopup(auth, googleProvider); }
+export async function signInAsGuest() { return fbSignInAnonymously(auth); }
+
+export async function sendMagicLink(email: string) {
+  const actionCodeSettings = { url: window.location.origin + window.location.pathname, handleCodeInApp: true };
+  await fbSendSignInLinkToEmail(auth, email, actionCodeSettings);
+  window.localStorage.setItem('emailForSignIn', email);
+}
+
+export function isMagicLink(url: string = window.location.href) { return fbIsSignInWithEmailLink(auth, url); }
+
+export async function completeMagicLinkSignIn(emailParam?: string, url: string = window.location.href) {
+  let email = emailParam || window.localStorage.getItem('emailForSignIn');
+  if (!email) email = window.prompt('Please provide your email for sign-in confirmation') || '';
+  if (!email) throw new Error('Email is required to complete magic link sign in.');
+  const result = await fbSignInWithEmailLink(auth, email, url);
+  window.localStorage.removeItem('emailForSignIn');
+  return result;
 }
 
 export async function signInWithEmail(email: string, pass: string) { return fbSignInWithEmailAndPassword(auth, email, pass); }
@@ -87,11 +142,7 @@ export async function resendEmailVerification(user: User) {
 export async function resetPassword(email: string) { return fbSendPasswordResetEmail(auth, email); }
 export async function logoutUser() { return fbSignOut(auth); }
 
-/**
- * Create the default user profile only when the document is still absent.
- * A transaction prevents the anonymous-partner auth flow from racing this
- * initializer and accidentally changing a PARTNER profile back to MOTHER.
- */
+/** Prevent the anonymous partner flow from racing default profile creation. */
 export async function ensureUserProfile(user: User) {
   if (!user || !user.uid) return;
   const userRef = doc(db, 'users', user.uid);
@@ -108,17 +159,4 @@ export async function ensureUserProfile(user: User) {
       }, { merge: true });
     }
   });
-}
-
-export async function signInAsGuest() {
-  return fbSignInAnonymously(auth);
-}
-
-export async function testConnection() {
-  try {
-    await getDocFromServer(doc(db, '__system', 'health'));
-    return true;
-  } catch {
-    return false;
-  }
 }
