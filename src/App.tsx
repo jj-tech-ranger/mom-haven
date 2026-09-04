@@ -1,8 +1,8 @@
 // src/App.tsx
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, reload } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { auth, db, ensureUserProfile, logoutUser, testConnection } from './lib/firebase';
+import { auth, db, ensureUserProfile, logoutUser, resendEmailVerification, testConnection } from './lib/firebase';
 import { UserRole, Clinician } from './types';
 import LandingPage from './components/LandingPage';
 import MotherShell from './components/MotherShell';
@@ -25,6 +25,8 @@ export default function App() {
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [adminMfaVerified, setAdminMfaVerified] = useState<boolean>(() => sessionStorage.getItem('admin_mfa_verified') === 'true');
   const [loading, setLoading] = useState(true);
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
   const [identityError, setIdentityError] = useState<string | null>(null);
   const fetchRequestRef = useRef(0);
 
@@ -45,8 +47,6 @@ export default function App() {
     setNeedsOnboarding(false);
 
     try {
-      // Resolve the application's role first. The clinician endpoint is deliberately
-      // restricted, so it must never be used as the gate for admins, partners, or mothers.
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (requestId !== fetchRequestRef.current) return;
       const data = userDoc.exists() ? userDoc.data() : {};
@@ -82,8 +82,6 @@ export default function App() {
             return;
           }
 
-          // A signed-in clinician may legitimately receive 403 while awaiting
-          // verification. The pending screen handles that state safely.
           if (response.status === 403) {
             if (requestId !== fetchRequestRef.current) return;
             setUserRole('CLINICIAN');
@@ -107,9 +105,6 @@ export default function App() {
         }
       }
 
-      // Mothers use the ordinary Firestore-owned profile flow. A missing profile
-      // is initialized here, while role resolution above prevents admin/clinician
-      // accounts from accidentally entering the mother experience.
       if (role === 'MOTHER' && !userDoc.exists()) {
         try { await ensureUserProfile(user); } catch (err) { console.warn('Could not initialize MomHaven user profile', err); }
       }
@@ -132,7 +127,23 @@ export default function App() {
     testConnection();
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
+      setVerificationMessage(null);
+
       if (user) {
+        // Password accounts are authenticated immediately after signup, but that
+        // must not be treated as verified. Keep unverified users outside all
+        // application data until Firebase confirms their email address.
+        const requiresEmailVerification = user.providerData.some(
+          provider => provider.providerId === 'password',
+        ) && !user.emailVerified;
+
+        if (requiresEmailVerification) {
+          setNeedsOnboarding(false);
+          setClinicianData(null);
+          setLoading(false);
+          return;
+        }
+
         await fetchUserData(user);
         try { await ensureUserProfile(user); } catch (err) { console.warn('Could not initialize MomHaven user profile', err); }
       } else {
@@ -150,7 +161,74 @@ export default function App() {
   const handleSignOut = async () => { sessionStorage.removeItem('admin_mfa_verified'); setAdminMfaVerified(false); await logoutUser(); };
   const handleAdminMfaSuccess = () => { sessionStorage.setItem('admin_mfa_verified', 'true'); setAdminMfaVerified(true); };
 
-  if (loading) return <div className="min-h-screen bg-[var(--lavender-50)] flex flex-col items-center justify-center p-4 font-body"><div className="w-16 h-16 rounded-2xl bg-white shadow-card-1 p-3 mb-4 flex items-center justify-center animate-pulse"><img src="/assets/logo.png" alt="MomHaven" className="w-full h-full object-contain" referrerPolicy="no-referrer" /></div><p className="font-display font-bold text-[16px] text-[var(--haven-deep)]">Loading MomHaven...</p></div>;
+  const handleResendVerification = async () => {
+    if (!currentUser) return;
+    try {
+      setVerificationLoading(true);
+      setVerificationMessage(null);
+      await resendEmailVerification(currentUser);
+      setVerificationMessage('Verification email sent. Check your inbox and spam folder.');
+    } catch (error: any) {
+      console.error('Email verification resend error', error);
+      setVerificationMessage(error?.code === 'auth/too-many-requests'
+        ? 'Please wait a little before requesting another email.'
+        : 'We could not send the verification email. Please try again.');
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  const handleCheckVerification = async () => {
+    if (!currentUser) return;
+    try {
+      setVerificationLoading(true);
+      setVerificationMessage(null);
+      await reload(currentUser);
+      const refreshedUser = auth.currentUser;
+      setCurrentUser(refreshedUser);
+      if (refreshedUser?.emailVerified) {
+        await fetchUserData(refreshedUser);
+        try { await ensureUserProfile(refreshedUser); } catch (err) { console.warn('Could not initialize MomHaven user profile', err); }
+        return;
+      }
+      setVerificationMessage('Your email is not verified yet. Open the verification email, confirm your address, then try again.');
+    } catch (error) {
+      console.error('Email verification refresh error', error);
+      setVerificationMessage('We could not check your verification status. Please try again.');
+    } finally {
+      setVerificationLoading(false);
+      setLoading(false);
+    }
+  };
+
+  if (loading) return <div className="min-h-screen bg-[var(--lavender-50)] flex flex-col items-center justify-center p-4"><div className="w-16 h-16 rounded-2xl bg-white shadow-card-1 p-3 mb-4 flex items-center justify-center animate-pulse"><img src="/assets/logo.png" alt="MomHaven" className="w-full h-full object-contain" referrerPolicy="no-referrer" /></div><p className="font-display font-bold text-[16px] text-[var(--haven-deep)]">Loading MomHaven...</p></div>;
+
+  if (currentUser && currentUser.providerData.some(provider => provider.providerId === 'password') && !currentUser.emailVerified) {
+    return (
+      <div className="min-h-screen bg-[var(--app-bg)] flex items-center justify-center p-6 font-body">
+        <div className="max-w-md w-full rounded-[28px] border border-[var(--border)] bg-[var(--surface-1)] p-7 shadow-card-1 text-center">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--haven-deep)]">✉️</div>
+          <h1 className="font-display font-extrabold text-2xl text-[var(--text-primary)]">Check your email</h1>
+          <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
+            We sent a verification link to <strong className="text-[var(--text-primary)]">{currentUser.email}</strong>. Verify your address before entering MomHaven.
+          </p>
+          {verificationMessage && <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-3 text-sm text-[var(--text-primary)]">{verificationMessage}</div>}
+          <div className="mt-6 grid gap-3">
+            <button type="button" onClick={handleCheckVerification} disabled={verificationLoading} className="w-full rounded-xl bg-[var(--haven-deep)] px-5 py-3 text-sm font-display font-bold text-white disabled:opacity-60">
+              {verificationLoading ? 'Checking…' : 'I verified my email — continue'}
+            </button>
+            <button type="button" onClick={handleResendVerification} disabled={verificationLoading} className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-1)] px-5 py-3 text-sm font-display font-bold text-[var(--text-primary)] disabled:opacity-60">
+              Resend verification email
+            </button>
+            <button type="button" onClick={handleSignOut} disabled={verificationLoading} className="w-full px-5 py-2 text-sm font-display font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+              Sign out
+            </button>
+          </div>
+          <p className="mt-5 text-xs leading-relaxed text-[var(--text-secondary)]">If you don't see it, check your spam or promotions folder.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (currentUser && identityError) return <div className="min-h-screen bg-[var(--lavender-50)] flex items-center justify-center p-6"><div className="max-w-lg w-full bg-white rounded-3xl border border-[var(--border-hairline)] shadow-card-1 p-8 text-center"><div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[var(--lavender-50)] flex items-center justify-center"><span aria-hidden="true">🔒</span></div><h1 className="font-display font-extrabold text-xl text-[var(--haven-deep)]">Portal access could not be verified</h1><p className="mt-3 text-sm text-[var(--ink-500)]">{identityError}</p><button type="button" onClick={handleSignOut} className="mt-6 px-5 py-3 rounded-xl bg-[var(--haven-deep)] text-white font-display font-bold">Sign out</button></div></div>;
 
