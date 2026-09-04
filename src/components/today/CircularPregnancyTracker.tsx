@@ -300,23 +300,39 @@ export const CircularPregnancyTracker: React.FC<CircularPregnancyTrackerProps> =
             }`}>
               {isSw ? `Wiki ya ${safeWeek}` : `Week ${safeWeek}`}
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Subtext description & Baby Size */}
-            <p className={`font-body text-[var(--ink-600)] mt-1 flex items-center justify-center gap-1 leading-snug line-clamp-2 max-w-[180px] ${
-              isCompact ? 'text-[10px]' : 'text-[12px]'
-            }`}>
-              <span>{isSw ? 'Mtoto ana ukubwa wa' : 'Baby is the size of'} {babySize.size}</span>
-              <span className="shrink-0">{babySize.emoji}</span>
-            </p>
+      {/* Compact Supporting Details: keep the wheel focused on the pregnancy week */}
+      <div className={`grid grid-cols-2 gap-2 ${isCompact ? 'mt-1.5' : 'mt-2'} px-0.5`}>
+        <div className={`min-w-0 rounded-2xl border border-[var(--border-hairline)] bg-[var(--surface-1)] ${isCompact ? 'px-2.5 py-2' : 'px-3 py-2.5'}`}>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className={`${isCompact ? 'text-sm' : 'text-base'} leading-none shrink-0`} aria-hidden="true">
+              {babySize.emoji}
+            </span>
+            <span className="text-[9px] sm:text-[10px] font-display font-bold uppercase tracking-wider text-[var(--ink-500)] truncate">
+              {isSw ? 'Ukubwa wa mtoto' : 'Baby size'}
+            </span>
+          </div>
+          <div className={`${isCompact ? 'text-[10px]' : 'text-[11px]'} font-display font-bold text-[var(--ink-900)] mt-1 truncate`}>
+            {babySize.size}
+          </div>
+        </div>
 
-            {/* EDD or Days remaining */}
-            <div className="mt-1 text-[9px] sm:text-[10px] font-display font-semibold text-[var(--haven-orchid)]">
-              {daysToEdd ? (
-                <span>{daysToEdd} {isSw ? 'siku zilizosalia' : 'days to estimated due date'}</span>
-              ) : (
-                <span>{isSw ? 'Tarehe ya Kujifungua:' : 'EDD:'} {eddFormatted}</span>
-              )}
-            </div>
+        <div className={`min-w-0 rounded-2xl border border-[var(--border-hairline)] bg-[var(--surface-1)] ${isCompact ? 'px-2.5 py-2' : 'px-3 py-2.5'}`}>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Calendar className={`${isCompact ? 'w-3 h-3' : 'w-3.5 h-3.5'} text-[var(--haven-orchid)] shrink-0`} />
+            <span className="text-[9px] sm:text-[10px] font-display font-bold uppercase tracking-wider text-[var(--ink-500)] truncate">
+              {isSw ? 'Kujifungua' : 'Due date'}
+            </span>
+          </div>
+          <div className={`${isCompact ? 'text-[10px]' : 'text-[11px]'} font-display font-bold text-[var(--ink-900)] mt-1 truncate`}>
+            {daysToEdd ? (
+              <>{daysToEdd} {isSw ? 'siku' : 'days'} <span className="font-medium text-[var(--ink-500)]">• {eddFormatted}</span></>
+            ) : (
+              eddFormatted
+            )}
           </div>
         </div>
       </div>
