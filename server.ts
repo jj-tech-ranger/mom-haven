@@ -11,7 +11,7 @@ import { adminAuth, adminDb } from './server/clinicianAccess.js';
 import { buildHavenContext, formatHavenContext } from './server/services/havenContextBuilder.js';
 import { processDueReminders, startReminderPushCron } from './server/jobs/reminderPush.js';
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mom-haven';
 const GOOGLE_CLOUD_LOCATION = process.env.GOOGLE_CLOUD_LOCATION || 'europe-west1';
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
