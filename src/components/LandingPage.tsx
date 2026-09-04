@@ -1183,6 +1183,22 @@ export default function LandingPage({ onSignedIn, onPartnerConnected }: LandingP
               <X className="w-5 h-5" />
             </button>
 
+            {/* Back button - shown on sub-views */}
+            {(authModal === 'forgot_password' || authModal === 'magic_link') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setAuthModal('signin');
+                }}
+                className="absolute top-5 left-5 p-1.5 rounded-full hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer flex items-center gap-1 text-xs font-display font-bold"
+                aria-label="Back to sign in"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Back</span>
+              </button>
+            )}
+
             {/* Brand icon and title */}
             <div className="text-center mb-5">
               <div className="w-12 h-12 rounded-2xl bg-[var(--surface-2)] p-2.5 mx-auto mb-2.5 shadow-2xs flex items-center justify-center">

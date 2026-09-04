@@ -13,6 +13,7 @@ interface PremiumOnboardingWizardProps {
   initialDisplayName?: string;
   initialLanguage?: 'en' | 'sw';
   onCompleted: () => void;
+  onCancel?: () => void;
 }
 
 const INTERESTS = [
@@ -39,7 +40,7 @@ const STAGES: Array<{ id: LifecycleStage; title: string; description: string }> 
   { id: 'exploring', title: 'I want to learn', description: 'Explore trusted maternal and child health information' },
 ];
 
-export default function PremiumOnboardingWizard({ userId, initialDisplayName = '', initialLanguage = 'en', onCompleted }: PremiumOnboardingWizardProps) {
+export default function PremiumOnboardingWizard({ userId, initialDisplayName = '', initialLanguage = 'en', onCompleted, onCancel }: PremiumOnboardingWizardProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,6 +136,34 @@ export default function PremiumOnboardingWizard({ userId, initialDisplayName = '
     }
   };
 
+  const handleExit = async () => {
+    setLoading(true);
+    try {
+      // Mark onboarding as bypassed/complete in Firestore so user isn't prompted again
+      await setDoc(doc(db, 'users', userId), {
+        displayName: displayName.trim() || 'Mama',
+        onboarded: true,
+        onboardingVersion: 1,
+        onboardingSkippedAt: serverTimestamp(),
+      }, { merge: true });
+
+      await setDoc(doc(db, 'motherProfiles', userId), {
+        userId,
+        county: county || 'Nairobi',
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    } catch (err) {
+      console.warn('Could not persist skipped onboarding status', err);
+    } finally {
+      setLoading(false);
+      if (onCancel) {
+        onCancel();
+      } else {
+        onCompleted();
+      }
+    }
+  };
+
   const next = () => {
     if (!canContinue()) {
       setError(step === 2 && lifecycleStage === 'pregnancy' ? 'Add your last period or due date so we can personalize your pregnancy journey.' : 'Please complete the required fields.');
@@ -151,11 +180,42 @@ export default function PremiumOnboardingWizard({ userId, initialDisplayName = '
     <div className="min-h-screen bg-[var(--app-bg)] px-4 py-6 sm:px-6 sm:py-10 font-body">
       <div className="mx-auto max-w-xl">
         <div className="mb-7 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-[var(--haven-orchid)] text-xs font-display font-bold uppercase tracking-wider"><Sparkles className="h-4 w-4" /> MomHaven setup</div>
-            <h1 className="mt-1 font-display font-extrabold text-2xl text-[var(--text-primary)]">Make MomHaven yours</h1>
+          <div className="flex items-center gap-2.5">
+            {step > 1 && (
+              <button
+                type="button"
+                onClick={back}
+                disabled={loading}
+                className="inline-flex items-center gap-1 text-xs font-display font-bold text-[var(--haven-deep)] hover:underline cursor-pointer py-1.5 px-2.5 rounded-lg hover:bg-[var(--surface-2)] transition-colors mr-1"
+                aria-label="Previous step"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span>Back</span>
+              </button>
+            )}
+            <div>
+              <div className="flex items-center gap-2 text-[var(--haven-orchid)] text-xs font-display font-bold uppercase tracking-wider">
+                <Sparkles className="h-4 w-4" /> MomHaven setup
+              </div>
+              <h1 className="mt-1 font-display font-extrabold text-2xl text-[var(--text-primary)]">
+                Make MomHaven yours
+              </h1>
+            </div>
           </div>
-          <div className="text-right text-xs font-display font-bold text-[var(--text-secondary)]">{step} of 4</div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-display font-bold text-[var(--text-secondary)]">
+              {step} of 4
+            </span>
+            <button
+              type="button"
+              onClick={handleExit}
+              disabled={loading}
+              className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-display font-bold px-3 py-1.5 rounded-full border border-[var(--border)] hover:bg-[var(--surface-2)] cursor-pointer transition-colors"
+              aria-label="Exit setup and continue to MomHaven"
+            >
+              Exit Setup
+            </button>
+          </div>
         </div>
         <div className="mb-7 h-2 overflow-hidden rounded-full bg-[var(--surface-3)]"><div className="h-full rounded-full bg-[var(--haven-deep)] transition-all" style={{ width: `${(step / 4) * 100}%` }} /></div>
 
@@ -196,7 +256,35 @@ export default function PremiumOnboardingWizard({ userId, initialDisplayName = '
             <div className="rounded-2xl bg-[var(--surface-2)] p-4 text-xs text-[var(--text-secondary)]">Your setup creates a versioned personalization context. Pregnancy and child clinical records remain separate and authoritative.</div>
           </section>}
 
-          <div className="mt-7 flex items-center justify-between gap-3 border-t border-[var(--border)] pt-5"><button type="button" onClick={back} disabled={step === 1 || loading} className="inline-flex items-center gap-1 rounded-full px-4 py-2.5 text-sm font-display font-bold text-[var(--text-secondary)] disabled:opacity-30"><ChevronLeft className="h-4 w-4" /> Back</button><Button type="button" variant="primary" onClick={next} disabled={loading} className="px-6 py-3">{loading ? 'Saving your setup…' : step === 4 ? 'Finish my setup' : 'Continue'}{!loading && step < 4 && <ChevronRight className="ml-1 h-4 w-4" />}</Button></div>
+          <div className="mt-7 flex items-center justify-between gap-3 border-t border-[var(--border)] pt-5">
+            {step > 1 ? (
+              <button
+                type="button"
+                onClick={back}
+                disabled={loading}
+                className="inline-flex items-center gap-1 rounded-full px-4 py-2.5 text-sm font-display font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span>Back</span>
+              </button>
+            ) : (
+              <div />
+            )}
+            <Button
+              type="button"
+              variant="primary"
+              onClick={next}
+              disabled={loading}
+              className="px-6 py-3"
+            >
+              {loading
+                ? 'Saving your setup…'
+                : step === 4
+                ? 'Finish my setup'
+                : 'Continue'}
+              {!loading && step < 4 && <ChevronRight className="ml-1 h-4 w-4" />}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

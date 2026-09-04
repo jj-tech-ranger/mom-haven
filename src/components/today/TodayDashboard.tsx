@@ -35,6 +35,7 @@ import { DailyPlanItem, SuggestedReminder } from '../../types/advancedPersonaliz
 
 // Modals & Cards
 import ProgressRibbon from './ProgressRibbon';
+import CircularPregnancyTracker from './CircularPregnancyTracker';
 import DailyCheckInCard from './DailyCheckInCard';
 import EmergencySafetyHub from '../emergency/EmergencySafetyHub';
 import NotificationCenter from './NotificationCenter';
@@ -446,82 +447,38 @@ export default function TodayDashboard({
       {/* ========================================================================= */}
       {/* A. Pregnancy Stage Hero */}
       {todayContext.hero.type === 'pregnancy' && (
-        <section 
-          aria-label="Pregnancy progress"
-          className="rounded-[24px] p-5 sm:p-6 text-white shadow-card-2 relative overflow-hidden transition-all duration-300"
-          style={{
-            background: 'linear-gradient(135deg, #33178A 0%, #4B27A8 45%, #6E3CB9 80%, #9167C2 100%)'
-          }}
-        >
-          <div className="absolute top-0 right-0 w-44 h-44 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-
-          <div className="relative z-10">
-            <div className="flex justify-between items-start mb-1">
-              <span className="text-[11px] font-display font-bold tracking-widest uppercase text-[#E5DFF0] flex items-center gap-1.5">
-                <span>Your Pregnancy</span>
-                {todayContext.hero.isAuthoritative ? (
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 text-[10px] font-semibold">
-                    Verified Record
-                  </span>
-                ) : todayContext.hero.gestationalWeeks > 0 ? (
-                  <span className="px-2 py-0.5 rounded-full bg-amber-500/30 text-amber-200 text-[10px] font-semibold">
-                    Self-Reported
-                  </span>
-                ) : null}
-              </span>
-
-              {todayContext.hero.gestationalWeeks > 0 && (
-                <span className="px-3 py-0.5 rounded-full bg-white/20 text-[11px] font-display font-semibold backdrop-blur-xs">
-                  Trimester {todayContext.hero.trimester}
-                </span>
-              )}
+        todayContext.hero.gestationalWeeks > 0 ? (
+          <CircularPregnancyTracker
+            variant="full"
+            gestationalWeeks={todayContext.hero.gestationalWeeks}
+            trimester={todayContext.hero.trimester}
+            babySize={todayContext.hero.babySize}
+            eddFormatted={todayContext.hero.eddFormatted}
+            isAuthoritative={todayContext.hero.isAuthoritative}
+            onLogAction={() => setShowHealthLogModal(true)}
+            onNavigate={handleNavigate}
+            onOpenAskHaven={onOpenAskHaven}
+          />
+        ) : (
+          <div className="bg-white rounded-[28px] border border-[var(--border-hairline)] shadow-card-1 p-6 text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-[var(--lavender-100)] text-[var(--haven-deep)] flex items-center justify-center mx-auto text-xl">
+              🌸
             </div>
-
-            {todayContext.hero.gestationalWeeks > 0 ? (
-              <>
-                <h2 className="font-display font-extrabold text-[32px] text-white tracking-tight leading-none mt-1">
-                  Week {todayContext.hero.gestationalWeeks}
-                </h2>
-
-                <p className="font-body text-[14px] text-[#F7F3FC] mt-1.5 flex items-center gap-1.5 font-normal">
-                  Baby is about the size of {todayContext.hero.babySize.size} <span className="text-[16px]">{todayContext.hero.babySize.emoji}</span>
-                </p>
-
-                <p className="text-[11px] text-white/80 mt-1 line-clamp-1">
-                  {todayContext.hero.babySize.fact}
-                </p>
-
-                {/* Organic Haven Ribbon Curve SVG with Dot Indicator */}
-                <ProgressRibbon
-                  progressRatio={todayContext.hero.progressRatio}
-                  progressPercent={todayContext.hero.progressPercent}
-                  startLabel="Week 1"
-                  endLabel={todayContext.hero.eddFormatted ? `EDD ${todayContext.hero.eddFormatted}` : 'Week 40'}
-                  ringColorClass="ring-[#4B27A8]"
-                  labelColorClass="text-[#E5DFF0]"
-                />
-              </>
-            ) : (
-              <div className="py-2">
-                <h2 className="font-display font-extrabold text-[22px] text-white leading-tight">
-                  Welcome to your pregnancy journey
-                </h2>
-                <p className="font-body text-xs text-[#F7F3FC] mt-1.5 leading-relaxed">
-                  Record your Last Menstrual Period (LMP) or clinical ANC dates to track your weekly growth accurately.
-                </p>
-                <div className="mt-4 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleNavigate('journey')}
-                    className="px-4 py-2 rounded-full bg-white text-[var(--haven-deep)] font-display font-bold text-xs hover:bg-white/90 cursor-pointer shadow-xs"
-                  >
-                    Set Up Pregnancy Dates
-                  </button>
-                </div>
-              </div>
-            )}
+            <h2 className="font-display font-extrabold text-xl text-[var(--ink-900)]">
+              Welcome to your pregnancy journey
+            </h2>
+            <p className="font-body text-xs text-[var(--ink-600)] max-w-md mx-auto leading-relaxed">
+              Record your Last Menstrual Period (LMP) or clinical ANC dates to activate your personalized circular pregnancy wheel tracker.
+            </p>
+            <button
+              type="button"
+              onClick={() => handleNavigate('journey')}
+              className="px-5 py-2.5 rounded-full bg-[var(--haven-deep)] text-white font-display font-bold text-xs hover:bg-[var(--haven-deep)]/90 cursor-pointer shadow-xs transition-colors"
+            >
+              Set Up Pregnancy Dates
+            </button>
           </div>
-        </section>
+        )
       )}
 
       {/* B. Postpartum Stage Hero */}

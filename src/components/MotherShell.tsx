@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Milestone, MessageSquare, FileText, User, LogOut, type LucideIcon } from 'lucide-react';
+import { Home, Milestone, MessageSquare, FileText, User, LogOut, ChevronLeft, type LucideIcon } from 'lucide-react';
 import EmptyState from './EmptyState';
 import PersonalizedToday from './today/PersonalizedToday';
 import HealthTrends from './health/HealthTrends';
@@ -43,7 +43,24 @@ export default function MotherShell({ userId, userName, userEmail, onSignOut }: 
   return <div className="min-h-screen bg-[var(--lavender-50)] text-[var(--ink-900)] pb-20">
     <header className="sticky top-0 z-20 border-b border-[var(--border-hairline)] bg-white/95 px-4 py-3 backdrop-blur">
       <div className="mx-auto flex max-w-lg items-center justify-between gap-3">
-        <div className="min-w-0"><p className="text-[10px] uppercase tracking-wider font-display font-bold text-[var(--haven-orchid)]">MomHaven</p><h1 className="truncate font-display text-lg font-extrabold">{activeTab === 'today' ? `Hello, ${userName || 'Mama'}` : current.label}</h1>{userEmail && activeTab !== 'today' && <p className="truncate text-[11px] text-[var(--ink-500)]">{userEmail}</p>}</div>
+        <div className="flex items-center gap-2 min-w-0">
+          {activeTab !== 'today' && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('today')}
+              className="p-1.5 -ml-1 rounded-full text-[var(--haven-deep)] hover:bg-[var(--lavender-100)] flex items-center gap-0.5 font-display font-bold text-xs transition-colors cursor-pointer shrink-0"
+              aria-label="Back to Today"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              <span className="hidden sm:inline">Today</span>
+            </button>
+          )}
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wider font-display font-bold text-[var(--haven-orchid)]">MomHaven</p>
+            <h1 className="truncate font-display text-lg font-extrabold">{activeTab === 'today' ? `Hello, ${userName || 'Mama'}` : current.label}</h1>
+            {userEmail && activeTab !== 'today' && <p className="truncate text-[11px] text-[var(--ink-500)]">{userEmail}</p>}
+          </div>
+        </div>
         {onSignOut && <button type="button" onClick={onSignOut} aria-label="Sign out" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--lavender-50)] hover:bg-[var(--lavender-100)]"><LogOut className="h-4 w-4" /></button>}
       </div>
     </header>

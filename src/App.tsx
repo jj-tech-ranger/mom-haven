@@ -118,7 +118,8 @@ export default function App() {
       if (requestId !== fetchRequestRef.current) return;
       setUserRole('MOTHER');
       setClinicianData(null);
-      setNeedsOnboarding(!hydrated && data?.onboardingVersion !== 1);
+      const isDismissed = sessionStorage.getItem(`onboarding_dismissed_${user.uid}`) === 'true';
+      setNeedsOnboarding(!isDismissed && !hydrated && data?.onboardingVersion !== 1);
     } catch (err) {
       if (requestId !== fetchRequestRef.current) return;
       console.warn('Could not read user role from Firestore', err);
@@ -154,7 +155,21 @@ export default function App() {
   if (currentUser && identityError) return <div className="min-h-screen bg-[var(--lavender-50)] flex items-center justify-center p-6"><div className="max-w-lg w-full bg-white rounded-3xl border border-[var(--border-hairline)] shadow-card-1 p-8 text-center"><div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[var(--lavender-50)] flex items-center justify-center"><span aria-hidden="true">🔒</span></div><h1 className="font-display font-extrabold text-xl text-[var(--haven-deep)]">Portal access could not be verified</h1><p className="mt-3 text-sm text-[var(--ink-500)]">{identityError}</p><button type="button" onClick={handleSignOut} className="mt-6 px-5 py-3 rounded-xl bg-[var(--haven-deep)] text-white font-display font-bold">Sign out</button></div></div>;
 
   if (currentUser && userRole === 'MOTHER' && needsOnboarding) {
-    return <PremiumOnboardingWizard userId={currentUser.uid} initialDisplayName={currentUser.displayName || ''} onCompleted={() => { setNeedsOnboarding(false); void fetchUserData(currentUser); }} />;
+    return (
+      <PremiumOnboardingWizard
+        userId={currentUser.uid}
+        initialDisplayName={currentUser.displayName || ''}
+        onCompleted={() => {
+          sessionStorage.removeItem(`onboarding_dismissed_${currentUser.uid}`);
+          setNeedsOnboarding(false);
+          void fetchUserData(currentUser);
+        }}
+        onCancel={() => {
+          sessionStorage.setItem(`onboarding_dismissed_${currentUser.uid}`, 'true');
+          setNeedsOnboarding(false);
+        }}
+      />
+    );
   }
 
   const renderCurrentShell = () => {

@@ -17,7 +17,8 @@ import {
   HeartPulse,
   Lock,
   PhoneCall,
-  ChevronRight
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 import { CredentialingQueue } from './admin/CredentialingQueue';
 import { FacilitiesDirectory } from './admin/FacilitiesDirectory';
@@ -164,6 +165,17 @@ export default function AdminShell({ onRoleSwitch }: AdminShellProps) {
         {/* Top Sticky Bar */}
         <header className="h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between sticky top-0 z-10 shadow-2xs">
           <div className="flex items-center gap-3">
+            {activeTab !== 'dashboard' && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('dashboard')}
+                className="p-1.5 -ml-1 rounded-lg text-teal-800 hover:bg-gray-100 flex items-center gap-1 text-xs font-bold transition-colors cursor-pointer"
+                aria-label="Back to Operations Overview"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Overview</span>
+              </button>
+            )}
             <h2 className="font-bold text-base text-gray-900 capitalize">
               {navItems.find(n => n.id === activeTab)?.label || activeTab}
             </h2>

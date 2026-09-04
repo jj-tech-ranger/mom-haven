@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   RefreshCw,
   Plus,
+  ChevronLeft,
   type LucideIcon,
 } from 'lucide-react';
 import EmptyState from './EmptyState';
@@ -262,11 +263,24 @@ export default function ClinicianShell({
         {/* Main Content Area */}
         <div className="flex-1 min-w-0 flex flex-col">
           <header className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-[var(--border-hairline)] px-5 md:px-8 py-4 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] uppercase tracking-wider font-display font-bold text-[var(--haven-orchid)]">
-                {current.description}
-              </p>
-              <h2 className="font-display font-extrabold text-lg md:text-xl">{current.label}</h2>
+            <div className="flex items-center gap-3">
+              {activeTab !== 'dashboard' && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('dashboard')}
+                  className="p-1.5 -ml-1 rounded-full text-[var(--haven-deep)] hover:bg-[var(--lavender-100)] flex items-center gap-1 font-display font-bold text-xs cursor-pointer transition-colors"
+                  aria-label="Back to Clinical Dashboard"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </button>
+              )}
+              <div>
+                <p className="text-[10px] uppercase tracking-wider font-display font-bold text-[var(--haven-orchid)]">
+                  {current.description}
+                </p>
+                <h2 className="font-display font-extrabold text-lg md:text-xl">{current.label}</h2>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               {facilityName && (

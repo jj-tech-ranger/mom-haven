@@ -172,11 +172,24 @@ export default function AnonymousOnboarding({
     <div className="max-w-xl mx-auto p-4 sm:p-6 space-y-6">
       {/* Top Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-[var(--haven-orchid)] text-xs font-display font-bold uppercase tracking-wider">
-          <Sparkles className="w-4 h-4" />
-          <span>Guest Personalization</span>
-        </div>
         <div className="flex items-center gap-2">
+          {step > 1 && (
+            <button
+              type="button"
+              onClick={() => setStep((s) => (Math.max(1, s - 1) as 1 | 2 | 3 | 4))}
+              className="inline-flex items-center gap-1 text-xs font-display font-bold text-[var(--haven-deep)] hover:underline cursor-pointer mr-1"
+              aria-label="Go to previous step"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Back</span>
+            </button>
+          )}
+          <div className="flex items-center gap-1.5 text-[var(--haven-orchid)] text-xs font-display font-bold uppercase tracking-wider">
+            <Sparkles className="w-4 h-4" />
+            <span>Guest Personalization</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
           <span className="text-xs font-display font-semibold text-[var(--ink-500)]">
             Step {step} of 4
           </span>
@@ -184,9 +197,10 @@ export default function AnonymousOnboarding({
             <button
               type="button"
               onClick={onCancel}
-              className="text-xs text-[var(--ink-400)] hover:text-[var(--ink-700)] ml-2"
+              className="text-xs text-[var(--ink-600)] hover:text-[var(--ink-900)] font-display font-bold px-3 py-1.5 rounded-full border border-[var(--border-hairline)] hover:bg-[var(--surface-2)] transition-colors cursor-pointer"
+              aria-label="Exit setup"
             >
-              Skip
+              Exit Setup
             </button>
           )}
         </div>
@@ -616,6 +630,17 @@ export default function AnonymousOnboarding({
               className="text-xs font-display font-bold text-[var(--haven-deep)] hover:underline pt-1 block mx-auto cursor-pointer"
             >
               Continue exploring privately on this device
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between pt-2">
+            <button
+              type="button"
+              onClick={() => setStep(3)}
+              className="px-4 py-2.5 rounded-full border border-[var(--border-hairline)] text-xs font-display font-bold text-[var(--ink-700)] hover:bg-[var(--surface-2)] flex items-center gap-1 cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Back</span>
             </button>
           </div>
         </section>

@@ -122,6 +122,7 @@ export default function PartnerConnectFlow({ onBack, onConnected }: PartnerConne
             onClick={step === 'pair' ? () => setStep('details') : onBack}
             className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-[var(--ink-900)] transition-colors cursor-pointer"
             title="Go back"
+            aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -129,14 +130,7 @@ export default function PartnerConnectFlow({ onBack, onConnected }: PartnerConne
             <img src="/assets/logo.png" alt="MomHaven" className="w-6 h-6 object-contain" referrerPolicy="no-referrer" />
             <span className="font-display font-extrabold text-xs text-[var(--haven-deep)]">MomHaven Partner</span>
           </div>
-          <button
-            type="button"
-            onClick={onBack}
-            className="text-xs font-display font-bold text-[var(--haven-deep)] hover:underline cursor-pointer"
-            title="Return to main screen"
-          >
-            Back
-          </button>
+          <div className="w-9" />
         </div>
 
         {/* Icon */}

@@ -12,7 +12,8 @@ import {
   ChevronUp, 
   Ambulance, 
   Search,
-  ExternalLink 
+  ExternalLink,
+  ArrowLeft 
 } from 'lucide-react';
 import { EMERGENCY_DANGER_SIGNS, DangerSignItem } from '../../data/emergencyDangerSigns';
 import { NATIONAL_BASELINE_CONTACTS, REGIONAL_REFERRAL_FACILITIES } from '../../services/emergencyGuidance';
@@ -74,9 +75,11 @@ export default function EmergencySafetyHub({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3 py-1 rounded-full bg-white/20 hover:bg-white/30 text-xs font-bold"
+                className="px-3.5 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                aria-label="Back / Exit Emergency Hub"
               >
-                Exit
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back</span>
               </button>
             )}
           </div>

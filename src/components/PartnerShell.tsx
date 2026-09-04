@@ -19,6 +19,7 @@ import {
   RefreshCw,
   Heart,
   ArrowRight,
+  ChevronLeft,
 } from 'lucide-react';
 import { redeemPartnerConnectionCode, getPartnerActiveRelationship } from '../services/sharingService';
 import { getHealthContext } from '../services/healthContextService';
@@ -171,6 +172,16 @@ export default function PartnerShell({
       {/* Top Header */}
       <header className="bg-white border-b border-[var(--border-hairline)] px-4 py-3 sticky top-0 z-30 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-2.5">
+          {activeTab !== 'home' && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('home')}
+              className="p-1 -ml-1 rounded-full text-[var(--haven-deep)] hover:bg-[var(--lavender-100)] flex items-center gap-0.5 font-display font-bold text-xs cursor-pointer transition-colors"
+              aria-label="Back to Partner Home"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          )}
           <img src="/assets/logo.png" alt="MomHaven" className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
           <div>
             <h1 className="font-display font-extrabold text-sm text-[var(--ink-900)] leading-none">
@@ -182,12 +193,24 @@ export default function PartnerShell({
           </div>
         </div>
 
-        {linkedMother && (
-          <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full text-xs font-semibold">
-            <HeartHandshake className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Connected: {linkedMother.motherName}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {linkedMother && (
+            <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full text-xs font-semibold">
+              <HeartHandshake className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="hidden sm:inline">Connected:</span> {linkedMother.motherName}
+            </div>
+          )}
+          {onSignOut && (
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="p-1.5 rounded-full text-[var(--ink-500)] hover:bg-[var(--lavender-100)] hover:text-[var(--ink-800)] cursor-pointer"
+              aria-label="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Main Content Area */}

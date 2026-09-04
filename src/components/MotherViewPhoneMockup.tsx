@@ -1,4 +1,5 @@
 import React from 'react';
+import CircularPregnancyTracker from './today/CircularPregnancyTracker';
 import { 
   Bell, 
   Syringe, 
@@ -87,66 +88,24 @@ export default function MotherViewPhoneMockup({ onExplore, language = 'en' }: Mo
           {/* 3. Screen Scrollable Body Content */}
           <div className="px-3.5 space-y-3 pb-16 pt-0.5 text-left">
             
-            {/* Real Gestation Ribbon Card */}
-            <div 
-              className="rounded-[20px] p-3.5 text-white shadow-md relative overflow-hidden"
-              style={{
-                background: 'linear-gradient(135deg, #33178A 0%, #4B27A8 45%, #6E3CB9 80%, #9167C2 100%)'
+            {/* Circular Wheel Pregnancy Progress Tracker */}
+            <CircularPregnancyTracker
+              variant="compact"
+              gestationalWeeks={24}
+              trimester={2}
+              babySize={{
+                size: isSw ? 'bisi/muhindi' : 'an ear of corn',
+                emoji: '🌽',
+                fact: isSw ? 'Mtoto ana ukubwa wa bisi/muhindi' : 'Baby is about the size of an ear of corn',
               }}
-            >
-              <div className="flex justify-between items-start mb-0.5">
-                <span className="text-[9px] font-display font-bold tracking-widest uppercase text-[#E5DFF0]">
-                  {isSw ? 'Ujauzito Wako' : 'Your Pregnancy'}
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-white/20 text-[9px] font-display font-semibold backdrop-blur-xs">
-                  {isSw ? 'Miezi 3 ya Pili' : 'Trimester 2'}
-                </span>
-              </div>
-
-              <div className="font-display font-extrabold text-[22px] text-white tracking-tight leading-none mt-0.5">
-                {isSw ? 'Wiki ya 24' : 'Week 24'}
-              </div>
-
-              <p className="font-body text-[11px] text-[#F7F3FC] mt-1 flex items-center gap-1">
-                {isSw ? 'Mtoto ana ukubwa wa bisi/muhindi' : 'Baby is about the size of an ear of corn'} <span className="text-[12px]">🌽</span>
-              </p>
-
-              {/* Organic Haven Ribbon Curve SVG */}
-              <div className="my-2.5 relative">
-                <svg 
-                  className="w-full h-7 overflow-visible" 
-                  viewBox="0 0 300 40" 
-                  fill="none" 
-                  preserveAspectRatio="none"
-                >
-                  <path
-                    d="M 10 28 C 75 14, 150 36, 225 18 C 260 10, 280 14, 290 16"
-                    stroke="rgba(255, 255, 255, 0.25)"
-                    strokeWidth="5"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M 10 28 C 75 14, 150 36, 225 18 C 260 10, 280 14, 290 16"
-                    stroke="#FFFFFF"
-                    strokeWidth="5"
-                    strokeLinecap="round"
-                    strokeDasharray="300"
-                    strokeDashoffset="120"
-                  />
-                </svg>
-
-                {/* Milestone Dot on curve */}
-                <div 
-                  className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.9)] ring-2 ring-[#4B27A8]"
-                  style={{ left: '60%' }}
-                />
-              </div>
-
-              <div className="flex justify-between items-center text-[9px] font-display font-semibold text-[#E5DFF0]">
-                <span>{isSw ? 'Wiki 1' : 'Week 1'}</span>
-                <span>{isSw ? 'Wiki 40 · EDD 14 Nov' : 'Week 40 · EDD 14 Nov'}</span>
-              </div>
-            </div>
+              eddFormatted="14 Nov"
+              daysToEdd={112}
+              isAuthoritative={true}
+              language={language}
+              onLogAction={onExplore}
+              onNavigate={() => onExplore?.()}
+              onOpenAskHaven={() => onExplore?.()}
+            />
 
             {/* Today's Priorities */}
             <div>

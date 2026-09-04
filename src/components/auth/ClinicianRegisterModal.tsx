@@ -7,7 +7,8 @@ import {
   ShieldCheck, 
   AlertCircle, 
   CheckCircle2, 
-  FileText 
+  FileText,
+  ArrowLeft
 } from 'lucide-react';
 import Button from '../Button';
 import { KENYA_KMHFL_FACILITIES, registerClinician } from '../../services/clinicianService';
@@ -81,7 +82,9 @@ export default function ClinicianRegisterModal({ onClose, onSuccess }: Clinician
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-[var(--ink-600)] hover:bg-gray-200 cursor-pointer"
+            className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-[var(--ink-600)] hover:bg-gray-200 cursor-pointer transition-colors"
+            title="Close"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
@@ -198,12 +201,19 @@ export default function ClinicianRegisterModal({ onClose, onSuccess }: Clinician
               </div>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-2 flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-3 rounded-xl border border-[var(--border-hairline)] text-xs font-display font-bold text-[var(--ink-700)] hover:bg-gray-100 cursor-pointer"
+              >
+                Cancel / Back
+              </button>
               <Button
                 type="submit"
                 variant="primary"
                 disabled={loading}
-                className="w-full py-3.5 text-xs font-display font-bold shadow-md"
+                className="flex-1 py-3.5 text-xs font-display font-bold shadow-md"
               >
                 {loading ? 'Submitting Credentials...' : 'Submit Verification Request'}
               </Button>
