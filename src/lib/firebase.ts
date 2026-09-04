@@ -10,6 +10,7 @@ import {
   signInWithEmailLink as fbSignInWithEmailLink,
   signInWithEmailAndPassword as fbSignInWithEmailAndPassword,
   createUserWithEmailAndPassword as fbCreateUserWithEmailAndPassword,
+  sendEmailVerification as fbSendEmailVerification,
   sendPasswordResetEmail as fbSendPasswordResetEmail,
   updateProfile,
   type User,
@@ -39,7 +40,6 @@ try {
     }),
   }, FIRESTORE_DATABASE_ID);
 } catch (err) {
-  // Fallback if already initialized (e.g., during testing or SSR)
   firestoreDb = getFirestore(app, FIRESTORE_DATABASE_ID);
 }
 
@@ -70,6 +70,10 @@ export interface FirestoreErrorInfo {
   };
 }
 
+/**
+ * Log full diagnostics for developers, but never put authentication metadata,
+ * document paths, or raw Firestore errors into a user-visible exception.
+ */
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null): never {
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
@@ -85,7 +89,8 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     path,
   };
   console.error('Firestore Error:', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+
+  throw new Error('We could not save your information. Please try again.');
 }
 
 export async function testConnection() {
@@ -121,7 +126,21 @@ export async function signInWithEmail(email: string, pass: string) { return fbSi
 export async function createAccountWithEmail(email: string, pass: string, displayName?: string) {
   const cred = await fbCreateUserWithEmailAndPassword(auth, email, pass);
   if (displayName && cred.user) await updateProfile(cred.user, { displayName });
+  if (cred.user && !cred.user.emailVerified) {
+    await fbSendEmailVerification(cred.user, {
+      url: window.location.origin,
+      handleCodeInApp: false,
+    });
+  }
   return cred;
+}
+
+export async function resendEmailVerification(user: User) {
+  if (!user.email) throw new Error('No email address is associated with this account.');
+  await fbSendEmailVerification(user, {
+    url: window.location.origin,
+    handleCodeInApp: false,
+  });
 }
 
 export async function resetPassword(email: string) { return fbSendPasswordResetEmail(auth, email); }
@@ -142,4 +161,3 @@ export async function ensureUserProfile(user: User) {
     }, { merge: true });
   }
 }
-
