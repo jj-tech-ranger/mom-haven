@@ -23,8 +23,30 @@ import {
 export const CURRENT_CONTEXT_VERSION = 1;
 
 /**
- * Strips authoritative clinical fields from personalization payloads
- * to prevent accidental pollution of the personalization layer.
+ * Firestore rejects undefined values anywhere in a document, including nested
+ * objects. Personalization is optional by design, so remove undefined values
+ * recursively before anything reaches Firestore.
+ */
+export function removeUndefinedDeep<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.filter((item) => item !== undefined).map(removeUndefinedDeep) as T;
+  }
+
+  if (value && typeof value === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+      if (child === undefined) continue;
+      result[key] = removeUndefinedDeep(child);
+    }
+    return result as T;
+  }
+
+  return value;
+}
+
+/**
+ * Strips authoritative clinical fields from personalization payloads and
+ * removes undefined values at every nesting level.
  */
 export function sanitizeHealthContext(raw: Record<string, unknown>): Partial<HealthContext> {
   if (!raw || typeof raw !== 'object') return {};
@@ -34,9 +56,9 @@ export function sanitizeHealthContext(raw: Record<string, unknown>): Partial<Hea
       console.warn(`[HealthContext] Stripped forbidden clinical field '${key}' from personalization context.`);
       continue;
     }
-    clean[key] = value;
+    clean[key] = removeUndefinedDeep(value);
   }
-  return clean as Partial<HealthContext>;
+  return removeUndefinedDeep(clean) as Partial<HealthContext>;
 }
 
 /**
@@ -106,13 +128,10 @@ export function mergeHealthContext(
     },
   };
 
-  return merged;
+  return removeUndefinedDeep(merged);
 }
 
-/**
- * Fetches the current personalization context for a user.
- * Path: `healthContexts/{userId}`
- */
+/** Fetches the current personalization context for a user. */
 export async function getHealthContext(userId: string): Promise<HealthContext | null> {
   if (!userId) return null;
   try {
@@ -120,7 +139,6 @@ export async function getHealthContext(userId: string): Promise<HealthContext | 
     if (!snapshot.exists()) return null;
     const data = snapshot.data();
     if (!data) return null;
-    // Sanitize on read to ensure malformed documents never break consumers
     return mergeHealthContext(null, data);
   } catch (error) {
     handleFirestoreError(error, OperationType.GET, `healthContexts/${userId}`);
@@ -128,11 +146,7 @@ export async function getHealthContext(userId: string): Promise<HealthContext | 
   }
 }
 
-/**
- * Saves and versions the personalization context.
- * Current context path: `healthContexts/{userId}`
- * Historical versions path: `healthContextVersions/{userId}/versions/{versionId}`
- */
+/** Saves and versions the personalization context. */
 export async function saveHealthContext(
   userId: string,
   context: Partial<HealthContext> | Omit<HealthContext, 'version' | 'updatedAt'>,
@@ -143,12 +157,14 @@ export async function saveHealthContext(
     const existing = await getHealthContext(userId);
     const merged = mergeHealthContext(existing, context);
 
-    await setDoc(doc(db, 'healthContexts', userId), merged, { merge: true });
+    // Defensive final pass: no undefined value may cross the Firestore boundary.
+    const firestoreSafeContext = removeUndefinedDeep(merged);
+    await setDoc(doc(db, 'healthContexts', userId), firestoreSafeContext, { merge: true });
 
     try {
       const versionRef = collection(db, `healthContextVersions/${userId}/versions`);
       await addDoc(versionRef, {
-        ...merged,
+        ...firestoreSafeContext,
         reasonForChange: reason,
         createdAt: serverTimestamp(),
       });
@@ -156,16 +172,13 @@ export async function saveHealthContext(
       console.warn(`[HealthContext] Could not write version snapshot for ${userId}`, versionError);
     }
 
-    return merged;
+    return firestoreSafeContext;
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, `healthContexts/${userId}`);
     throw error;
   }
 }
 
-/**
- * Merges partial updates into an existing health context and saves a new version.
- */
 export async function updateHealthContext(
   userId: string,
   updates: Partial<HealthContext>,
@@ -174,10 +187,6 @@ export async function updateHealthContext(
   return saveHealthContext(userId, updates, reason);
 }
 
-/**
- * Fetches historical context snapshots for auditing and evolution.
- * Path: `healthContextVersions/{userId}/versions`
- */
 export async function getHealthContextVersions(
   userId: string,
   limitCount = 10,
@@ -201,4 +210,3 @@ export async function getHealthContextVersions(
     return [];
   }
 }
-
