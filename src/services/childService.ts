@@ -21,6 +21,7 @@ import {
   ChildMilestoneRecord,
   Provenance
 } from '../types';
+import { reconcileMotherClinicalReminders } from './reminderGenerationService';
 
 export function calculateChildAge(dobString: string): {
   totalDays: number;
@@ -112,6 +113,21 @@ export async function createChild(
         verifiedAt: null,
       }
     });
+
+    // Auto-generate KEPI vaccine doses and Vitamin A/Deworming reminders (Prompt 2.2)
+    reconcileMotherClinicalReminders(motherId, {
+      children: [{
+        id: childDoc.id,
+        motherId,
+        name: data.name,
+        dateOfBirth: data.dob,
+        sex: data.sex,
+        createdAt: new Date().toISOString(),
+      }],
+    }).catch((reconcileErr) => {
+      console.warn('[childService] Child reminder auto-generation notice:', reconcileErr);
+    });
+
     return childDoc.id;
   } catch (err) {
     handleFirestoreError(err, OperationType.CREATE, 'children');
@@ -288,3 +304,64 @@ export async function toggleMilestoneRecord(
     handleFirestoreError(err, OperationType.WRITE, `children/${childId}/milestoneRecords/${milestoneId}`);
   }
 }
+
+// Illness & IMCI Records
+export async function getIllnessRecords(childId: string): Promise<any[]> {
+  try {
+    const colRef = collection(db, `children/${childId}/illnessRecords`);
+    const q = query(colRef, orderBy('date', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({
+      ...d.data(),
+      id: d.id,
+    }));
+  } catch (err) {
+    handleFirestoreError(err, OperationType.LIST, `children/${childId}/illnessRecords`);
+    return [];
+  }
+}
+
+export async function addIllnessRecord(childId: string, record: any): Promise<string> {
+  try {
+    const colRef = collection(db, `children/${childId}/illnessRecords`);
+    const docRef = await addDoc(colRef, {
+      ...record,
+      createdAt: new Date().toISOString(),
+    });
+    return docRef.id;
+  } catch (err) {
+    handleFirestoreError(err, OperationType.CREATE, `children/${childId}/illnessRecords`);
+    throw err;
+  }
+}
+
+// MUAC Measurements
+export async function getMuacMeasurements(childId: string): Promise<any[]> {
+  try {
+    const colRef = collection(db, `children/${childId}/muacMeasurements`);
+    const q = query(colRef, orderBy('date', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({
+      ...d.data(),
+      id: d.id,
+    }));
+  } catch (err) {
+    handleFirestoreError(err, OperationType.LIST, `children/${childId}/muacMeasurements`);
+    return [];
+  }
+}
+
+export async function addMuacMeasurement(childId: string, measurement: any): Promise<string> {
+  try {
+    const colRef = collection(db, `children/${childId}/muacMeasurements`);
+    const docRef = await addDoc(colRef, {
+      ...measurement,
+      createdAt: new Date().toISOString(),
+    });
+    return docRef.id;
+  } catch (err) {
+    handleFirestoreError(err, OperationType.CREATE, `children/${childId}/muacMeasurements`);
+    throw err;
+  }
+}
+

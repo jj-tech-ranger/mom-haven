@@ -1,9 +1,10 @@
 // src/components/admin/CredentialingQueue.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   CheckCircle2, XCircle, Clock, ShieldCheck, Search, Filter, 
-  ExternalLink, FileText, UserCheck, AlertTriangle, Building2, Phone, Award
+  ExternalLink, FileText, UserCheck, AlertTriangle, Building2, Phone, Award, RefreshCw
 } from 'lucide-react';
+import { auth } from '../../lib/firebase';
 
 export interface ClinicianProfile {
   id: string;
@@ -125,6 +126,64 @@ export const CredentialingQueue: React.FC = () => {
   const [selectedClinician, setSelectedClinician] = useState<ClinicianProfile | null>(null);
   const [actionModal, setActionModal] = useState<{ type: 'APPROVE' | 'REJECT' | 'SUSPEND'; clinician: ClinicianProfile } | null>(null);
   const [reasonInput, setReasonInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const fetchClinicians = async () => {
+    try {
+      setLoading(true);
+      const user = auth.currentUser;
+      const idToken = user ? await user.getIdToken(true) : '';
+      if (!idToken) return;
+      const res = await fetch('/api/v1/admin/clinicians', {
+        headers: {
+          authorization: `Bearer ${idToken}`,
+          'x-firebase-id-token': idToken,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.items) && data.items.length > 0) {
+          const serverProfiles: ClinicianProfile[] = data.items.map((item: any) => {
+            let status: ClinicianProfile['status'] = 'PENDING_REVIEW';
+            const s = String(item.verificationStatus || '').toLowerCase();
+            if (s === 'approved') status = 'ACTIVE';
+            else if (s === 'rejected') status = 'REJECTED';
+            else if (s === 'suspended') status = 'SUSPENDED';
+            else status = 'PENDING_REVIEW';
+
+            return {
+              id: item.id || item.uid,
+              fullName: item.displayName || item.name || 'Healthcare Provider',
+              email: item.email || '',
+              phone: item.phone || '',
+              cadre: (item.cadre || 'Clinical Officer').toUpperCase(),
+              licenseNumber: item.licenseNumber || 'PENDING',
+              boardName: item.boardName || 'Regulatory Board',
+              facilityAffiliation: item.facilityName || 'Health Facility',
+              county: item.county || 'National',
+              status,
+              submissionDate: item.createdAt ? new Date(item.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              rejectionReason: item.rejectionReason,
+              documents: item.documents || {},
+            };
+          });
+          const serverIds = new Set(serverProfiles.map(p => p.id));
+          const nonDuplicatedDemo = INITIAL_CLINICIANS.filter(c => !serverIds.has(c.id));
+          setClinicians([...serverProfiles, ...nonDuplicatedDemo]);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load server clinicians:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClinicians();
+  }, []);
 
   const filtered = clinicians.filter(c => {
     const matchesSearch = c.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -134,34 +193,86 @@ export const CredentialingQueue: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleApprove = (id: string) => {
-    setClinicians(prev => prev.map(c => {
-      if (c.id === id) {
-        return {
-          ...c,
-          status: 'ACTIVE',
-          verificationAuditDate: new Date().toISOString().split('T')[0],
-          verifierAdminId: 'admin_current_user'
-        };
+  const handleApprove = async (id: string) => {
+    try {
+      setProcessing(true);
+      setActionError(null);
+      const user = auth.currentUser;
+      const idToken = user ? await user.getIdToken(true) : '';
+      if (idToken) {
+        const res = await fetch(`/api/v1/admin/clinician/${id}/approve`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            authorization: `Bearer ${idToken}`,
+            'x-firebase-id-token': idToken,
+          },
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Failed to approve clinician on server.');
+        }
       }
-      return c;
-    }));
-    setActionModal(null);
+      setClinicians(prev => prev.map(c => {
+        if (c.id === id) {
+          return {
+            ...c,
+            status: 'ACTIVE',
+            verificationAuditDate: new Date().toISOString().split('T')[0],
+            verifierAdminId: user?.uid || 'admin_super_01'
+          };
+        }
+        return c;
+      }));
+      setActionModal(null);
+    } catch (e: any) {
+      setActionError(e?.message || 'Failed to approve clinician.');
+    } finally {
+      setProcessing(false);
+    }
   };
 
-  const handleRejectOrSuspend = (id: string, newStatus: 'REJECTED' | 'SUSPENDED', reason: string) => {
-    setClinicians(prev => prev.map(c => {
-      if (c.id === id) {
-        return {
-          ...c,
-          status: newStatus,
-          rejectionReason: reason || 'Failed regulatory compliance requirements.'
-        };
+  const handleRejectOrSuspend = async (id: string, newStatus: 'REJECTED' | 'SUSPENDED', reason: string) => {
+    try {
+      setProcessing(true);
+      setActionError(null);
+      const user = auth.currentUser;
+      const idToken = user ? await user.getIdToken(true) : '';
+      if (idToken) {
+        const endpoint = newStatus === 'REJECTED'
+          ? `/api/v1/admin/clinician/${id}/reject`
+          : `/api/v1/admin/clinician/${id}/suspend`;
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            authorization: `Bearer ${idToken}`,
+            'x-firebase-id-token': idToken,
+          },
+          body: JSON.stringify({ reason }),
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `Failed to ${newStatus.toLowerCase()} clinician on server.`);
+        }
       }
-      return c;
-    }));
-    setActionModal(null);
-    setReasonInput('');
+      setClinicians(prev => prev.map(c => {
+        if (c.id === id) {
+          return {
+            ...c,
+            status: newStatus,
+            rejectionReason: reason || 'Failed regulatory compliance requirements.'
+          };
+        }
+        return c;
+      }));
+      setActionModal(null);
+      setReasonInput('');
+    } catch (e: any) {
+      setActionError(e?.message || `Failed to update clinician status.`);
+    } finally {
+      setProcessing(false);
+    }
   };
 
   return (
@@ -436,35 +547,45 @@ export const CredentialingQueue: React.FC = () => {
               />
             )}
 
+            {actionError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs mb-3">
+                {actionError}
+              </div>
+            )}
+
             <div className="flex items-center justify-end gap-2">
               <button
-                onClick={() => { setActionModal(null); setReasonInput(''); }}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold"
+                onClick={() => { setActionModal(null); setReasonInput(''); setActionError(null); }}
+                disabled={processing}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold disabled:opacity-50"
               >
                 Cancel
               </button>
               {actionModal.type === 'APPROVE' && (
                 <button
                   onClick={() => handleApprove(actionModal.clinician.id)}
-                  className="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-xl text-xs font-semibold"
+                  disabled={processing}
+                  className="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-xl text-xs font-semibold disabled:opacity-50"
                 >
-                  Confirm & Issue Authorization
+                  {processing ? 'Authorizing...' : 'Confirm & Issue Authorization'}
                 </button>
               )}
               {actionModal.type === 'REJECT' && (
                 <button
                   onClick={() => handleRejectOrSuspend(actionModal.clinician.id, 'REJECTED', reasonInput)}
-                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold"
+                  disabled={processing}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold disabled:opacity-50"
                 >
-                  Confirm Rejection
+                  {processing ? 'Rejecting...' : 'Confirm Rejection'}
                 </button>
               )}
               {actionModal.type === 'SUSPEND' && (
                 <button
                   onClick={() => handleRejectOrSuspend(actionModal.clinician.id, 'SUSPENDED', reasonInput)}
-                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold"
+                  disabled={processing}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold disabled:opacity-50"
                 >
-                  Suspend Clinician
+                  {processing ? 'Suspending...' : 'Suspend Clinician'}
                 </button>
               )}
             </div>

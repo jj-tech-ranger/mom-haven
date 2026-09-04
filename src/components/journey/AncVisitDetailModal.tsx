@@ -57,11 +57,11 @@ export default function AncVisitDetailModal({
           <div className="flex items-start justify-between gap-2 border-b border-[var(--border-hairline)] pb-4">
             <div>
               <span className="text-[11px] font-display font-bold text-[var(--ink-600)] uppercase tracking-wider block">
-                {visitDateFormatted} · {visit.facilityName || 'KARIOKOR HEALTH CENTRE'}
+                {visitDateFormatted} · {visit.facilityName || 'CLINIC ENCOUNTER'}
               </span>
               <p className="font-body text-[12px] text-[var(--ink-600)] mt-0.5">
                 {isVerified
-                  ? `Reviewed by ${visit.provenance?.verifiedBy || 'Nurse A. Wanjiru'} · ${visit.provenance?.verifiedAt ? new Date(visit.provenance.verifiedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Verified'}`
+                  ? `Reviewed by ${visit.provenance?.verifiedBy || 'Clinician'} · ${visit.provenance?.verifiedAt ? new Date(visit.provenance.verifiedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Verified'}`
                   : 'Self-reported clinic encounter'
                 }
               </p>
@@ -75,28 +75,28 @@ export default function AncVisitDetailModal({
             <div className="flex justify-between items-center py-1 border-b border-[var(--border-hairline)]/50">
               <span className="font-body text-[var(--ink-600)]">Weight</span>
               <span className="font-display font-bold text-[var(--ink-900)]">
-                {visit.weight ? `${visit.weight} kg` : '68.4 kg'}
+                {visit.weight ? `${visit.weight} kg` : 'Not recorded'}
               </span>
             </div>
 
             <div className="flex justify-between items-center py-1 border-b border-[var(--border-hairline)]/50">
               <span className="font-body text-[var(--ink-600)]">Blood pressure</span>
               <span className="font-display font-bold text-[var(--ink-900)]">
-                {visit.bloodPressure || `${visit.systolicBp || 112} / ${visit.diastolicBp || 74}`}
+                {visit.bloodPressure || (visit.systolicBp && visit.diastolicBp ? `${visit.systolicBp}/${visit.diastolicBp}` : 'Not recorded')}
               </span>
             </div>
 
             <div className="flex justify-between items-center py-1 border-b border-[var(--border-hairline)]/50">
               <span className="font-body text-[var(--ink-600)]">Fundal height</span>
               <span className="font-display font-bold text-[var(--ink-900)]">
-                {visit.fundalHeight ? `${visit.fundalHeight} cm` : '24 cm'}
+                {visit.fundalHeight ? `${visit.fundalHeight} cm` : 'Not recorded'}
               </span>
             </div>
 
             <div className="flex justify-between items-center py-1">
               <span className="font-body text-[var(--ink-600)]">Fetal heart rate</span>
               <span className="font-display font-bold text-[var(--ink-900)]">
-                {visit.fetalHeartRate ? `${visit.fetalHeartRate} bpm` : '144 bpm'}
+                {visit.fetalHeartRate ? `${visit.fetalHeartRate} bpm` : 'Not recorded'}
               </span>
             </div>
 
@@ -104,7 +104,7 @@ export default function AncVisitDetailModal({
               <div className="flex justify-between items-center py-1 border-t border-[var(--border-hairline)]/50">
                 <span className="font-body text-[var(--ink-600)]">Hemoglobin (Hb)</span>
                 <span className="font-display font-bold text-[var(--ink-900)]">
-                  {visit.hbLevel} g/dL (Normal)
+                  {visit.hbLevel} g/dL
                 </span>
               </div>
             )}
@@ -128,7 +128,7 @@ export default function AncVisitDetailModal({
           </p>
 
           <p className="font-body text-[14px] text-[var(--ink-900)] italic bg-[var(--lavender-50)] p-4 rounded-[16px] border border-[var(--border-hairline)] leading-relaxed">
-            "{visit.notes || 'Mild swelling in my ankles by evening, otherwise feeling well.'}"
+            {visit.notes ? `"${visit.notes}"` : 'No notes recorded for this visit.'}
           </p>
         </div>
 

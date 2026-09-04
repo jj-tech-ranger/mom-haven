@@ -18,28 +18,28 @@ export default function AddAncVisitModal({
   userId,
   onClose,
   onSaved,
-  initialVisitNumber = 4,
+  initialVisitNumber = 1,
 }: AddAncVisitModalProps) {
   const [visitNumber, setVisitNumber] = useState<number>(initialVisitNumber);
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [facilityName, setFacilityName] = useState('Kariokor Health Centre');
-  const [gestationalAgeWeeks, setGestationalAgeWeeks] = useState(24);
-  const [weight, setWeight] = useState('68.4');
-  const [systolicBp, setSystolicBp] = useState('112');
-  const [diastolicBp, setDiastolicBp] = useState('74');
-  const [fundalHeight, setFundalHeight] = useState('24');
-  const [fetalHeartRate, setFetalHeartRate] = useState('144');
-  const [hbLevel, setHbLevel] = useState('12.1');
+  const [facilityName, setFacilityName] = useState('');
+  const [gestationalAgeWeeks, setGestationalAgeWeeks] = useState(16);
+  const [weight, setWeight] = useState('');
+  const [systolicBp, setSystolicBp] = useState('');
+  const [diastolicBp, setDiastolicBp] = useState('');
+  const [fundalHeight, setFundalHeight] = useState('');
+  const [fetalHeartRate, setFetalHeartRate] = useState('');
+  const [hbLevel, setHbLevel] = useState('');
   const [urineAlbumin, setUrineAlbumin] = useState('Nil');
   const [urineGlucose, setUrineGlucose] = useState('Nil');
 
   // Interventions checkboxes
-  const [ironFolicGiven, setIronFolicGiven] = useState(true);
+  const [ironFolicGiven, setIronFolicGiven] = useState(false);
   const [tdBoosterGiven, setTdBoosterGiven] = useState(false);
-  const [iptpGiven, setIptpGiven] = useState(true);
+  const [iptpGiven, setIptpGiven] = useState(false);
   const [mosquitoNetGiven, setMosquitoNetGiven] = useState(false);
   const [nextAppointmentDate, setNextAppointmentDate] = useState('');
-  const [notes, setNotes] = useState('Mild swelling in my ankles by evening, otherwise feeling well.');
+  const [notes, setNotes] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

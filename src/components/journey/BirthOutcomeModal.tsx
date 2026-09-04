@@ -20,19 +20,19 @@ export default function BirthOutcomeModal({
   onTransitionCompleted,
 }: BirthOutcomeModalProps) {
   const [deliveryDate, setDeliveryDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [deliveryTime, setDeliveryTime] = useState('14:30');
+  const [deliveryTime, setDeliveryTime] = useState('');
   const [outcomeType, setOutcomeType] = useState<'Live Birth' | 'Multiple Birth' | 'Stillbirth'>('Live Birth');
   const [deliveryType, setDeliveryType] = useState<'SVD' | 'CS' | 'Assisted'>('SVD');
-  const [facilityName, setFacilityName] = useState('Pumwani Maternity Hospital');
+  const [facilityName, setFacilityName] = useState(pregnancy.birthPlan?.preferredFacility || '');
   const [attendantCadre, setAttendantCadre] = useState('Certified Midwife');
 
   // Baby Details
-  const [babyName, setBabyName] = useState(`Baby ${motherDisplayName}`);
+  const [babyName, setBabyName] = useState(pregnancy.babyName || `Baby of ${motherDisplayName}`);
   const [babySex, setBabySex] = useState<'female' | 'male'>('female');
-  const [birthWeight, setBirthWeight] = useState('3.4');
-  const [birthLength, setBirthLength] = useState('50');
-  const [headCircumference, setHeadCircumference] = useState('34.5');
-  const [apgarScore, setApgarScore] = useState('9 / 10');
+  const [birthWeight, setBirthWeight] = useState('');
+  const [birthLength, setBirthLength] = useState('');
+  const [headCircumference, setHeadCircumference] = useState('');
+  const [apgarScore, setApgarScore] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

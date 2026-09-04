@@ -12,7 +12,7 @@ import {
   addDoc,
   serverTimestamp 
 } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
 import { 
   Clinician, 
   ClinicianAccessSession, 
@@ -75,25 +75,36 @@ export async function registerClinician(
     facilityId: string;
     facilityName: string;
   }
-): Promise<void> {
-  try {
-    const docRef = doc(db, 'clinicians', uid);
-    await setDoc(docRef, {
-      ...data,
-      verificationStatus: 'approved', // instant approved for demo and training access
-      createdAt: new Date().toISOString(),
-    });
-    // Also update users role
-    await setDoc(doc(db, 'users', uid), {
-      displayName: data.name,
-      email: data.email,
-      role: 'CLINICIAN',
-      updatedAt: serverTimestamp(),
-    }, { merge: true });
-  } catch (err) {
-    handleFirestoreError(err, OperationType.WRITE, `clinicians/${uid}`);
-    throw err;
+): Promise<{ success: boolean; status: string }> {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error('Authentication required to submit clinician verification.');
   }
+
+  const idToken = await user.getIdToken(true);
+  const response = await fetch('/api/v1/clinician/verification', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      authorization: `Bearer ${idToken}`,
+      'x-firebase-id-token': idToken,
+    },
+    body: JSON.stringify({
+      name: data.name,
+      email: data.email,
+      licenseNumber: data.licenseNumber,
+      cadre: data.cadre,
+      facilityId: data.facilityId,
+      facilityName: data.facilityName,
+    }),
+  });
+
+  if (!response.ok) {
+    const errPayload = await response.json().catch(() => ({}));
+    throw new Error(errPayload.error || 'Failed to submit clinician verification.');
+  }
+
+  return await response.json();
 }
 
 export async function redeemClinicShareCode(

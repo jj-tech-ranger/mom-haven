@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, CheckCircle2, Sparkles, Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { ChildMilestoneRecord } from '../../types';
+import { getMilestoneRecords, toggleMilestoneRecord } from '../../services/childService';
 
 interface MilestoneChecklistProps {
+  childId?: string;
+  motherId?: string;
   childName: string;
   onBack: () => void;
 }
@@ -61,15 +64,42 @@ const MILESTONE_DATA: MilestoneGroup[] = [
 ];
 
 export default function MilestoneChecklist({
+  childId,
+  motherId = 'user',
   childName,
   onBack,
 }: MilestoneChecklistProps) {
-  const [completedIds, setCompletedIds] = useState<string[]>(['m1', 'm2', 'm3', 'm4', 'm5', 'm6']);
+  const [completedIds, setCompletedIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const toggleMilestone = (id: string) => {
-    setCompletedIds(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
+  useEffect(() => {
+    if (!childId) return;
+    let isMounted = true;
+    getMilestoneRecords(childId).then(records => {
+      if (isMounted) {
+        const achieved = records.filter(r => r.achievedDate).map(r => r.milestoneId);
+        setCompletedIds(achieved);
+      }
+    }).catch(err => {
+      console.warn('Could not fetch milestone records', err);
+    });
+    return () => { isMounted = false; };
+  }, [childId]);
+
+  const toggleMilestone = async (id: string, domain: string) => {
+    const isCurrentlyCompleted = completedIds.includes(id);
+    const nextCompleted = isCurrentlyCompleted
+      ? completedIds.filter(i => i !== id)
+      : [...completedIds, id];
+    setCompletedIds(nextCompleted);
+
+    if (childId) {
+      try {
+        await toggleMilestoneRecord(childId, id, domain, !isCurrentlyCompleted, motherId);
+      } catch (err) {
+        console.error('Failed to update milestone record', err);
+      }
+    }
   };
 
   const totalItems = MILESTONE_DATA.reduce((acc, g) => acc + g.items.length, 0);
@@ -143,7 +173,7 @@ export default function MilestoneChecklist({
                   return (
                     <div
                       key={item.id}
-                      onClick={() => toggleMilestone(item.id)}
+                      onClick={() => toggleMilestone(item.id, group.domain)}
                       className={`p-3 rounded-[16px] border flex items-start gap-3 cursor-pointer transition-all ${
                         isChecked
                           ? 'bg-[var(--lavender-50)] border-[var(--haven-orchid)]/40 shadow-xs'

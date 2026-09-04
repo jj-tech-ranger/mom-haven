@@ -29,6 +29,7 @@ service cloud.firestore {
   match /auditEvents/{id}{allow read:if isAdmin();allow write:if false;}
   match /facilities/{id}{allow read:if signed();allow write:if isAdmin();}
   match /clinicians/{id}{allow read,write:if isAdmin();}
+  match /adminMfaSecrets/{id}{allow read,write:if false;}
   match /clinicalDecisionRegister/{id}{allow read,write:if isAdmin();}
   match /releaseGates/{id}{allow read,write:if isAdmin();}
   match /safetyPatterns/{id}{allow read:if signed();allow write:if isAdmin();}

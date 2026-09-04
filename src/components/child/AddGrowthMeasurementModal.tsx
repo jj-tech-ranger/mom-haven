@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { X, Scale, Info, AlertCircle } from 'lucide-react';
-import { GrowthMeasurement, Provenance } from '../../types';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { Provenance } from '../../types';
+import { addGrowthMeasurement } from '../../services/childService';
 import Button from '../Button';
 
 interface AddGrowthMeasurementModalProps {
@@ -19,11 +18,11 @@ export default function AddGrowthMeasurementModal({
   onSaved,
 }: AddGrowthMeasurementModalProps) {
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [ageMonths, setAgeMonths] = useState(6);
-  const [weightKg, setWeightKg] = useState('7.2');
-  const [heightCm, setHeightCm] = useState('65.5');
-  const [muacCm, setMuacCm] = useState('13.8');
-  const [headCircumferenceCm, setHeadCircumferenceCm] = useState('43.0');
+  const [ageMonths, setAgeMonths] = useState('');
+  const [weightKg, setWeightKg] = useState('');
+  const [heightCm, setHeightCm] = useState('');
+  const [muacCm, setMuacCm] = useState('');
+  const [headCircumferenceCm, setHeadCircumferenceCm] = useState('');
   const [feedingStatus, setFeedingStatus] = useState('Exclusive Breastfeeding');
   const [notes, setNotes] = useState('');
 
@@ -44,7 +43,7 @@ export default function AddGrowthMeasurementModal({
         verifiedAt: null,
       };
 
-      await addDoc(collection(db, 'growthMeasurements'), {
+      await addGrowthMeasurement(childId, {
         childId,
         date,
         ageMonths: Number(ageMonths),
@@ -55,7 +54,6 @@ export default function AddGrowthMeasurementModal({
         feedingStatus,
         notes: notes.trim(),
         provenance,
-        createdAt: new Date().toISOString(),
       });
 
       onSaved();

@@ -107,25 +107,33 @@ export default function GrowthTracker({
             <span className="text-[11px] font-display font-bold text-[var(--haven-orchid)] uppercase tracking-wider">
               Current Trajectory
             </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-display font-bold">
-              Normal WHO Range
-            </span>
+            {latest ? (
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-display font-bold">
+                WHO Standard Recorded
+              </span>
+            ) : (
+              <span className="px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 text-[11px] font-display font-bold">
+                No Entries Yet
+              </span>
+            )}
           </div>
 
           <div className="flex items-baseline gap-3">
-            <span className="font-display font-black text-[32px] text-[var(--ink-900)]">
+            <span className="font-display font-black text-[30px] text-[var(--ink-900)]">
               {metricTab === 'weight'
-                ? `${latest?.weightKg || 6.8} kg`
+                ? (latest?.weightKg ? `${latest.weightKg} kg` : 'Not recorded')
                 : metricTab === 'height'
-                ? `${latest?.heightCm || 64.0} cm`
+                ? (latest?.heightCm ? `${latest.heightCm} cm` : 'Not recorded')
                 : metricTab === 'muac'
-                ? `${latest?.muacCm || 13.5} cm`
-                : `${latest?.headCircumferenceCm || 42.0} cm`}
+                ? (latest?.muacCm ? `${latest.muacCm} cm` : 'Not recorded')
+                : (latest?.headCircumferenceCm ? `${latest.headCircumferenceCm} cm` : 'Not recorded')}
             </span>
-            <span className="text-[13px] text-emerald-700 font-semibold flex items-center gap-1">
-              <TrendingUp className="w-4 h-4" />
-              Tracking on median curve
-            </span>
+            {latest && (
+              <span className="text-[13px] text-emerald-700 font-semibold flex items-center gap-1">
+                <TrendingUp className="w-4 h-4" />
+                Latest measurement
+              </span>
+            )}
           </div>
 
           {/* MUAC Specific Color Band Visualizer */}

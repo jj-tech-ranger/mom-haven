@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { X, Syringe, Info, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { ChildVaccineRecord, Provenance } from '../../types';
+import { Provenance } from '../../types';
 import { KENYA_FACILITIES } from '../../data/kenyaFacilities';
 import { KEPI_SCHEDULE } from './ImmunizationPassport';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { addImmunizationRecord } from '../../services/childService';
 import Button from '../Button';
 
 interface AddVaccineModalProps {
@@ -27,9 +26,9 @@ export default function AddVaccineModal({
   const [vaccineName, setVaccineName] = useState(initialVaccineName);
   const [recommendedAgeBracket, setRecommendedAgeBracket] = useState(initialAgeBracket);
   const [dateAdministered, setDateAdministered] = useState(() => new Date().toISOString().split('T')[0]);
-  const [facilityName, setFacilityName] = useState('Kariokor Health Centre');
+  const [facilityName, setFacilityName] = useState('');
   const [batchNumber, setBatchNumber] = useState('');
-  const [administeredBy, setAdministeredBy] = useState('Nurse A. Wanjiru');
+  const [administeredBy, setAdministeredBy] = useState('');
   const [adverseEvents, setAdverseEvents] = useState('None');
   const [notes, setNotes] = useState('');
 
@@ -50,7 +49,7 @@ export default function AddVaccineModal({
         verifiedAt: null,
       };
 
-      await addDoc(collection(db, 'childVaccineRecords'), {
+      await addImmunizationRecord(childId, {
         childId,
         vaccineName,
         recommendedAgeBracket,
@@ -62,7 +61,6 @@ export default function AddVaccineModal({
         adverseEvents: adverseEvents.trim(),
         notes: notes.trim(),
         provenance,
-        createdAt: new Date().toISOString(),
       });
 
       onSaved();

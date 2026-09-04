@@ -13,6 +13,8 @@ import {
 import Button from '../Button';
 import { KENYA_KMHFL_FACILITIES, registerClinician } from '../../services/clinicianService';
 import { KENYA_COUNTIES } from '../../types';
+import { auth, signInAsGuest } from '../../lib/firebase';
+import { updateProfile } from 'firebase/auth';
 
 interface ClinicianRegisterModalProps {
   onClose: () => void;
@@ -40,9 +42,21 @@ export default function ClinicianRegisterModal({ onClose, onSuccess }: Clinician
       setLoading(true);
       setError(null);
       const selectedFacility = KENYA_KMHFL_FACILITIES.find(f => f.code === facilityCode) || KENYA_KMHFL_FACILITIES[0];
-      const clinicianUid = `clinician-${Date.now()}`;
 
-      await registerClinician(clinicianUid, {
+      let user = auth.currentUser;
+      if (!user) {
+        const cred = await signInAsGuest();
+        user = cred.user;
+      }
+      if (name.trim()) {
+        try {
+          await updateProfile(user, { displayName: name.trim() });
+        } catch {
+          // Continue if profile update fails
+        }
+      }
+
+      await registerClinician(user.uid, {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         licenseNumber: licenseNumber.trim().toUpperCase(),
@@ -51,7 +65,7 @@ export default function ClinicianRegisterModal({ onClose, onSuccess }: Clinician
         facilityName: selectedFacility.name,
       });
 
-      onSuccess(clinicianUid);
+      onSuccess(user.uid);
     } catch (err: any) {
       console.error('Clinician registration error', err);
       setError(err?.message || 'Failed to submit clinician verification. Please try again.');

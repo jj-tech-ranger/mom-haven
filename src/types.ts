@@ -329,6 +329,11 @@ export interface Reminder {
   completed: boolean;
   sharedWithPartner?: boolean;
   createdAt: string;
+  notifiedAt?: string | null;
+  sourceEventId?: string;
+  deepLink?: string;
+  childId?: string;
+  pregnancyId?: string;
 }
 
 export interface PregnancySummary {

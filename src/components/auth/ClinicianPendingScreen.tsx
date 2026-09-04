@@ -13,8 +13,6 @@ import {
 } from 'lucide-react';
 import Button from '../Button';
 import { Clinician } from '../../types';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
 
 interface ClinicianPendingScreenProps {
   clinicianId: string;
@@ -43,17 +41,11 @@ export default function ClinicianPendingScreen({
   };
 
   const handleDemoApproval = async () => {
+    if (!onInstantApprove) return;
     setSimulating(true);
     try {
-      if (onInstantApprove) {
-        onInstantApprove();
-      } else {
-        await updateDoc(doc(db, 'clinicians', clinicianId), {
-          verificationStatus: 'approved',
-          updatedAt: serverTimestamp(),
-        });
-        await onRefresh();
-      }
+      await onInstantApprove();
+      await onRefresh();
     } catch (e) {
       console.error('Approval simulation error', e);
     } finally {
@@ -142,15 +134,17 @@ export default function ClinicianPendingScreen({
           </Button>
 
           {/* Quick Demo Approval for testing */}
-          <button
-            type="button"
-            onClick={handleDemoApproval}
-            disabled={simulating}
-            className="w-full py-2.5 px-4 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-display font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
-          >
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            {simulating ? 'Approving...' : 'Demo Fast-Track: Approve Medical Credentials'}
-          </button>
+          {onInstantApprove && (
+            <button
+              type="button"
+              onClick={handleDemoApproval}
+              disabled={simulating}
+              className="w-full py-2.5 px-4 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-display font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              {simulating ? 'Approving...' : 'Demo Fast-Track: Approve Medical Credentials'}
+            </button>
+          )}
 
           <button
             type="button"

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { X, Upload, FileText, Image, CheckCircle2, AlertCircle, Info } from 'lucide-react';
-import { DocumentRecord, Provenance } from '../../types';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { Provenance } from '../../types';
+import { addVaultDocument } from '../../services/documentVaultService';
 import { KENYA_FACILITIES } from '../../data/kenyaFacilities';
 import Button from '../Button';
 
@@ -56,7 +55,7 @@ export default function DocumentUploadModal({
         verifiedAt: null,
       };
 
-      await addDoc(collection(db, 'documents'), {
+      await addVaultDocument({
         userId,
         title: title.trim(),
         category,
@@ -65,7 +64,6 @@ export default function DocumentUploadModal({
         notes: notes.trim(),
         provenance,
         fileType: fileSelected?.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg',
-        createdAt: new Date().toISOString(),
       });
 
       onUploaded();

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
   Plus, 
@@ -12,6 +12,7 @@ import {
   Info
 } from 'lucide-react';
 import { IllnessRecord, Provenance } from '../../types';
+import { getIllnessRecords, addIllnessRecord } from '../../services/childService';
 import ProvenanceBadge from '../common/ProvenanceBadge';
 import Button from '../Button';
 
@@ -32,24 +33,6 @@ const IMCI_DANGER_SIGNS = [
   'High fever > 38.5°C persisting for > 2 days',
 ];
 
-const SAMPLE_ILLNESS_LOGS: IllnessRecord[] = [
-  {
-    id: 'ill-1',
-    childId: 'child-1',
-    date: '2026-03-01',
-    symptoms: ['Mild fever (37.8°C)', 'Runny nose'],
-    temperatureCelsius: 37.8,
-    durationDays: 2,
-    hasDangerSigns: false,
-    careActionTaken: 'Paracetamol syrup administered as per age dose, increased fluid intake.',
-    provenance: {
-      status: 'REPORTED',
-      enteredBy: 'user',
-      enteredAt: '2026-03-01T10:00:00Z',
-    },
-  },
-];
-
 export default function IllnessSymptomLog({
   childId,
   childName,
@@ -57,7 +40,8 @@ export default function IllnessSymptomLog({
   onBack,
   onTriggerEmergency,
 }: IllnessSymptomLogProps) {
-  const [logs, setLogs] = useState<IllnessRecord[]>(SAMPLE_ILLNESS_LOGS);
+  const [logs, setLogs] = useState<IllnessRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
 
   // Form State
@@ -65,10 +49,26 @@ export default function IllnessSymptomLog({
   const [symptomCough, setSymptomCough] = useState(false);
   const [symptomDiarrhea, setSymptomDiarrhea] = useState(false);
   const [symptomVomiting, setSymptomVomiting] = useState(false);
-  const [temperature, setTemperature] = useState('38.2');
+  const [temperature, setTemperature] = useState('');
   const [durationDays, setDurationDays] = useState(1);
   const [selectedDangerSigns, setSelectedDangerSigns] = useState<string[]>([]);
-  const [careAction, setCareAction] = useState('Oral rehydration solution (ORS) and Zinc syrup given.');
+  const [careAction, setCareAction] = useState('');
+
+  const loadLogs = async () => {
+    try {
+      setLoading(true);
+      const records = await getIllnessRecords(childId);
+      setLogs(records);
+    } catch (err) {
+      console.warn('Could not fetch illness records', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLogs();
+  }, [childId]);
 
   const toggleDangerSign = (sign: string) => {
     setSelectedDangerSigns(prev =>
@@ -76,24 +76,23 @@ export default function IllnessSymptomLog({
     );
   };
 
-  const handleSaveLog = (e: React.FormEvent) => {
+  const handleSaveLog = async (e: React.FormEvent) => {
     e.preventDefault();
     const symptoms: string[] = [];
-    if (symptomFever) symptoms.push(`Fever (${temperature}°C)`);
+    if (symptomFever) symptoms.push(`Fever (${temperature ? `${temperature}°C` : 'Elevated'})`);
     if (symptomCough) symptoms.push('Cough / Fast breathing');
     if (symptomDiarrhea) symptoms.push('Diarrhea / Loose stools');
     if (symptomVomiting) symptoms.push('Vomiting');
 
-    const newRecord: IllnessRecord = {
-      id: `ill-${Date.now()}`,
+    const newRecord: Omit<IllnessRecord, 'id'> = {
       childId,
       date: new Date().toISOString().split('T')[0],
       symptoms: symptoms.length ? symptoms : ['General malaise'],
-      temperatureCelsius: symptomFever ? parseFloat(temperature) : undefined,
+      temperatureCelsius: symptomFever && temperature ? parseFloat(temperature) : undefined,
       durationDays: Number(durationDays),
       hasDangerSigns: selectedDangerSigns.length > 0,
       dangerSigns: selectedDangerSigns,
-      careActionTaken: careAction.trim(),
+      careActionTaken: careAction.trim() || undefined,
       provenance: {
         status: 'REPORTED',
         enteredBy: userId,
@@ -101,11 +100,16 @@ export default function IllnessSymptomLog({
       },
     };
 
-    setLogs([newRecord, ...logs]);
-    setIsAdding(false);
+    try {
+      await addIllnessRecord(childId, newRecord);
+      await loadLogs();
+      setIsAdding(false);
 
-    if (selectedDangerSigns.length > 0) {
-      onTriggerEmergency();
+      if (selectedDangerSigns.length > 0) {
+        onTriggerEmergency();
+      }
+    } catch (err) {
+      console.error('Failed to save illness log', err);
     }
   };
 

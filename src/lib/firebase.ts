@@ -17,7 +17,7 @@ import {
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp, getDocFromServer } from 'firebase/firestore';
 import { firebaseConfig } from './firebaseConfig';
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const FIRESTORE_DATABASE_ID = 'mom-haven';
 
 export const db = getFirestore(app, FIRESTORE_DATABASE_ID);

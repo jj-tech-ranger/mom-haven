@@ -106,10 +106,12 @@ export default function JourneyOverview({
               Maternal Weight
             </span>
             <p className="font-display font-bold text-[17px] text-[var(--ink-900)] mt-0.5">
-              {ancEncounters[ancEncounters.length - 1]?.weight || '64.5'} kg
+              {ancEncounters.length > 0 && ancEncounters[ancEncounters.length - 1]?.weight
+                ? `${ancEncounters[ancEncounters.length - 1].weight} kg`
+                : 'Not recorded'}
             </p>
-            <span className="text-[11px] text-emerald-700 font-medium">
-              Healthy progression
+            <span className="text-[11px] text-[var(--ink-500)] font-medium">
+              {ancEncounters.length > 0 ? 'Latest checkup' : 'Log at ANC visit'}
             </span>
           </div>
 
@@ -119,10 +121,12 @@ export default function JourneyOverview({
               Blood Pressure
             </span>
             <p className="font-display font-bold text-[17px] text-[var(--ink-900)] mt-0.5">
-              {ancEncounters[ancEncounters.length - 1]?.bloodPressure || '118 / 76'}
+              {ancEncounters.length > 0 && (ancEncounters[ancEncounters.length - 1]?.bloodPressure || (ancEncounters[ancEncounters.length - 1]?.systolicBp && ancEncounters[ancEncounters.length - 1]?.diastolicBp ? `${ancEncounters[ancEncounters.length - 1].systolicBp}/${ancEncounters[ancEncounters.length - 1].diastolicBp}` : null))
+                ? (ancEncounters[ancEncounters.length - 1]?.bloodPressure || `${ancEncounters[ancEncounters.length - 1].systolicBp}/${ancEncounters[ancEncounters.length - 1].diastolicBp}`)
+                : 'Not recorded'}
             </p>
-            <span className="text-[11px] text-emerald-700 font-medium">
-              Normal range
+            <span className="text-[11px] text-[var(--ink-500)] font-medium">
+              {ancEncounters.length > 0 ? 'Normal range' : 'Log at ANC visit'}
             </span>
           </div>
 
@@ -132,7 +136,7 @@ export default function JourneyOverview({
               Next ANC Visit
             </span>
             <p className="font-display font-bold text-[17px] text-[var(--haven-deep)] mt-0.5">
-              Contact {Math.min(8, Math.ceil(gestationalWeeks / 5) + 1)}
+              Contact {Math.min(8, Math.max(1, ancEncounters.length + 1))}
             </p>
             <span className="text-[11px] text-[var(--ink-500)]">
               {pregnancy.edd ? new Date(pregnancy.edd).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : 'Upcoming'}
@@ -178,6 +182,44 @@ export default function JourneyOverview({
           </h4>
           <p className="font-body text-[12px] text-[var(--ink-600)] mt-0.5">
             Facility, driver &amp; emergency fund
+          </p>
+        </div>
+
+        {/* Maternal Health History */}
+        <div
+          onClick={onOpenHealthHistory}
+          className="bg-white p-4 rounded-[20px] border border-[var(--border-hairline)] shadow-card-1 hover:border-[var(--haven-orchid)] transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-800">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <ChevronRight className="w-4 h-4 text-[var(--ink-400)] group-hover:text-[var(--haven-deep)] transition-colors" />
+          </div>
+          <h4 className="font-display font-bold text-[14px] text-[var(--ink-900)]">
+            Health History
+          </h4>
+          <p className="font-body text-[12px] text-[var(--ink-600)] mt-0.5">
+            Blood group ({pregnancy.bloodGroup ? `${pregnancy.bloodGroup}${pregnancy.rhesusFactor || ''}` : 'Not set'}), allergies &amp; meds
+          </p>
+        </div>
+
+        {/* Delivery / Birth Outcome */}
+        <div
+          onClick={onOpenDeliveryTransition}
+          className="bg-white p-4 rounded-[20px] border border-[var(--border-hairline)] shadow-card-1 hover:border-[var(--haven-orchid)] transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-800">
+              <Baby className="w-5 h-5" />
+            </div>
+            <ChevronRight className="w-4 h-4 text-[var(--ink-400)] group-hover:text-[var(--haven-deep)] transition-colors" />
+          </div>
+          <h4 className="font-display font-bold text-[14px] text-[var(--ink-900)]">
+            {pregnancy.status === 'completed' ? 'Birth Outcome Record' : 'Log Delivery / Baby'}
+          </h4>
+          <p className="font-body text-[12px] text-[var(--ink-600)] mt-0.5">
+            {pregnancy.status === 'completed' ? 'Delivered · View details' : 'Transition to child passport'}
           </p>
         </div>
       </div>

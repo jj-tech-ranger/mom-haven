@@ -1,6 +1,7 @@
 import { getApps, initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
+import { getMessaging, type Messaging } from 'firebase-admin/messaging';
 
 function adminReady() {
   if (getApps().length) return;
@@ -16,6 +17,15 @@ adminReady();
 const FIRESTORE_DATABASE_ID = 'mom-haven';
 export const adminDb = getFirestore(undefined, FIRESTORE_DATABASE_ID);
 export const adminAuth = getAuth();
+
+export function getAdminMessaging(): Messaging | null {
+  try {
+    return getMessaging();
+  } catch (err) {
+    console.warn('[FirebaseAdmin] FCM messaging initialization note:', err instanceof Error ? err.message : String(err));
+    return null;
+  }
+}
 
 export class ApiError extends Error {
   status: number;

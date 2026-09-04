@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Pregnancy, AncEncounter, Child, Provenance, PregnancySummary } from '../types';
+import { reconcileMotherClinicalReminders } from './reminderGenerationService';
 import {
   calculateGestationFromLmp,
   calculateLmpFromEdd,
@@ -214,6 +215,21 @@ export async function createActivePregnancy(
       gestationalAgeWeeks: calc.gestationalAgeWeeks,
     }).catch(() => {});
 
+    // Automatically generate scheduled ANC reminders from Kenya MOH schedule (Prompt 2.2)
+    reconcileMotherClinicalReminders(motherId, {
+      activePregnancy: {
+        id: newDoc.id,
+        motherId,
+        status: 'active',
+        lmp,
+        edd,
+        gestationalAgeWeeks: calc.gestationalAgeWeeks,
+        createdAt: new Date().toISOString(),
+      },
+    }).catch((reconcileErr) => {
+      console.warn('[pregnancyService] Reminder auto-generation notice:', reconcileErr);
+    });
+
     return newDoc.id;
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, 'pregnancies');
@@ -345,6 +361,25 @@ export async function completePregnancyTransition(
       deliveryType: outcome.deliveryType,
       facilityName: outcome.facilityName || '',
       provenance,
+    });
+
+    // Auto-generate PNC contact reminders & newborn KEPI vaccines (Prompt 2.2)
+    reconcileMotherClinicalReminders(motherId, {
+      newOutcome: {
+        deliveryDate: outcome.deliveryDate,
+        pregnancyId,
+        childId: childDoc.id,
+      },
+      children: [{
+        id: childDoc.id,
+        motherId,
+        name: baby.name || 'Baby',
+        dateOfBirth: outcome.deliveryDate,
+        sex: baby.sex,
+        createdAt: new Date().toISOString(),
+      }],
+    }).catch((reconcileErr) => {
+      console.warn('[pregnancyService] Transition reminder auto-generation notice:', reconcileErr);
     });
 
     return childDoc.id;

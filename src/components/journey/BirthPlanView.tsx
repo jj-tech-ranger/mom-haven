@@ -43,24 +43,19 @@ export default function BirthPlanView({
   const [copySuccess, setCopySuccess] = useState(false);
 
   const plan: BirthPlan = pregnancy.birthPlan || {
-    preferredFacility: 'Pumwani Maternity Hospital',
-    backupFacility: 'Kenyatta National Hospital (KNH)',
-    transportMode: 'Designated Taxi / Private Car',
-    driverName: 'John Mwangi',
-    driverPhone: '+254 712 345 678',
-    birthCompanion: 'Grace Achieng',
-    companionRelationship: 'Sister',
-    companionPhone: '+254 722 987 654',
-    bloodDonorName: 'Peter Omondi',
+    preferredFacility: '',
+    backupFacility: '',
+    transportMode: '',
+    driverName: '',
+    driverPhone: '',
+    birthCompanion: '',
+    companionRelationship: '',
+    companionPhone: '',
+    bloodDonorName: '',
     bloodDonorGroup: 'O+',
-    bloodDonorPhone: '+254 733 456 789',
-    emergencyFundsSaved: 15000,
-    hospitalBagPacked: [
-      'Mother: Clean nightdresses, maternity pads, warm socks',
-      'Mother: ID, NHIF / Insurance card, MOH 216 Handbook',
-      'Baby: 3 warm onesies, cotton vests, receiving blankets',
-      'Baby: Newborn diapers, baby wipes, warm booties/hat'
-    ],
+    bloodDonorPhone: '',
+    emergencyFundsSaved: 0,
+    hospitalBagPacked: [],
   };
 
   // Calculate readiness meter

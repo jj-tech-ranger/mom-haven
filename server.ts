@@ -9,6 +9,7 @@ import { contextSyncRouter } from './server/routes/contextSync.js';
 import { classifyLayerOneRemote } from './server/safetyConfig.js';
 import { adminAuth, adminDb } from './server/clinicianAccess.js';
 import { buildHavenContext, formatHavenContext } from './server/services/havenContextBuilder.js';
+import { processDueReminders, startReminderPushCron } from './server/jobs/reminderPush.js';
 
 const PORT = 3000;
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mom-haven';
@@ -67,6 +68,50 @@ async function startServer() {
   app.use('/api/v1/clinician', clinicianRouter);
   app.use('/api/v1/admin', adminRouter);
   app.use('/api/v1/context', contextSyncRouter);
+
+  // Hourly / on-demand reminder push dispatch job endpoint
+  app.post('/api/v1/reminders/process-due', async (req, res) => {
+    try {
+      const internalSecret = process.env.INTERNAL_JOB_SECRET;
+      const authHeader = req.headers.authorization;
+      let authorized = false;
+      let targetUserId: string | undefined;
+
+      if (internalSecret && req.headers['x-internal-secret'] === internalSecret) {
+        authorized = true;
+      } else if (authHeader?.startsWith('Bearer ')) {
+        try {
+          const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
+          authorized = true;
+          targetUserId = decoded.uid;
+        } catch {
+          // invalid token
+        }
+      } else if (!internalSecret) {
+        authorized = true;
+      }
+
+      if (!authorized) {
+        return res.status(403).json({ error: 'Unauthorized to trigger reminder processing.' });
+      }
+
+      const leadTimeHours = req.body?.leadTimeHours ? Number(req.body.leadTimeHours) : 24;
+      const targetReminderId = req.body?.targetReminderId ? String(req.body.targetReminderId) : undefined;
+      const result = await processDueReminders({
+        leadTimeHours,
+        targetUserId: req.body?.targetUserId || targetUserId,
+        targetReminderId,
+      });
+
+      res.json({ success: true, ...result });
+    } catch (err: any) {
+      console.error('Process due reminders error', err);
+      res.status(500).json({ error: err?.message || 'Failed to process due reminders' });
+    }
+  });
+
+  // Start background cron for hourly reminder checks
+  startReminderPushCron();
 
   app.post('/api/v1/chat', async (req, res) => {
     try {

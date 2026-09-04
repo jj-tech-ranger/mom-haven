@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Home, Milestone, MessageSquare, FileText, User, LogOut, ChevronLeft, type LucideIcon } from 'lucide-react';
+import { Home, Milestone, Baby, MessageSquare, FileText, User, LogOut, ChevronLeft, type LucideIcon } from 'lucide-react';
 import EmptyState from './EmptyState';
 import PersonalizedToday from './today/PersonalizedToday';
-import HealthTrends from './health/HealthTrends';
-import WellbeingTrends from './journey/WellbeingTrends';
+import JourneyMainView from './journey/JourneyMainView';
+import ChildMainView from './child/ChildMainView';
 import MotherRecordsView from './records/MotherRecordsView';
 import HavenChatView from './haven/HavenChatView';
 import MotherProfileSettings from './profile/MotherProfileSettings';
@@ -12,12 +12,13 @@ import PartnerSharingModal from './profile/PartnerSharingModal';
 import PrintExportModal from './records/PrintExportModal';
 import EmergencySafetyHub from './emergency/EmergencySafetyHub';
 
-type MotherTab = 'today' | 'journey' | 'haven' | 'records' | 'profile';
+type MotherTab = 'today' | 'journey' | 'child' | 'haven' | 'records' | 'profile';
 interface MotherShellProps { userId?: string; userEmail?: string; userName?: string; onSignOut?: () => void; }
 
 const tabs: { id: MotherTab; label: string; icon: LucideIcon }[] = [
   { id: 'today', label: 'Today', icon: Home },
   { id: 'journey', label: 'Journey', icon: Milestone },
+  { id: 'child', label: 'Child', icon: Baby },
   { id: 'haven', label: 'Haven', icon: MessageSquare },
   { id: 'records', label: 'Records', icon: FileText },
   { id: 'profile', label: 'Profile', icon: User },
@@ -33,7 +34,7 @@ export default function MotherShell({ userId, userName, userEmail, onSignOut }: 
 
   const current = tabs.find(t => t.id === activeTab) || tabs[0];
   const Icon = current.icon;
-  const navigate = (tab: 'haven' | 'journey' | 'records' | 'profile') => setActiveTab(tab);
+  const navigate = (tab: 'today' | 'journey' | 'child' | 'haven' | 'records' | 'profile') => setActiveTab(tab);
 
   const handleOpenAskHaven = (prompt?: string) => {
     setHavenInitialPrompt(prompt);
@@ -76,12 +77,21 @@ export default function MotherShell({ userId, userName, userEmail, onSignOut }: 
       ) : activeTab === 'today' ? (
         <EmptyState icon={Icon} title="Sign in to see your journey" message="Your personalized MomHaven home appears after your account is connected." />
       ) : activeTab === 'journey' && userId ? (
-        <div className="space-y-6">
-          <WellbeingTrends userId={userId} onNavigateToday={() => setActiveTab('today')} />
-          <HealthTrends userId={userId} />
-        </div>
+        <JourneyMainView
+          userId={userId}
+          userName={userName}
+          onNavigateToday={() => setActiveTab('today')}
+          onTriggerEmergency={() => setShowEmergencyHub(true)}
+        />
       ) : activeTab === 'journey' ? (
-        <EmptyState icon={Icon} title="Sign in to see your journey" message="Your health trends and journey timeline appear after your account is connected." />
+        <EmptyState icon={Icon} title="Sign in to see your journey" message="Your health trends, ANC visits, and journey timeline appear after your account is connected." />
+      ) : activeTab === 'child' && userId ? (
+        <ChildMainView
+          userId={userId}
+          onTriggerEmergency={() => setShowEmergencyHub(true)}
+        />
+      ) : activeTab === 'child' ? (
+        <EmptyState icon={Icon} title="Sign in to see child records" message="Your child's immunization passport, growth curves, and health records appear after your account is connected." />
       ) : activeTab === 'haven' && userId ? (
         <HavenChatView
           userId={userId}

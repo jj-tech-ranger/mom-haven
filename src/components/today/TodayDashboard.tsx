@@ -28,6 +28,7 @@ import { getHealthContext, saveHealthContext } from '../../services/healthContex
 import { getActivePregnancy } from '../../services/pregnancyService';
 import { getChildren } from '../../services/childService';
 import { getUpcomingReminders, createReminder } from '../../services/reminderService';
+import { reconcileMotherClinicalReminders } from '../../services/reminderGenerationService';
 import { deriveTodayContext, TodayContext } from '../../services/todayContextService';
 import { DailyHealthLog, SymptomsValues } from '../../types/healthLog';
 import { getTodaysMoodLog, getMoodStreak, getConsecutiveNegativeMoodCount, getDailyHealthLogsByType } from '../../services/healthLogService';
@@ -246,6 +247,21 @@ export default function TodayDashboard({
   }, [todayContext.priorities, todayContext.language, flaggedDangerLog]);
 
   const shouldShowCheckInNotification = !todaysMoodLog && new Date().getHours() >= 18;
+  const dueRemindersCount = effectiveReminders.filter((r) => !r.completed).length;
+  const totalNotificationCount = dueRemindersCount + (shouldShowCheckInNotification ? 1 : 0) + (flaggedDangerLog ? 1 : 0);
+
+  // Opportunistically reconcile clinical schedule reminders on dashboard load
+  useEffect(() => {
+    if (!userId) return;
+    reconcileMotherClinicalReminders(userId, {
+      activePregnancy: effectivePregnancy,
+      children: effectiveChildren,
+    }).then(({ createdCount }) => {
+      if (createdCount > 0) {
+        getUpcomingReminders(userId).then(setInternalReminders).catch(() => {});
+      }
+    }).catch(() => {});
+  }, [userId, effectivePregnancy?.id, effectiveChildren.length]);
 
   // Modal Handlers
   const handleOpenEmergency = () => {
@@ -422,11 +438,16 @@ export default function TodayDashboard({
             type="button"
             onClick={handleOpenNotifications}
             className="w-10 h-10 rounded-full bg-white border border-[var(--border-hairline)] flex items-center justify-center text-[var(--haven-deep)] shadow-xs hover:bg-[var(--lavender-100)] transition-colors relative cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--haven-orchid)]"
-            aria-label="View notifications and reminders"
+            aria-label={`View notifications and reminders (${totalNotificationCount} unread)`}
           >
             <Bell className="w-5 h-5" />
-            {(effectiveReminders.some(r => !r.completed) || shouldShowCheckInNotification) && (
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
+            {totalNotificationCount > 0 && (
+              <span
+                data-testid="notification-badge"
+                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-display font-extrabold flex items-center justify-center ring-2 ring-white shadow-xs"
+              >
+                {totalNotificationCount > 9 ? '9+' : totalNotificationCount}
+              </span>
             )}
           </button>
 
@@ -1188,10 +1209,16 @@ export default function TodayDashboard({
       {/* Notification Center */}
       {showNotifications && (
         <NotificationCenter
+          userId={userId}
+          reminders={effectiveReminders}
           onBack={() => setShowNotifications(false)}
           onNavigateRecords={() => {
             setShowNotifications(false);
             handleNavigate('records');
+          }}
+          onNavigateTab={(tab) => {
+            setShowNotifications(false);
+            handleNavigate(tab);
           }}
           onSelectReminder={(r) => {
             setShowNotifications(false);

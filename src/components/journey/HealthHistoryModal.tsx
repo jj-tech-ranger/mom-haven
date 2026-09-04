@@ -28,9 +28,9 @@ export default function HealthHistoryModal({
   const [bloodGroup, setBloodGroup] = useState(pregnancy.bloodGroup || 'O');
   const [rhesusFactor, setRhesusFactor] = useState<'+' | '-'>(pregnancy.rhesusFactor || '+');
   const [selectedConditions, setSelectedConditions] = useState<string[]>(pregnancy.chronicConditions || ['None']);
-  const [medications, setMedications] = useState<string[]>(pregnancy.currentMedications || ['IFAS (Iron & Folic Acid) 1 tablet daily', 'Calcium supplements']);
+  const [medications, setMedications] = useState<string[]>(pregnancy.currentMedications || []);
   const [newMed, setNewMed] = useState('');
-  const [allergies, setAllergies] = useState<string[]>(pregnancy.allergies || ['No known drug allergies (NKDA)']);
+  const [allergies, setAllergies] = useState<string[]>(pregnancy.allergies || []);
   const [newAllergy, setNewAllergy] = useState('');
 
   const [loading, setLoading] = useState(false);

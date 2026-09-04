@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Heart, Baby, Plus, Check } from 'lucide-react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
 import { Child, Pregnancy } from '../../types';
+import { getChildren } from '../../services/childService';
 
 interface ContextSelectorModalProps {
   userId: string;
@@ -27,9 +26,8 @@ export default function ContextSelectorModal({
   useEffect(() => {
     async function loadChildren() {
       try {
-        const q = query(collection(db, 'children'), where('motherId', '==', userId));
-        const snap = await getDocs(q);
-        setChildren(snap.docs.map(d => ({ ...d.data(), id: d.id } as Child)));
+        const list = await getChildren(userId);
+        setChildren(list);
       } catch (err) {
         console.error('Error loading children', err);
       } finally {

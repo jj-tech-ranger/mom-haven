@@ -10,7 +10,9 @@ import {
   ChevronRight, 
   ShieldCheck, 
   AlertTriangle,
-  Plus
+  Plus,
+  ShieldAlert,
+  Activity
 } from 'lucide-react';
 import { Child, ChildVaccineRecord, GrowthMeasurement } from '../../types';
 import ProvenanceBadge from '../common/ProvenanceBadge';
@@ -24,6 +26,8 @@ interface ChildOverviewProps {
   onOpenMilestones: () => void;
   onOpenIllnessLog: () => void;
   onLogGrowthMeasurement: () => void;
+  onOpenMuacAssessment?: () => void;
+  onOpenNewbornDangerSigns?: () => void;
 }
 
 export default function ChildOverview({
@@ -35,6 +39,8 @@ export default function ChildOverview({
   onOpenMilestones,
   onOpenIllnessLog,
   onLogGrowthMeasurement,
+  onOpenMuacAssessment,
+  onOpenNewbornDangerSigns,
 }: ChildOverviewProps) {
   // Calculate age string
   const dob = child.dateOfBirth ? new Date(child.dateOfBirth) : new Date();
@@ -85,13 +91,13 @@ export default function ChildOverview({
           <div className="bg-white/80 p-2.5 rounded-[14px] text-center border border-[var(--border-hairline)]">
             <span className="text-[10px] font-bold text-[var(--ink-500)] uppercase block">Weight</span>
             <span className="font-display font-extrabold text-[15px] text-[var(--ink-900)]">
-              {latestGrowth?.weightKg || child.birthWeightKg || '6.8'} kg
+              {latestGrowth?.weightKg ? `${latestGrowth.weightKg} kg` : child.birthWeightKg ? `${child.birthWeightKg} kg` : '—'}
             </span>
           </div>
           <div className="bg-white/80 p-2.5 rounded-[14px] text-center border border-[var(--border-hairline)]">
             <span className="text-[10px] font-bold text-[var(--ink-500)] uppercase block">Height</span>
             <span className="font-display font-extrabold text-[15px] text-[var(--ink-900)]">
-              {latestGrowth?.heightCm || child.birthLengthCm || '64'} cm
+              {latestGrowth?.heightCm ? `${latestGrowth.heightCm} cm` : child.birthLengthCm ? `${child.birthLengthCm} cm` : '—'}
             </span>
           </div>
           <div className="bg-white/80 p-2.5 rounded-[14px] text-center border border-[var(--border-hairline)]">
@@ -102,6 +108,29 @@ export default function ChildOverview({
           </div>
         </div>
       </div>
+
+      {/* Newborn Danger Signs Warning Banner (For young infants) */}
+      {diffDays <= 45 && onOpenNewbornDangerSigns && (
+        <div 
+          onClick={onOpenNewbornDangerSigns}
+          className="bg-[#FCE7EA] border border-[#C4283C]/30 p-4 rounded-[20px] flex items-center justify-between cursor-pointer hover:bg-[#F9D6DC] transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-[#C4283C] text-white flex items-center justify-center shrink-0">
+              <ShieldAlert className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="font-display font-bold text-[14px] text-[#C4283C]">
+                Newborn Danger Signs Checklist
+              </h4>
+              <p className="font-body text-[11px] text-[var(--ink-800)]">
+                Key warning signs for the first 28 days of life
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-[#C4283C]" />
+        </div>
+      )}
 
       {/* ================= 4 CORE ACTION CARDS ================= */}
       <div className="grid grid-cols-2 gap-3">
@@ -139,7 +168,7 @@ export default function ChildOverview({
             Growth Curves (WHO)
           </h3>
           <p className="font-body text-[12px] text-[var(--ink-600)] mt-0.5">
-            Z-score curves &amp; MUAC
+            Z-score curves &amp; history
           </p>
         </div>
 
@@ -180,6 +209,49 @@ export default function ChildOverview({
             Fever, diarrhea &amp; red flags
           </p>
         </div>
+      </div>
+
+      {/* MUAC & Danger Signs Quick Row */}
+      <div className="grid grid-cols-2 gap-3">
+        {onOpenMuacAssessment && (
+          <button
+            type="button"
+            onClick={onOpenMuacAssessment}
+            className="p-3 bg-white rounded-[18px] border border-[var(--border-hairline)] shadow-xs flex items-center gap-2.5 text-left hover:border-[var(--haven-orchid)] transition-colors cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+              <Activity className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-display font-bold text-[12px] text-[var(--ink-900)] block">
+                MUAC Assessment
+              </span>
+              <span className="font-body text-[10px] text-[var(--ink-500)] block">
+                Color band screening
+              </span>
+            </div>
+          </button>
+        )}
+
+        {onOpenNewbornDangerSigns && diffDays > 45 && (
+          <button
+            type="button"
+            onClick={onOpenNewbornDangerSigns}
+            className="p-3 bg-white rounded-[18px] border border-[var(--border-hairline)] shadow-xs flex items-center gap-2.5 text-left hover:border-red-300 transition-colors cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-lg bg-red-50 text-red-700 flex items-center justify-center shrink-0">
+              <ShieldAlert className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-display font-bold text-[12px] text-[var(--ink-900)] block">
+                Danger Signs
+              </span>
+              <span className="font-body text-[10px] text-[var(--ink-500)] block">
+                Emergency review
+              </span>
+            </div>
+          </button>
+        )}
       </div>
 
       {/* ================= IMMUNIZATION STATUS BANNER ================= */}

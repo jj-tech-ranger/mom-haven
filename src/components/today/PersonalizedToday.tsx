@@ -5,7 +5,7 @@ import TodayDashboard from './TodayDashboard';
 interface PersonalizedTodayProps {
   userId: string;
   userName?: string;
-  onNavigate: (tab: 'haven' | 'journey' | 'records' | 'profile') => void;
+  onNavigate: (tab: 'today' | 'journey' | 'child' | 'haven' | 'records' | 'profile') => void;
   onOpenAskHaven?: (prompt?: string) => void;
 }
 

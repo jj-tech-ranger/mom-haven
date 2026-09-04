@@ -38,6 +38,11 @@ import {
   DEFAULT_SHARING_SCOPES 
 } from '../../services/sharingService';
 import { getHealthContext } from '../../services/healthContextService';
+import { 
+  requestNotificationPermissionAndToken, 
+  showLocalSystemNotification, 
+  triggerProcessDueReminders 
+} from '../../services/notificationDeliveryService';
 import { LanguageToggle } from '../LanguageToggle';
 import Button from '../Button';
 
@@ -81,6 +86,19 @@ export default function MotherProfileSettings({
   const [reminderTime, setReminderTime] = useState('09:00');
   const [savingReminder, setSavingReminder] = useState(false);
   const [reminderSavedNotice, setReminderSavedNotice] = useState(false);
+
+  // Push & Delivery Notification Settings (Prompt 2.1)
+  const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
+  const [pushLoading, setPushLoading] = useState(false);
+  const [pushStatusMessage, setPushStatusMessage] = useState<string | null>(null);
+  const [testingNotification, setTestingNotification] = useState(false);
+  const [checkingDueReminders, setCheckingDueReminders] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setPushPermission(Notification.permission);
+    }
+  }, []);
 
   const loadPartners = useCallback(async (uid: string) => {
     try {
@@ -202,11 +220,16 @@ export default function MotherProfileSettings({
     }
   };
 
-  // Persist check-in reminders (P6.1)
+  // Persist check-in reminders (P6.1) & register push notifications (Prompt 2.1)
   const handleSaveReminders = async (enabled: boolean, time: string) => {
     setRemindersEnabled(enabled);
     setReminderTime(time);
     if (!userId) return;
+
+    // If mother is enabling reminders and hasn't granted notifications yet, prompt for device permission
+    if (enabled && typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted') {
+      handleEnablePushNotifications();
+    }
 
     try {
       setSavingReminder(true);
@@ -223,6 +246,64 @@ export default function MotherProfileSettings({
       console.warn('Could not save checkInReminders preference', err);
     } finally {
       setSavingReminder(false);
+    }
+  };
+
+  const handleEnablePushNotifications = async () => {
+    if (!userId) return;
+    setPushLoading(true);
+    setPushStatusMessage(null);
+    try {
+      const res = await requestNotificationPermissionAndToken(userId);
+      const currentPerm = typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default';
+      setPushPermission(currentPerm);
+      if (res.granted) {
+        if (res.token) {
+          setPushStatusMessage('Device push notifications enabled and FCM token registered!');
+        } else {
+          setPushStatusMessage('System notifications enabled locally! (To activate FCM cloud pushes in production, provide VAPID key in settings).');
+        }
+      } else if (currentPerm === 'denied') {
+        setPushStatusMessage('Notifications are blocked by your browser settings. Please allow notifications in site settings.');
+      } else if (res.error) {
+        setPushStatusMessage(res.error);
+      }
+    } catch (err: any) {
+      setPushStatusMessage(err?.message || 'Could not register push notifications.');
+    } finally {
+      setPushLoading(false);
+    }
+  };
+
+  const handleSendTestNotification = async () => {
+    setTestingNotification(true);
+    try {
+      await showLocalSystemNotification({
+        title: 'MomHaven Clinical Reminder',
+        body: 'Upcoming ANC / KEPI vaccine window reminder from your personalized schedule.',
+        deepLink: 'today',
+      });
+      setPushStatusMessage('Test notification dispatched to your device!');
+    } catch (err: any) {
+      setPushStatusMessage(err?.message || 'Could not display test notification.');
+    } finally {
+      setTestingNotification(false);
+    }
+  };
+
+  const handleTriggerProcessDue = async () => {
+    setCheckingDueReminders(true);
+    try {
+      const result = await triggerProcessDueReminders();
+      if (result.success) {
+        setPushStatusMessage(`Due reminders checked! ${result.notifiedCount || 0} push notifications dispatched.`);
+      } else {
+        setPushStatusMessage(`Server check completed: ${result.error || 'No pending due reminders'}`);
+      }
+    } catch (err: any) {
+      setPushStatusMessage(err?.message || 'Failed to trigger due reminder check.');
+    } finally {
+      setCheckingDueReminders(false);
     }
   };
 
@@ -627,6 +708,71 @@ export default function MotherProfileSettings({
             </div>
           </div>
         )}
+
+        {/* Push Notifications & Delivery Section (Prompt 2.1) */}
+        <div className="pt-3 border-t border-[var(--border-hairline)] space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-display font-bold text-[var(--ink-800)]">
+                Device Notifications:
+              </span>
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                pushPermission === 'granted'
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : pushPermission === 'denied'
+                  ? 'bg-rose-100 text-rose-800'
+                  : 'bg-amber-100 text-amber-800'
+              }`}>
+                {pushPermission === 'granted' ? 'Enabled' : pushPermission === 'denied' ? 'Blocked' : 'Not Requested'}
+              </span>
+            </div>
+
+            {pushPermission !== 'granted' && (
+              <button
+                type="button"
+                onClick={handleEnablePushNotifications}
+                disabled={pushLoading}
+                className="px-3 py-1 bg-[var(--haven-deep)] hover:bg-[var(--haven-deep)]/90 text-white rounded-lg text-xs font-display font-bold cursor-pointer transition-colors flex items-center gap-1"
+              >
+                {pushLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+                <span>Enable Push Notifications</span>
+              </button>
+            )}
+          </div>
+
+          <p className="text-[11px] text-[var(--ink-600)]">
+            Receive automated alerts for Kenya MOH scheduled ANC visits, KEPI vaccines, and danger sign reviews directly on your device.
+          </p>
+
+          {/* Action buttons: Test notification & check due */}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <button
+              type="button"
+              onClick={handleSendTestNotification}
+              disabled={testingNotification}
+              className="px-2.5 py-1 bg-[var(--lavender-100)] hover:bg-[var(--lavender-200)] text-[var(--haven-deep)] rounded-lg text-[11px] font-display font-bold cursor-pointer transition-colors flex items-center gap-1"
+            >
+              {testingNotification ? <Loader2 className="w-3 h-3 animate-spin" /> : <Bell className="w-3 h-3" />}
+              <span>Send Test Notification</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleTriggerProcessDue}
+              disabled={checkingDueReminders}
+              className="px-2.5 py-1 bg-[var(--lavender-50)] hover:bg-[var(--lavender-100)] text-[var(--ink-800)] border border-[var(--border-hairline)] rounded-lg text-[11px] font-display font-bold cursor-pointer transition-colors flex items-center gap-1"
+            >
+              {checkingDueReminders ? <Loader2 className="w-3 h-3 animate-spin" /> : <Clock className="w-3 h-3" />}
+              <span>Check Due Reminders Now</span>
+            </button>
+          </div>
+
+          {pushStatusMessage && (
+            <div className="p-2 rounded-lg bg-[var(--lavender-50)] border border-[var(--border-hairline)] text-[11px] text-[var(--haven-deep)] font-medium">
+              {pushStatusMessage}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Security & Access Section */}

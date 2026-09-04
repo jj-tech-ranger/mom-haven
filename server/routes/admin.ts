@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { adminAuth, adminDb, ApiError, logAudit, serialize } from '../clinicianAccess.js';
 import { invalidateSafetyCache } from '../safetyConfig.js';
+import * as otplib from 'otplib';
 
 export const adminRouter=Router();
 async function requireAdmin(req:Request){const h=String(req.headers.authorization||'');if(!h.startsWith('Bearer '))throw new ApiError(401,'Sign-in required.');let token;try{token=await adminAuth.verifyIdToken(h.slice(7));}catch{throw new ApiError(401,'Sign-in required.');}const user=await adminDb.doc(`users/${token.uid}`).get();if(!user.exists||user.data()?.role!=='ADMIN')throw new ApiError(403,'Admin access required.');return token;}
@@ -53,3 +54,76 @@ adminRouter.post('/emergency-defaults',async(req,res)=>{try{const token=await re
 adminRouter.patch('/emergency-defaults/:id',async(req,res)=>{try{const token=await requireAdmin(req);const patch:any={updatedAt:FieldValue.serverTimestamp()};for(const k of ['county','facilityName','phone'])if(req.body?.[k]!==undefined)patch[k]=String(req.body[k]).trim();if(req.body?.verified!==undefined){patch.verified=Boolean(req.body.verified);patch.verifiedBy=patch.verified?token.uid:null;patch.verifiedAt=patch.verified?FieldValue.serverTimestamp():null;}await adminDb.doc(`emergencyDefaults/${req.params.id}`).update(patch);await logAudit(token.uid,'ADMIN','EMERGENCY_DEFAULT_UPDATED','emergencyDefaults',req.params.id);res.json({success:true});}catch(e){sendError(res,e);}});
 
 adminRouter.get('/audit',async(req,res)=>{try{await requireAdmin(req);const items=(await list('auditEvents',500)).filter((x:any)=>{const t=String(x.objectType||'').toLowerCase();return!['pregnan','child','patient','haven','clinicalrecord','privatenote'].some(v=>t.includes(v));});res.json({items});}catch(e){sendError(res,e);}});
+
+adminRouter.get('/mfa/setup', async (req, res) => {
+  try {
+    const token = await requireAdmin(req);
+    const docRef = adminDb.doc(`adminMfaSecrets/${token.uid}`);
+    const snap = await docRef.get();
+    let secret = snap.exists ? snap.data()?.secret : null;
+    if (!secret) {
+      secret = otplib.generateSecret();
+      await docRef.set({
+        uid: token.uid,
+        email: token.email || null,
+        secret,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+    const adminEmail = token.email || 'admin@health.go.ke';
+    const uri = `otpauth://totp/MomHaven%20MOH%20Admin:${encodeURIComponent(adminEmail)}?secret=${secret}&issuer=MomHaven%20MOH`;
+    res.json({
+      success: true,
+      enrolled: true,
+      secret,
+      uri,
+      adminEmail,
+    });
+  } catch (e) {
+    sendError(res, e);
+  }
+});
+
+adminRouter.post('/mfa/verify', async (req, res) => {
+  try {
+    const token = await requireAdmin(req);
+    const code = String(req.body?.code || '').trim();
+    if (!code || !/^\d{6}$/.test(code)) {
+      throw new ApiError(400, 'Security code must be a 6-digit numeric token.');
+    }
+    const docRef = adminDb.doc(`adminMfaSecrets/${token.uid}`);
+    const snap = await docRef.get();
+    let secret = snap.exists ? snap.data()?.secret : null;
+    if (!secret) {
+      secret = otplib.generateSecret();
+      await docRef.set({
+        uid: token.uid,
+        email: token.email || null,
+        secret,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+
+    const verification = otplib.verifySync({ token: code, secret });
+    if (!verification || !verification.valid) {
+      throw new ApiError(401, 'Invalid security token. Please check the code on your authenticator app.');
+    }
+
+    await docRef.set({
+      lastVerifiedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    await logAudit(token.uid, 'ADMIN', 'ADMIN_MFA_VERIFIED', 'adminMfaSecrets', token.uid);
+
+    res.json({
+      success: true,
+      verified: true,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (e) {
+    sendError(res, e);
+  }
+});
