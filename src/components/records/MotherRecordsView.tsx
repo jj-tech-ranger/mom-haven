@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileText,
   KeyRound,
@@ -9,13 +9,16 @@ import {
   Clock,
   Sparkles,
   Send,
+  AlertTriangle,
 } from 'lucide-react';
 import HealthSummary from './HealthSummary';
 import RecordsVault from './RecordsVault';
 import SharingCodeModal from './SharingCodeModal';
-import type { MomHavenHealthSummary } from '../../types/healthSummary';
+import type { MomHavenHealthSummary, ClinicianHealthLogEntry } from '../../types/healthSummary';
 import { auth, db } from '../../lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getHealthLogs } from '../../services/healthLogService';
+import { DailyHealthLog } from '../../types/healthLog';
 import Button from '../Button';
 
 interface MotherRecordsViewProps {
@@ -46,6 +49,49 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
         } catch {
           // ignore
         }
+
+        // Fetch real health logs to include recent self-monitoring entries
+        const realLogs: DailyHealthLog[] = await getHealthLogs(userId, { limit: 10 }).catch(() => []);
+        const formattedLogs: ClinicianHealthLogEntry[] = realLogs.length > 0
+          ? realLogs
+              .filter((l) => ['blood_pressure', 'weight', 'baby_movement', 'symptoms'].includes(l.type))
+              .map((l) => {
+                const vals = (l.values || {}) as Record<string, any>;
+                return {
+                  id: l.id,
+                  type: l.type as 'blood_pressure' | 'weight' | 'baby_movement' | 'symptoms',
+                  timestamp: l.timestamp,
+                  values: vals,
+                  hasDangerSigns: !!vals.hasDangerSigns,
+                  dangerSignsList: vals.dangerSigns,
+                  notes: l.notes,
+                  source: 'USER_REPORTED' as const,
+                  provenance: {
+                    status: 'REPORTED' as const,
+                    enteredBy: 'Mama',
+                  },
+                };
+              })
+          : [
+              {
+                id: 'log-1',
+                type: 'blood_pressure',
+                timestamp: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
+                values: { systolic: 116, diastolic: 74, pulse: 78 },
+                hasDangerSigns: false,
+                source: 'USER_REPORTED',
+                provenance: { status: 'REPORTED' as const },
+              },
+              {
+                id: 'log-2',
+                type: 'baby_movement',
+                timestamp: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString(),
+                values: { movementCount: 14, durationMinutes: 60 },
+                hasDangerSigns: false,
+                source: 'USER_REPORTED',
+                provenance: { status: 'REPORTED' as const },
+              },
+            ];
 
         const preferredName = contextData?.preferredName || userName || 'Mama';
         const questions = Array.isArray(contextData?.questionsForClinician)
@@ -162,26 +208,7 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
             },
           },
           children: [],
-          recentHealthLogs: [
-            {
-              id: 'log-1',
-              type: 'blood_pressure',
-              timestamp: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
-              values: { systolic: 116, diastolic: 74, pulse: 78 },
-              hasDangerSigns: false,
-              source: 'USER_REPORTED',
-              provenance: { status: 'REPORTED' },
-            },
-            {
-              id: 'log-2',
-              type: 'baby_movement',
-              timestamp: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString(),
-              values: { movementCount: 14, durationMinutes: 60 },
-              hasDangerSigns: false,
-              source: 'USER_REPORTED',
-              provenance: { status: 'REPORTED' },
-            },
-          ],
+          recentHealthLogs: formattedLogs,
           appointments: [
             {
               id: 'apt-next',
@@ -215,6 +242,48 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
     void loadMotherSummary();
   }, [userId, userName]);
 
+  const freshnessLabel = useMemo(() => {
+    if (!summary) return 'Up to date';
+
+    const timestamps: number[] = [];
+
+    if (summary.verifiedHighlights?.lastClinicalVerificationDate) {
+      const t = new Date(summary.verifiedHighlights.lastClinicalVerificationDate).getTime();
+      if (!isNaN(t)) timestamps.push(t);
+    }
+    if (summary.pregnancy?.ancSummary?.latestEncounterDate) {
+      const t = new Date(summary.pregnancy.ancSummary.latestEncounterDate).getTime();
+      if (!isNaN(t)) timestamps.push(t);
+    }
+    if (summary.recentHealthLogs && summary.recentHealthLogs.length > 0) {
+      summary.recentHealthLogs.forEach((l) => {
+        const t = new Date(l.timestamp).getTime();
+        if (!isNaN(t)) timestamps.push(t);
+      });
+    }
+
+    if (timestamps.length === 0) return 'Up to date';
+
+    const latestMs = Math.max(...timestamps);
+    const latestDate = new Date(latestMs);
+    const now = new Date();
+
+    if (now.toDateString() === latestDate.toDateString()) {
+      return 'Up to date · Last updated today';
+    }
+    const yesterday = new Date(now.getTime() - 24 * 3600 * 1000);
+    if (yesterday.toDateString() === latestDate.toDateString()) {
+      return 'Up to date · Last updated yesterday';
+    }
+    const formatted = latestDate.toLocaleDateString([], { day: 'numeric', month: 'short' });
+    return `Up to date · Last updated ${formatted}`;
+  }, [summary]);
+
+  const dangerLogsCount = useMemo(() => {
+    if (!summary?.recentHealthLogs) return 0;
+    return summary.recentHealthLogs.filter((l) => l.hasDangerSigns).length;
+  }, [summary]);
+
   const handleAddQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newQuestion.trim() || !summary) return;
@@ -243,41 +312,74 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
   return (
     <div className="space-y-4">
       {/* Top Action & Sub-Navigation Bar */}
-      <div className="bg-white p-2 rounded-[20px] border border-[var(--border-hairline)] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 p-1 bg-[var(--lavender-50)] rounded-xl">
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('summary')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-display font-bold transition-all cursor-pointer ${
-              activeSubTab === 'summary'
-                ? 'bg-white text-[var(--haven-deep)] shadow-xs'
-                : 'text-[var(--ink-500)] hover:text-[var(--ink-900)]'
-            }`}
-          >
-            Health Summary
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('vault')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-display font-bold transition-all cursor-pointer ${
-              activeSubTab === 'vault'
-                ? 'bg-white text-[var(--haven-deep)] shadow-xs'
-                : 'text-[var(--ink-500)] hover:text-[var(--ink-900)]'
-            }`}
-          >
-            Documents Vault
-          </button>
+      <div className="bg-white p-2.5 rounded-[20px] border border-[var(--border-hairline)] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 p-1 bg-[var(--lavender-50)] rounded-xl">
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('summary')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-display font-bold transition-all cursor-pointer ${
+                activeSubTab === 'summary'
+                  ? 'bg-white text-[var(--haven-deep)] shadow-xs'
+                  : 'text-[var(--ink-500)] hover:text-[var(--ink-900)]'
+              }`}
+            >
+              Health Summary
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('vault')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-display font-bold transition-all cursor-pointer ${
+                activeSubTab === 'vault'
+                  ? 'bg-white text-[var(--haven-deep)] shadow-xs'
+                  : 'text-[var(--ink-500)] hover:text-[var(--ink-900)]'
+              }`}
+            >
+              Documents Vault
+            </button>
+          </div>
+
+          {/* Freshness Status Chip */}
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <span className="font-mono sm:font-sans">{freshnessLabel}</span>
+          </div>
         </div>
 
         <button
           type="button"
           onClick={() => setShowShareModal(true)}
-          className="flex items-center justify-center gap-2 py-2 px-3.5 rounded-xl bg-[var(--haven-deep)] text-white text-xs font-display font-bold cursor-pointer shadow-xs hover:bg-[var(--haven-orchid)] transition-all"
+          className="flex items-center justify-center gap-2 py-2 px-3.5 rounded-xl bg-[var(--haven-deep)] text-white text-xs font-display font-bold cursor-pointer shadow-xs hover:bg-[var(--haven-orchid)] transition-all shrink-0"
         >
           <KeyRound className="w-3.5 h-3.5" />
           <span>Bedside Fast Share PIN</span>
         </button>
       </div>
+
+      {/* Flagged Danger Signs Clinical Alert Banner */}
+      {dangerLogsCount > 0 && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between gap-3 text-xs text-red-900 shadow-2xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+            <span className="truncate sm:whitespace-normal">
+              <strong>Clinical Alert:</strong> {dangerLogsCount} self-reported symptom log{dangerLogsCount > 1 ? 's' : ''} flagged with MOH danger signs.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveSubTab('summary');
+              setTimeout(() => {
+                document.getElementById('recent-health-logs')?.scrollIntoView({ behavior: 'smooth' });
+              }, 50);
+            }}
+            className="px-2.5 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-800 font-semibold text-[11px] shrink-0 transition-colors cursor-pointer"
+          >
+            Review Log
+          </button>
+        </div>
+      )}
 
       {/* Main Content Area */}
       {activeSubTab === 'summary' && summary && (

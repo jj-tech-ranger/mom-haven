@@ -327,7 +327,30 @@ export interface Reminder {
   dueDate: string;
   category: 'anc' | 'pnc' | 'immunization' | 'custom';
   completed: boolean;
+  sharedWithPartner?: boolean;
   createdAt: string;
+}
+
+export interface PregnancySummary {
+  motherId: string;
+  motherName?: string;
+  hasActivePregnancy: boolean;
+  pregnancyId?: string;
+  lmp?: string;
+  edd?: string;
+  eddFormatted?: string;
+  gestationalAgeWeeks: number;
+  gestationalWeeks: number;
+  trimester: 1 | 2 | 3;
+  daysRemaining: number;
+  weeksRemaining: number;
+  status: 'active' | 'completed' | 'none';
+  babyMilestone?: {
+    size: string;
+    emoji: string;
+    fact: string;
+  };
+  updatedAt: string;
 }
 
 export interface EmergencyContact {

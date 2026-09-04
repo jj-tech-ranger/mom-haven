@@ -25,6 +25,7 @@ export const en = {
     haven: 'Haven',
     lifecycle: 'How it works',
     about: 'About',
+    partners: 'For Partners',
     signIn: 'Sign in',
     explore: 'Explore MomHaven',
     themeToggleAria: 'Toggle color theme',
@@ -33,10 +34,11 @@ export const en = {
 
   hero: {
     badge: 'Every Mother, Every Child, Every Milestone.',
-    title: 'Everything you need for the journey of mother and child.',
+    title: 'Calm guidance, trusted answers, and organized care for mother and baby.',
     subtitle: 'Every Mother, Every Child, Every Milestone.',
-    description: 'Learn what to expect. Keep your health journey organized. Ask Haven when questions come up. Stay connected to the people involved in your care.',
+    description: 'From your first antenatal check-up to your baby’s milestones, MomHaven keeps your care organized, your questions answered, and your family supported.',
     primaryCta: 'Explore MomHaven',
+    guestPreviewCta: 'Preview as Guest',
     secondaryCta: 'Sign in',
     createAccountPrompt: "Don't have an account?",
     createAccountLink: 'Create an account',

@@ -1,6 +1,7 @@
-import React from 'react';
-import { X, Calendar, FileText, CheckCircle2, ShieldAlert, Sparkles, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Calendar, FileText, CheckCircle2, ShieldAlert, Sparkles, ArrowRight, HeartHandshake } from 'lucide-react';
 import Button from '../Button';
+import { updateReminder } from '../../services/reminderService';
 
 interface ReminderDetailModalProps {
   reminder: any;
@@ -13,7 +14,28 @@ export default function ReminderDetailModal({
   onClose,
   onLogVisit,
 }: ReminderDetailModalProps) {
+  const [sharedWithPartner, setSharedWithPartner] = useState<boolean>(
+    reminder?.sharedWithPartner ?? false
+  );
+  const [savingShare, setSavingShare] = useState(false);
+
   if (!reminder) return null;
+
+  const handleToggleShare = async () => {
+    if (!reminder?.id) return;
+    const nextVal = !sharedWithPartner;
+    setSharedWithPartner(nextVal);
+    setSavingShare(true);
+    try {
+      await updateReminder(reminder.id, { sharedWithPartner: nextVal });
+      reminder.sharedWithPartner = nextVal;
+    } catch (err) {
+      console.error('Failed to update shared reminder setting', err);
+      setSharedWithPartner(!nextVal);
+    } finally {
+      setSavingShare(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -75,6 +97,41 @@ export default function ReminderDetailModal({
                 <span>Daily IFAS / Calcium supplements for refills</span>
               </li>
             </ul>
+          </div>
+
+          {/* Share with Partner Toggle */}
+          <div className="bg-[var(--lavender-50)] p-3.5 rounded-[18px] border border-[var(--border-hairline)] flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-purple-100 text-[var(--haven-deep)] flex items-center justify-center shrink-0">
+                <HeartHandshake className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="font-display font-bold text-[13px] text-[var(--ink-900)]">
+                  Share with partner
+                </h4>
+                <p className="text-[11px] text-[var(--ink-600)]">
+                  {sharedWithPartner 
+                    ? 'Visible on partner’s shared appointments feed' 
+                    : 'Kept private to your personal profile only'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={sharedWithPartner}
+              disabled={savingShare}
+              onClick={handleToggleShare}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                sharedWithPartner ? 'bg-[var(--haven-deep)]' : 'bg-gray-200'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
+                  sharedWithPartner ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
           </div>
         </div>
 

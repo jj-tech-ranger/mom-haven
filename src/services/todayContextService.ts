@@ -19,22 +19,27 @@
 
 import { Pregnancy, Reminder, Child } from '../types';
 import { HealthContext, LifecycleStage } from '../types/healthContext';
-import { calculateGestationFromLmp } from '../utils/clinicalCalculations';
+import { DailyHealthLog, MoodType, MoodValues } from '../types/healthLog';
+import {
+  calculateGestationFromLmp,
+  computeGestationalHeroMetrics,
+  getBabySizeForWeek,
+  BABY_SIZE_MILESTONES,
+  type BabyMilestone,
+  type BabySizeMilestone,
+} from '../utils/clinicalCalculations';
 import { calculateChildAge } from './childService';
 import { PersonalizedPlanResult } from '../types/advancedPersonalization';
 import { derivePersonalizedPlan } from './advancedPersonalizationService';
+
+export type { BabySizeMilestone, BabyMilestone };
+export { getBabySizeForWeek, BABY_SIZE_MILESTONES };
 
 export interface TodayGreeting {
   salutation: string;
   name: string;
   fullGreeting: string;
   dateFormatted: string;
-}
-
-export interface BabySizeMilestone {
-  size: string;
-  emoji: string;
-  fact: string;
 }
 
 export interface TodayHeroGestation {
@@ -59,6 +64,10 @@ export interface TodayHeroPostpartum {
   headline: string;
   subheadline: string;
   provenanceNote: string;
+  progressRatio?: number;
+  progressPercent?: number;
+  progressStartLabel?: string;
+  progressEndLabel?: string;
 }
 
 export interface TodayHeroParenting {
@@ -69,6 +78,10 @@ export interface TodayHeroParenting {
   headline: string;
   subheadline: string;
   hasChildRecord: boolean;
+  progressRatio?: number;
+  progressPercent?: number;
+  progressStartLabel?: string;
+  progressEndLabel?: string;
 }
 
 export interface TodayHeroPlanning {
@@ -126,6 +139,12 @@ export interface TodayQuickAction {
   specialAction?: 'emergency' | 'askHaven' | 'addVisit';
 }
 
+export interface TodayCheckInStatus {
+  completed: boolean;
+  mood?: MoodType;
+  microInsight?: string;
+}
+
 export interface TodayContext {
   greeting: TodayGreeting;
   lifecycleStage: LifecycleStage;
@@ -139,6 +158,7 @@ export interface TodayContext {
   hasAuthoritativeClinicalData: boolean;
   provenanceSummary: string;
   advancedPersonalization?: PersonalizedPlanResult;
+  checkInStatus?: TodayCheckInStatus;
 }
 
 export interface DeriveTodayContextParams {
@@ -148,32 +168,114 @@ export interface DeriveTodayContextParams {
   reminders?: Reminder[];
   userName?: string;
   now?: Date;
+  todaysMoodLog?: DailyHealthLog | null;
 }
 
-// Deterministic baby milestones per Kenya & WHO obstetrics guidelines
-export const BABY_SIZE_MILESTONES: Record<number, BabySizeMilestone> = {
-  4: { size: 'a poppy seed', emoji: '🌱', fact: 'Blastocyst is implanting gently in the uterine lining.' },
-  8: { size: 'a raspberry', emoji: '🫐', fact: 'Tiny fingers, toes and cardiac chambers are developing.' },
-  12: { size: 'a plum', emoji: '🍑', fact: 'All vital organs are formed; reflexes are starting.' },
-  16: { size: 'an avocado', emoji: '🥑', fact: 'Baby can move facial muscles and make gentle swimming movements.' },
-  20: { size: 'a banana', emoji: '🍌', fact: 'Halfway milestone! You may begin to notice fluttery kicks (quickening).' },
-  24: { size: 'an ear of corn', emoji: '🌽', fact: 'Baby can hear your voice, heartbeats and familiar ambient sounds.' },
-  28: { size: 'an eggplant', emoji: '🍆', fact: 'Entering 3rd trimester! Baby practices breathing movements.' },
-  32: { size: 'a butternut squash', emoji: '🥥', fact: 'Bones are fully developed, and baby is storing maternal calcium.' },
-  36: { size: 'a papaya', emoji: '🍈', fact: 'Lungs and central nervous system are maturing rapidly for birth.' },
-  40: { size: 'a small pumpkin', emoji: '🎃', fact: 'Full term! Baby is ready to be welcomed into the world.' },
+export const MICRO_INSIGHT_LOOKUP: Record<string, Record<MoodType, string[]>> = {
+  pregnancy: {
+    calm: [
+      'Resting in calm moments supports both your body and your baby’s steady growth.',
+      'Peaceful pauses help ease tension and promote healthy circulation.',
+      'Notice this stillness—it gives you grounding as your body does incredible work.',
+    ],
+    happy: [
+      'Enjoy this uplifted energy; your joy radiates to your baby today.',
+      'Celebrate feeling good today—take a gentle walk or savor a nourishing meal.',
+      'Holding onto positive moments builds inner strength for the journey ahead.',
+    ],
+    tired: [
+      'Your body is building new life every second—honor your fatigue with guilt-free rest.',
+      'Growing a baby takes tremendous metabolic energy; prioritize hydration and naps.',
+      'Put your feet up whenever you can; resting is active maternal care.',
+    ],
+    anxious: [
+      'It is completely normal to feel uncertain at times; take a slow, grounding breath.',
+      'One day at a time—reach out to Haven or note your questions for your next clinic visit.',
+      'You are not alone in wondering about changes; gentle reassurance is always here.',
+    ],
+    sad: [
+      'Maternal emotions ebb and flow with hormone shifts; treat yourself with utmost kindness today.',
+      'Give yourself permission to feel what you feel without self-judgment.',
+      'A warm drink, a quiet pause, or sharing with someone you trust can lighten the weight.',
+    ],
+    overwhelmed: [
+      'When everything feels like too much, focus only on the next gentle hour.',
+      'You don’t have to do it all at once; let non-essential chores wait today.',
+      'Pause and exhale slowly. Your only true priority today is being gentle with yourself.',
+    ],
+  },
+  postpartum: {
+    calm: [
+      'Enjoying calm in postpartum is deeply restorative; healing thrives in peaceful moments.',
+      'A quiet pocket in your day helps restore physical and emotional energy.',
+      'Soak in this tranquil moment with yourself and your baby.',
+    ],
+    happy: [
+      'Cherish these bright smiles and bonding moments with your little one.',
+      'Celebrating good days in recovery helps you recognize your growing strength.',
+      'Joy in the fourth trimester is precious—let it fill your home today.',
+    ],
+    tired: [
+      'Postpartum recovery combined with night feeds is exhausting; rest whenever possible.',
+      'Physical healing takes weeks; give yourself full permission to sleep or lie down.',
+      'Ask your support circle for a hand with meals or holding baby so you can rest.',
+    ],
+    anxious: [
+      'New motherhood brings sudden worries. Trust your instincts and take one feeding at a time.',
+      'Questions are natural as you get to know your baby; Haven and clinic nurses are here for you.',
+      'Take three slow breaths; you are the safe haven your baby needs.',
+    ],
+    sad: [
+      'Postpartum hormone transitions are profound. Be patient with your tender heart.',
+      'The baby blues are very common; sharing how you feel with loved ones is healing.',
+      'If low feelings persist, know that reaching out for support is an act of love.',
+    ],
+    overwhelmed: [
+      'Caring for a newborn is a full-time endeavor. Lean on partners or family for help.',
+      'Simplify everything around you today; feeds and rest are all that matter.',
+      'Step back, take a breath of fresh air, and remember you are learning together.',
+    ],
+  },
+  parenting: {
+    calm: [
+      'A calm caregiver provides a safe, steady harbor for your growing child.',
+      'Peaceful routines foster emotional security and healthy development.',
+      'Enjoy the steady rhythm of your family life today.',
+    ],
+    happy: [
+      'Shared laughter and discovery make childhood memories that last.',
+      'Your warmth and smile are the most encouraging environment for your child.',
+      'Celebrate the little milestones and playful moments today.',
+    ],
+    tired: [
+      'Parenting demands constant stamina; give yourself grace and take pauses.',
+      'You cannot pour from an empty cup—find a few minutes to recharge.',
+      'Good enough is truly enough on exhausting days; keep routines simple.',
+    ],
+    anxious: [
+      'Every child grows at their own unique pace; focus on connection over comparison.',
+      'When parenting worries arise, write them down or check MOH milestone guidelines.',
+      'Trust your bond with your child; you know them best.',
+    ],
+    sad: [
+      'Being a parent doesn’t mean having to be strong every minute. Speak gently to yourself.',
+      'Your feelings are valid; taking time to care for yourself models self-love for your child.',
+      'A quiet walk or listening to uplifting music can offer comfort today.',
+    ],
+    overwhelmed: [
+      'Parenting multitasking is heavy. Step back, simplify the routine, and take a breather.',
+      'Lower expectations for household chores today; connecting with your child comes first.',
+      'It’s okay to ask for help from friends or family when the day feels full.',
+    ],
+  },
 };
 
-export function getBabySizeForWeek(week: number): BabySizeMilestone {
-  const availableWeeks = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40];
-  const closest = availableWeeks.reduce((prev, curr) =>
-    Math.abs(curr - week) < Math.abs(prev - week) ? curr : prev
-  );
-  return BABY_SIZE_MILESTONES[closest] || {
-    size: 'an ear of corn',
-    emoji: '🌽',
-    fact: 'Baby is growing steadily and hearing sounds from the outside world.',
-  };
+export function getMicroInsight(lifecycleStage: LifecycleStage, mood: MoodType, seedDate: Date = new Date()): string {
+  const stageKey = MICRO_INSIGHT_LOOKUP[lifecycleStage] ? lifecycleStage : 'pregnancy';
+  const stageTable = MICRO_INSIGHT_LOOKUP[stageKey] || MICRO_INSIGHT_LOOKUP.pregnancy;
+  const templates = stageTable[mood] || stageTable.calm;
+  const index = Math.abs(seedDate.getDate()) % templates.length;
+  return templates[index];
 }
 
 export function formatContextDate(date: Date, lang: 'en' | 'sw' = 'en'): string {
@@ -247,6 +349,7 @@ export function deriveTodayContext({
   reminders = [],
   userName,
   now = new Date(),
+  todaysMoodLog = null,
 }: DeriveTodayContextParams): TodayContext {
   const language = healthContext?.language || 'en';
   const rawStage = healthContext?.lifecycleStage || 'pregnancy';
@@ -266,29 +369,34 @@ export function deriveTodayContext({
 
   if (lifecycleStage === 'pregnancy') {
     if (clinicalPregnancy) {
-      hasAuthoritativeClinicalData = true;
-      let weeks = clinicalPregnancy.gestationalAgeWeeks || 0;
-      if (clinicalPregnancy.lmp) {
-        const calc = calculateGestationFromLmp(clinicalPregnancy.lmp, now);
-        weeks = calc.gestationalAgeWeeks;
+      const metrics = computeGestationalHeroMetrics(clinicalPregnancy, now);
+      if (metrics) {
+        hasAuthoritativeClinicalData = true;
+        hero = {
+          type: 'pregnancy',
+          gestationalWeeks: metrics.weeks,
+          trimester: metrics.trimester,
+          eddFormatted: metrics.eddFormatted,
+          progressRatio: metrics.progressRatio,
+          progressPercent: metrics.progressPercent,
+          babySize: metrics.babySize,
+          isAuthoritative: true,
+          provenanceTag: 'VERIFIED',
+          provenanceNote: 'Calculated from your verified clinical pregnancy record',
+        };
+      } else {
+        hero = {
+          type: 'pregnancy',
+          gestationalWeeks: 1,
+          trimester: 1,
+          progressRatio: 0.05,
+          progressPercent: 5,
+          babySize: getBabySizeForWeek(1),
+          isAuthoritative: false,
+          provenanceTag: 'USER_REPORTED',
+          provenanceNote: 'Estimated gestational baseline',
+        };
       }
-      weeks = Math.max(1, Math.min(42, weeks));
-      const trimester: 1 | 2 | 3 = weeks >= 28 ? 3 : weeks >= 13 ? 2 : 1;
-      const progressRatio = Math.min(1, Math.max(0.05, weeks / 40));
-      const progressPercent = Math.round(progressRatio * 100);
-
-      hero = {
-        type: 'pregnancy',
-        gestationalWeeks: weeks,
-        trimester,
-        eddFormatted: clinicalPregnancy.edd ? formatShortDate(clinicalPregnancy.edd) : undefined,
-        progressRatio,
-        progressPercent,
-        babySize: getBabySizeForWeek(weeks),
-        isAuthoritative: true,
-        provenanceTag: 'VERIFIED',
-        provenanceNote: 'Calculated from your verified clinical pregnancy record',
-      };
     } else if (healthContext?.pregnancy?.pregnancyWeek) {
       // User-reported fallback
       const weeks = Math.max(1, Math.min(42, healthContext.pregnancy.pregnancyWeek));
@@ -333,6 +441,7 @@ export function deriveTodayContext({
       hasAuthoritativeClinicalData = true;
       const ageCalc = calculateChildAge(primaryChild.dateOfBirth);
       const weeks = Math.max(0, Math.floor(ageCalc.totalDays / 7));
+      const progressRatio = Math.min(1, Math.max(0.08, (weeks || 0.5) / 6));
       hero = {
         type: 'postpartum',
         weeksPostpartum: weeks,
@@ -342,6 +451,10 @@ export function deriveTodayContext({
         headline: weeks > 0 ? `Week ${weeks} Postpartum` : 'Early Postpartum Days',
         subheadline: `Caring for ${primaryChild.name || 'baby'} (${ageCalc.ageFormatted}) while gently supporting maternal recovery.`,
         provenanceNote: 'Postpartum guidance aligned with Kenya MOH postnatal standards',
+        progressRatio,
+        progressPercent: Math.round(progressRatio * 100),
+        progressStartLabel: 'Birth (Day 1)',
+        progressEndLabel: weeks >= 6 ? '12 Weeks Postnatal' : '6 Weeks PNC Check',
       };
     } else {
       hero = {
@@ -349,6 +462,10 @@ export function deriveTodayContext({
         headline: 'Postpartum Recovery',
         subheadline: 'Restoring strength, nourishing your body, and caring for emotional well-being.',
         provenanceNote: 'Maternal recovery guidelines per Kenya MOH protocols',
+        progressRatio: 0.25,
+        progressPercent: 25,
+        progressStartLabel: 'Birth',
+        progressEndLabel: '6 Weeks Postnatal Recovery',
       };
     }
   } else if (lifecycleStage === 'parenting') {
@@ -365,6 +482,9 @@ export function deriveTodayContext({
         milestone = 'First walking steps, vocabulary expansion & social exploration';
       }
 
+      const targetMonths = ageCalc.months < 12 ? 12 : 24;
+      const progressRatio = Math.min(1, Math.max(0.08, (ageCalc.months || 0.5) / targetMonths));
+
       hero = {
         type: 'parenting',
         childName: primaryChild.name,
@@ -373,6 +493,10 @@ export function deriveTodayContext({
         headline: primaryChild.name ? `Parenting ${primaryChild.name}` : 'Parenting Journey',
         subheadline: `${primaryChild.name || 'Child'} is ${ageCalc.ageFormatted} · ${milestone}`,
         hasChildRecord: true,
+        progressRatio,
+        progressPercent: Math.round(progressRatio * 100),
+        progressStartLabel: 'Birth',
+        progressEndLabel: targetMonths === 12 ? '1 Year KEPI' : '2 Years Milestones',
       };
     } else {
       hero = {
@@ -381,6 +505,10 @@ export function deriveTodayContext({
         subheadline: 'Track immunizations, developmental milestones, and healthy nutrition.',
         milestoneFocus: 'Comprehensive early childhood support',
         hasChildRecord: false,
+        progressRatio: 0.35,
+        progressPercent: 35,
+        progressStartLabel: 'Birth',
+        progressEndLabel: 'Early Childhood Milestones',
       };
     }
   } else if (lifecycleStage === 'planning') {
@@ -826,6 +954,20 @@ export function deriveTodayContext({
     now,
   });
 
+  // Daily Mood & Energy Check-in Status
+  let checkInStatus: TodayCheckInStatus = {
+    completed: false,
+  };
+  if (todaysMoodLog && todaysMoodLog.values && (todaysMoodLog.values as MoodValues).mood) {
+    const loggedMood = (todaysMoodLog.values as MoodValues).mood;
+    const insight = getMicroInsight(lifecycleStage, loggedMood, now);
+    checkInStatus = {
+      completed: true,
+      mood: loggedMood,
+      microInsight: insight,
+    };
+  }
+
   return {
     greeting,
     lifecycleStage,
@@ -839,5 +981,6 @@ export function deriveTodayContext({
     hasAuthoritativeClinicalData,
     provenanceSummary,
     advancedPersonalization,
+    checkInStatus,
   };
 }

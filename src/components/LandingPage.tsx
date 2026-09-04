@@ -300,6 +300,12 @@ export default function LandingPage({ onSignedIn, onPartnerConnected }: LandingP
           >
             {t('header.lifecycle')}
           </a>
+          <a 
+            href="#partners"
+            className="hover:text-[var(--haven-deep)] transition-colors"
+          >
+            {t('header.partners')}
+          </a>
           <button
             type="button"
             onClick={() => setShowAboutModal(true)}
@@ -330,7 +336,7 @@ export default function LandingPage({ onSignedIn, onPartnerConnected }: LandingP
             onClick={() => handleLaunchAnonymous('today')}
             className="text-xs font-display font-bold text-white bg-[var(--haven-deep)] hover:opacity-90 px-4 sm:px-5 py-2 rounded-full shadow-xs transition-all active:scale-95 cursor-pointer"
           >
-            {t('header.explore')}
+            {t('hero.guestPreviewCta')}
           </button>
         </div>
       </header>
@@ -361,7 +367,7 @@ export default function LandingPage({ onSignedIn, onPartnerConnected }: LandingP
               onClick={() => handleLaunchAnonymous('today')}
               className="w-full sm:w-auto px-8 py-4 rounded-full bg-[var(--haven-deep)] hover:opacity-90 active:scale-[0.98] text-white font-display font-bold text-base shadow-md hover:shadow-lg flex items-center justify-center gap-2.5 transition-all cursor-pointer group"
             >
-              <span>{t('hero.primaryCta')}</span>
+              <span>{t('hero.guestPreviewCta')}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </button>
 
@@ -976,7 +982,7 @@ export default function LandingPage({ onSignedIn, onPartnerConnected }: LandingP
       {/* ========================================================================= */}
       {/* 8. PARTNER SUPPORT: NO LOVE ICON, CLEAN PARTNERSHIP */}
       {/* ========================================================================= */}
-      <section className="py-14 sm:py-20 px-4 sm:px-6 max-w-5xl mx-auto">
+      <section id="partners" className="py-14 sm:py-20 px-4 sm:px-6 max-w-5xl mx-auto scroll-mt-20">
         <div className="bg-[var(--surface-1)] rounded-[32px] border border-[var(--border)] p-6 sm:p-10 shadow-xs flex flex-col md:flex-row items-center justify-between gap-8">
           
           <div className="space-y-3 text-left max-w-xl">
@@ -1013,7 +1019,7 @@ export default function LandingPage({ onSignedIn, onPartnerConnected }: LandingP
             </div>
           </div>
 
-          <div className="w-full md:w-72 bg-[var(--surface-2)] rounded-2xl p-4 border border-[var(--border)] text-left space-y-2">
+          <div className="w-full md:w-72 bg-[var(--surface-2)] rounded-2xl p-4 border border-[var(--border)] text-left space-y-2.5">
             <div className="flex items-center gap-2 text-xs font-display font-bold text-[var(--text-primary)]">
               <Share2 className="w-4 h-4 text-[var(--haven-orchid)]" />
               <span>{t('partner.cardTitle')}</span>
@@ -1021,8 +1027,15 @@ export default function LandingPage({ onSignedIn, onPartnerConnected }: LandingP
             <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
               {t('partner.cardDesc')}
             </p>
-            <div className="pt-1 text-[11px] font-bold text-[var(--haven-orchid)]">
-              {t('partner.cardCheck')}
+            <div className="space-y-1 pt-1 border-t border-[var(--border)]">
+              <div className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                <span>✓</span>
+                <span>{t('partner.cardCheck')}</span>
+              </div>
+              <div className="text-[10px] text-[var(--text-secondary)] flex items-center gap-1.5">
+                <span>•</span>
+                <span>Milestone updates & danger-sign checklists</span>
+              </div>
             </div>
           </div>
 

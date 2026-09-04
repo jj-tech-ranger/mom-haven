@@ -25,6 +25,7 @@ export const sw = {
     haven: 'Haven',
     lifecycle: 'Jinsi Inavyofanya Kazi',
     about: 'Kuhusu MomHaven',
+    partners: 'Kwa Wenza',
     signIn: 'Ingia',
     explore: 'Gundua MomHaven',
     themeToggleAria: 'Badilisha mandhari ya rangi',
@@ -33,10 +34,11 @@ export const sw = {
 
   hero: {
     badge: 'Kila Mama, Kila Mtoto, Kila Hatua ya Maisha.',
-    title: 'Kila kitu unachohitaji katika safari ya mama na mtoto.',
+    title: 'Mwongozo thabiti, majibu ya kuaminika, na kumbukumbu salama za mama na mtoto.',
     subtitle: 'Kila Mama, Kila Mtoto, Kila Hatua ya Maisha.',
-    description: 'Jifunze nini cha kutarajia. Weka safari yako ya afya kwa mpangilio. Muulize Haven maswali yanapojitokeza. Baki ukiwa umeunganishwa na wale wanaokuhudumia.',
+    description: 'Kuanzia kliniki yako ya kwanza ya ujauzito hadi hatua za ukuaji wa mtoto, MomHaven huweka huduma yako kwa mpangilio, maswali yako yamejibiwa, na familia yako ikiwa na msaada.',
     primaryCta: 'Gundua MomHaven',
+    guestPreviewCta: 'Tazama kama Mgeni',
     secondaryCta: 'Ingia',
     createAccountPrompt: 'Huna akaunti bado?',
     createAccountLink: 'Fungua akaunti',

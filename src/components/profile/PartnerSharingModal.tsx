@@ -90,7 +90,7 @@ export default function PartnerSharingModal({ motherId, motherName = 'Mama', onC
             </div>
           ) : (
             <>
-              {relationship?.status === 'connected' ? (
+              {relationship?.status === 'active' ? (
                 <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-[18px]">
                   <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 mx-auto flex items-center justify-center mb-2">
                     <Check className="w-5 h-5" />

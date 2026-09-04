@@ -12,15 +12,105 @@ import {
   addDoc
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { Pregnancy, AncEncounter, Child, Provenance } from '../types';
+import { Pregnancy, AncEncounter, Child, Provenance, PregnancySummary } from '../types';
 import {
   calculateGestationFromLmp,
   calculateLmpFromEdd,
+  computeGestationalHeroMetrics,
   type GestationCalculation,
 } from '../utils/clinicalCalculations';
 
 export type { GestationCalculation } from '../utils/clinicalCalculations';
 export { calculateGestationFromLmp, calculateLmpFromEdd } from '../utils/clinicalCalculations';
+
+/**
+ * Strategy Choice: Option (a) Narrowly-scoped partner projection.
+ * Why this approach:
+ * 1. firestore.rules explicitly blocks partners from reading `/pregnancies`
+ *    (`!isPartner() && !isClinician()`) to protect clinical data (ANC encounters,
+ *    clinical notes, gravida/parity history).
+ * 2. Creating and synchronizing a dedicated projection at `/pregnancySummaries/{motherId}`
+ *    (and mirror `/partnerShares/{motherId}`) allows active partners (`activePartner(motherId)`)
+ *    to read only logistics & gestational milestones without exposing clinical records.
+ */
+export async function syncPregnancySummary(
+  motherId: string,
+  pregnancy: Partial<Pregnancy> | null,
+  motherName?: string
+): Promise<void> {
+  if (!motherId) return;
+
+  try {
+    let summary: PregnancySummary;
+
+    if (!pregnancy || pregnancy.status === 'completed') {
+      summary = {
+        motherId,
+        motherName,
+        hasActivePregnancy: false,
+        pregnancyId: pregnancy?.id,
+        gestationalAgeWeeks: 0,
+        gestationalWeeks: 0,
+        trimester: 1,
+        daysRemaining: 0,
+        weeksRemaining: 0,
+        status: pregnancy?.status === 'completed' ? 'completed' : 'none',
+        updatedAt: new Date().toISOString(),
+      };
+    } else {
+      const metrics = computeGestationalHeroMetrics(pregnancy);
+      summary = {
+        motherId,
+        motherName,
+        hasActivePregnancy: true,
+        pregnancyId: pregnancy.id,
+        lmp: pregnancy.lmp,
+        edd: pregnancy.edd,
+        eddFormatted: metrics?.eddFormatted,
+        gestationalAgeWeeks: metrics?.gestationalAgeWeeks || pregnancy.gestationalAgeWeeks || 0,
+        gestationalWeeks: metrics?.gestationalWeeks || pregnancy.gestationalAgeWeeks || 0,
+        trimester: metrics?.trimester || 1,
+        daysRemaining: metrics?.daysRemaining || 0,
+        weeksRemaining: metrics?.weeksRemaining || 0,
+        status: 'active',
+        babyMilestone: metrics?.babySize,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    const summariesRef = doc(db, 'pregnancySummaries', motherId);
+    const sharesRef = doc(db, 'partnerShares', motherId);
+
+    await Promise.allSettled([
+      setDoc(summariesRef, summary, { merge: true }),
+      setDoc(sharesRef, summary, { merge: true }),
+    ]);
+  } catch (err) {
+    console.warn('[pregnancyService] Could not sync pregnancy summary projection', err);
+  }
+}
+
+export async function getPregnancySummary(motherId: string): Promise<PregnancySummary | null> {
+  if (!motherId) return null;
+  try {
+    const sumRef = doc(db, 'pregnancySummaries', motherId);
+    const sumSnap = await getDoc(sumRef);
+    if (sumSnap.exists()) {
+      return sumSnap.data() as PregnancySummary;
+    }
+
+    const shareRef = doc(db, 'partnerShares', motherId);
+    const shareSnap = await getDoc(shareRef);
+    if (shareSnap.exists()) {
+      return shareSnap.data() as PregnancySummary;
+    }
+
+    return null;
+  } catch (err) {
+    console.warn('[pregnancyService] Could not fetch pregnancy summary projection', err);
+    return null;
+  }
+}
 
 export async function getActivePregnancy(motherId: string): Promise<Pregnancy | null> {
   try {
@@ -40,14 +130,55 @@ export async function getActivePregnancy(motherId: string): Promise<Pregnancy | 
         const calc = calculateGestationFromLmp(data.lmp);
         gestationalAgeWeeks = calc.gestationalAgeWeeks;
       }
-      return {
+      const fullPregnancy = {
         ...data,
         id: d.id,
         gestationalAgeWeeks,
       };
+
+      // Opportunistically update the partner-readable summary projection
+      syncPregnancySummary(motherId, fullPregnancy).catch(() => {});
+
+      return fullPregnancy;
     }
+
+    // If query returned empty for a partner, check if a summary projection exists
+    const summary = await getPregnancySummary(motherId);
+    if (summary && summary.hasActivePregnancy) {
+      return {
+        id: summary.pregnancyId || `summary_${motherId}`,
+        motherId,
+        status: 'active',
+        lmp: summary.lmp,
+        edd: summary.edd,
+        gestationalAgeWeeks: summary.gestationalAgeWeeks,
+        createdAt: summary.updatedAt || new Date().toISOString(),
+      };
+    }
+
     return null;
   } catch (err) {
+    // Under firestore.rules line 14:
+    // allow read: if signed() && resource.data.motherId == request.auth.uid && !isPartner() && !isClinician() && !isAdmin()
+    // Partners are explicitly denied direct access to /pregnancies.
+    // Fall back to the partner-accessible projection (pregnancySummaries / partnerShares).
+    try {
+      const summary = await getPregnancySummary(motherId);
+      if (summary && summary.hasActivePregnancy) {
+        return {
+          id: summary.pregnancyId || `summary_${motherId}`,
+          motherId,
+          status: 'active',
+          lmp: summary.lmp,
+          edd: summary.edd,
+          gestationalAgeWeeks: summary.gestationalAgeWeeks,
+          createdAt: summary.updatedAt || new Date().toISOString(),
+        };
+      }
+    } catch {
+      // Ignore projection read errors
+    }
+
     handleFirestoreError(err, OperationType.GET, 'pregnancies');
     return null;
   }
@@ -73,6 +204,16 @@ export async function createActivePregnancy(
       previousOutcomes: history?.previousOutcomes || [],
       createdAt: new Date().toISOString(),
     });
+
+    syncPregnancySummary(motherId, {
+      id: newDoc.id,
+      motherId,
+      status: 'active',
+      lmp,
+      edd,
+      gestationalAgeWeeks: calc.gestationalAgeWeeks,
+    }).catch(() => {});
+
     return newDoc.id;
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, 'pregnancies');
@@ -169,6 +310,12 @@ export async function completePregnancyTransition(
       completedAt: new Date().toISOString(),
       outcomeDetails: outcome,
     });
+
+    syncPregnancySummary(motherId, {
+      id: pregnancyId,
+      motherId,
+      status: 'completed',
+    }).catch(() => {});
 
     const childRef = collection(db, 'children');
     const childDoc = await addDoc(childRef, {

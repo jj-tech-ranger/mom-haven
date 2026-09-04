@@ -5,19 +5,21 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "rm -rf build dist && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=build/server.cjs",
-    "start": "node build/server.cjs",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist build",
     "lint": "tsc --noEmit",
-    "test": "npm run test:clinical && npm run test:context && npm run test:anonymous && npm run test:haven-context && npm run test:today && npm run test:resources && npm run test:summary",
+    "test": "npm run test:clinical && npm run test:context && npm run test:anonymous && npm run test:haven-context && npm run test:today && npm run test:resources && npm run test:summary && npm run test:sharing && npm run test:partner-signal",
     "test:clinical": "tsx src/utils/clinicalCalculations.test.ts",
     "test:context": "tsx src/services/healthContextService.test.ts",
     "test:anonymous": "tsx src/services/anonymousContextService.test.ts",
     "test:haven-context": "tsx server/services/havenContextBuilder.test.ts",
     "test:today": "tsx src/services/todayContextService.test.ts && tsx src/components/today/TodayDashboard.test.ts",
     "test:resources": "tsx src/services/resourceRecommendationService.test.ts",
-    "test:summary": "tsx server/services/healthSummaryService.test.ts"
+    "test:summary": "tsx server/services/healthSummaryService.test.ts",
+    "test:sharing": "tsx src/services/sharingService.test.ts",
+    "test:partner-signal": "tsx src/services/partnerContextService.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

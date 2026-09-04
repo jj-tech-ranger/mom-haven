@@ -1,5 +1,5 @@
 // src/components/PartnerShell.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Home, 
   HeartHandshake, 
@@ -14,13 +14,38 @@ import {
   Clock,
   Car,
   AlertCircle,
-  ShieldCheck
+  ShieldCheck,
+  Loader2,
+  RefreshCw,
+  Heart,
+  ArrowRight,
 } from 'lucide-react';
-import { redeemPartnerConnectionCode, getMotherPartnerRelationship } from '../services/sharingService';
+import { redeemPartnerConnectionCode, getPartnerActiveRelationship } from '../services/sharingService';
+import { getHealthContext } from '../services/healthContextService';
+import { getActivePregnancy } from '../services/pregnancyService';
+import { getSharedPartnerReminders } from '../services/reminderService';
+import { getPartnerShare, PartnerShareData, PARTNER_MOOD_TIPS } from '../services/partnerContextService';
+import { computeGestationalHeroMetrics } from '../utils/clinicalCalculations';
+import { Pregnancy, Reminder } from '../types';
+import { HealthContext } from '../types/healthContext';
 import EmergencySafetyHub from './emergency/EmergencySafetyHub';
 import PartnerSupportHub from './partner/PartnerSupportHub';
 import PartnerBirthPlanView from './partner/PartnerBirthPlanView';
 import Button from './Button';
+
+function formatAppointmentDate(dateString: string): string {
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return dateString;
+    return d.toLocaleDateString('en-GB', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    });
+  } catch {
+    return dateString;
+  }
+}
 
 interface PartnerShellProps {
   partnerId?: string;
@@ -43,6 +68,79 @@ export default function PartnerShell({
   const [redeemError, setRedeemError] = useState<string | null>(null);
   const [redeemSuccess, setRedeemSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Real mother data states
+  const [healthContext, setHealthContext] = useState<HealthContext | null>(null);
+  const [pregnancy, setPregnancy] = useState<Pregnancy | null>(null);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [partnerShare, setPartnerShare] = useState<PartnerShareData | null>(null);
+  const [motherDataLoading, setMotherDataLoading] = useState<boolean>(false);
+  const [motherDataError, setMotherDataError] = useState<string | null>(null);
+
+  const fetchMotherData = useCallback(async (motherId: string) => {
+    if (!motherId) return;
+    setMotherDataLoading(true);
+    setMotherDataError(null);
+    try {
+      const [ctx, preg, rems, shareData] = await Promise.all([
+        getHealthContext(motherId).catch(() => null),
+        getActivePregnancy(motherId).catch(() => null),
+        getSharedPartnerReminders(motherId).catch(() => []),
+        getPartnerShare(motherId).catch(() => null),
+      ]);
+      setHealthContext(ctx);
+      setPregnancy(preg);
+      setReminders(rems);
+      setPartnerShare(shareData);
+    } catch (err) {
+      console.warn('Failed to load mother data in PartnerShell', err);
+      setMotherDataError('Unable to load latest updates right now.');
+    } finally {
+      setMotherDataLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (linkedMother?.motherId) {
+      fetchMotherData(linkedMother.motherId);
+    } else {
+      setHealthContext(null);
+      setPregnancy(null);
+      setReminders([]);
+      setPartnerShare(null);
+    }
+  }, [linkedMother?.motherId, fetchMotherData]);
+
+  const gestationalMetrics = useMemo(() => {
+    return computeGestationalHeroMetrics(pregnancy);
+  }, [pregnancy]);
+
+  const sharedReminders = useMemo(() => {
+    return reminders.filter((r) => r.sharedWithPartner === true && !r.completed);
+  }, [reminders]);
+
+  const displayMotherName = healthContext?.preferredName || linkedMother?.motherName || 'Mother';
+
+  useEffect(() => {
+    if (!partnerId || partnerId === 'partner-user') return;
+    let isMounted = true;
+    getPartnerActiveRelationship(partnerId)
+      .then((rel) => {
+        if (!isMounted) return;
+        if (rel && rel.status === 'active' && rel.motherId) {
+          const linkData = { motherId: rel.motherId, motherName: rel.motherName || 'Mama Jemimah' };
+          setLinkedMother(linkData);
+          localStorage.setItem('momhaven_partner_link', JSON.stringify(linkData));
+        } else if (rel && rel.status === 'revoked') {
+          setLinkedMother(null);
+          localStorage.removeItem('momhaven_partner_link');
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not query partner active relationship', err);
+      });
+    return () => { isMounted = false; };
+  }, [partnerId]);
 
   const handleRedeem = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,7 +213,7 @@ export default function PartnerShell({
               <div className="p-3 bg-purple-50 rounded-[14px] border border-purple-100 text-left text-[11px] text-purple-950 flex items-start gap-2">
                 <ShieldCheck className="w-4 h-4 text-[var(--haven-deep)] shrink-0 mt-0.5" />
                 <span>
-                  <strong>Privacy Protected:</strong> You will only view birth logistics, emergency contacts, and shared appointment dates. Medical clinical charts remain confidential between mother and clinicians.
+                  <strong>Privacy Protected:</strong> You will only view birth logistics, emergency contacts, shared appointment dates, and optional mood signals if she chooses to share them. Medical clinical charts and notes remain strictly confidential between mother and clinicians.
                 </span>
               </div>
 
@@ -160,25 +258,162 @@ export default function PartnerShell({
           <div className="max-w-md mx-auto p-4 space-y-4">
             {activeTab === 'home' && (
               <div className="space-y-4">
+                {/* Refresh indicator or active syncing */}
+                {motherDataLoading && (
+                  <div className="flex items-center justify-center gap-2 p-2.5 bg-white/80 backdrop-blur-xs border border-[var(--border-hairline)] rounded-[16px] text-xs text-[var(--haven-deep)] shadow-xs">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[var(--haven-orchid)]" />
+                    <span>Syncing {displayMotherName}’s latest updates...</span>
+                  </div>
+                )}
+
+                {/* Error banner if fetching failed */}
+                {motherDataError && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-[16px] text-xs text-amber-800 flex items-center justify-between shadow-xs">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>{motherDataError}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => linkedMother && fetchMotherData(linkedMother.motherId)}
+                      className="text-[11px] font-bold text-amber-900 underline hover:no-underline cursor-pointer"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+
                 {/* Hero Gestational Progress Card */}
-                <div className="bg-gradient-to-br from-[#241451] via-[#4B27A8] to-[#6B3DB8] text-white p-5 rounded-[24px] shadow-card-2 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-display font-bold uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full">
-                      Trimester 3 · Week 34
-                    </span>
-                    <span className="text-xs font-medium text-purple-200">
-                      ~6 Weeks to Due Date
-                    </span>
+                {gestationalMetrics ? (
+                  <div className="bg-gradient-to-br from-[#241451] via-[#4B27A8] to-[#6B3DB8] text-white p-5 rounded-[24px] shadow-card-2 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-display font-bold uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full">
+                        Trimester {gestationalMetrics.trimester} · Week {gestationalMetrics.weeks}
+                      </span>
+                      <span className="text-xs font-medium text-purple-200">
+                        {gestationalMetrics.eddFormatted
+                          ? `Due ${gestationalMetrics.eddFormatted}`
+                          : `~${gestationalMetrics.weeksRemaining} Weeks to Due Date`}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-display font-bold text-lg text-white">
+                        Supporting {displayMotherName}
+                      </h3>
+                      <p className="font-body text-xs text-purple-100 mt-1 leading-relaxed">
+                        {gestationalMetrics.babySize.fact} Baby is about the size of {gestationalMetrics.babySize.size} {gestationalMetrics.babySize.emoji}. Ensure transport logistics and emergency funds are ready!
+                      </p>
+                    </div>
+
+                    {/* Gestational journey progress bar */}
+                    <div className="pt-1">
+                      <div className="flex items-center justify-between text-[10px] text-purple-200 font-semibold mb-1">
+                        <span>Week {gestationalMetrics.weeks} of 40</span>
+                        <span>{gestationalMetrics.progressPercent}% of journey</span>
+                      </div>
+                      <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-emerald-400 rounded-full transition-all duration-500"
+                          style={{ width: `${gestationalMetrics.progressPercent}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-display font-bold text-lg text-white">
-                      Supporting {linkedMother.motherName}
-                    </h3>
-                    <p className="font-body text-xs text-purple-100 mt-1 leading-relaxed">
-                      Baby is practicing rhythmic breathing movements and storing vital antibodies. Ensure transport logistics and emergency funds are ready!
-                    </p>
+                ) : (
+                  /* Honest Empty State when mother has no active pregnancy or journey is not yet dated */
+                  <div className="bg-gradient-to-br from-[#241451] via-[#352063] to-[#452778] text-white p-5 rounded-[24px] shadow-card-2 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-display font-bold uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full">
+                        Journey Not Started Yet
+                      </span>
+                      <span className="text-xs font-medium text-purple-200">
+                        Partner Linked
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-display font-bold text-lg text-white">
+                        Supporting {displayMotherName}
+                      </h3>
+                      <p className="font-body text-xs text-purple-100 mt-1 leading-relaxed">
+                        {displayMotherName} has not set up an active pregnancy record yet. As soon as clinical dating or gestational details are added, weeks and baby milestones will appear here.
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Partner Mood Wellness Signal Card */}
+                {partnerShare?.moodSignal ? (
+                  <div className={`p-4 rounded-[22px] border shadow-card-1 space-y-3 transition-all ${
+                    partnerShare.moodSignal === 'low'
+                      ? 'bg-rose-50/70 border-rose-200 text-rose-950'
+                      : partnerShare.moodSignal === 'ok'
+                      ? 'bg-amber-50/70 border-amber-200 text-amber-950'
+                      : 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          partnerShare.moodSignal === 'low'
+                            ? 'bg-rose-100 text-rose-700'
+                            : partnerShare.moodSignal === 'ok'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-emerald-100 text-emerald-700'
+                        }`}>
+                          <Heart className="w-4 h-4 fill-current" />
+                        </div>
+                        <span className="text-[11px] font-display font-bold uppercase tracking-wider">
+                          {partnerShare.moodSignal === 'low'
+                            ? 'Gentle Care Signal'
+                            : partnerShare.moodSignal === 'ok'
+                            ? 'Daily Wellness Signal'
+                            : 'Thriving Signal'}
+                        </span>
+                      </div>
+                      {partnerShare.sharedAt && (
+                        <span className="text-[10px] text-gray-500 font-medium">
+                          Shared today
+                        </span>
+                      )}
+                    </div>
+
+                    <div>
+                      <h4 className="font-display font-bold text-[14px] leading-snug">
+                        {partnerShare.moodSignal === 'low'
+                          ? `She might be feeling a bit low today — here's how you can help`
+                          : partnerShare.moodSignal === 'ok'
+                          ? `She’s taking things one step at a time today`
+                          : `She is feeling bright and grounded today!`}
+                      </h4>
+                      <p className="text-[12px] opacity-85 mt-1 leading-relaxed">
+                        {PARTNER_MOOD_TIPS[partnerShare.moodSignal].description}
+                      </p>
+                    </div>
+
+                    {/* Actionable Partner Guidance */}
+                    <div className="space-y-1.5 pt-1 border-t border-black/5">
+                      <span className="text-[11px] font-display font-bold uppercase tracking-wider opacity-70">
+                        Ways You Can Help Today
+                      </span>
+                      <ul className="space-y-1.5 text-[12px] leading-relaxed">
+                        {PARTNER_MOOD_TIPS[partnerShare.moodSignal].actionTips.slice(0, 2).map((tip, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <span className="text-emerald-600 font-bold shrink-0">•</span>
+                            <span>{tip.en}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('support')}
+                      className="w-full py-2 px-3 text-[12px] font-display font-bold rounded-xl bg-white border border-[var(--border-hairline)] hover:bg-white/80 transition-colors text-center flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                    >
+                      <span>Open Partner Support Guide</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : null}
 
                 {/* Shared Appointments Feed */}
                 <div className="bg-white border border-[var(--border-hairline)] p-4 sm:p-5 rounded-[22px] shadow-card-1 space-y-3">
@@ -188,21 +423,45 @@ export default function PartnerShell({
                       Shared Clinical Appointments
                     </h4>
                     <span className="text-[10px] text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full font-bold">
-                      Upcoming
+                      {sharedReminders.length > 0 ? `${sharedReminders.length} Shared` : 'None Shared'}
                     </span>
                   </div>
 
-                  <div className="p-3 bg-[var(--lavender-50)] rounded-[14px] border border-[var(--border-hairline)] space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-display font-bold text-xs text-[var(--ink-900)]">
-                        ANC Visit 7 (34 Weeks Routine Contact)
-                      </span>
-                      <span className="text-[11px] text-[var(--haven-orchid)] font-bold">Thursday, 9:00 AM</span>
+                  {sharedReminders.length > 0 ? (
+                    <div className="space-y-2">
+                      {sharedReminders.map((reminder) => (
+                        <div
+                          key={reminder.id}
+                          className="p-3 bg-[var(--lavender-50)] rounded-[14px] border border-[var(--border-hairline)] space-y-1"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-display font-bold text-xs text-[var(--ink-900)]">
+                              {reminder.title}
+                            </span>
+                            <span className="text-[11px] text-[var(--haven-orchid)] font-bold">
+                              {reminder.dueDate ? formatAppointmentDate(reminder.dueDate) : 'Upcoming'}
+                            </span>
+                          </div>
+                          {reminder.description && (
+                            <p className="text-[11px] text-[var(--ink-600)]">
+                              {reminder.description}
+                            </p>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                    <p className="text-[11px] text-[var(--ink-600)]">
-                      Pumwani Maternity Clinic · Blood Pressure &amp; Fetal Growth checkup
-                    </p>
-                  </div>
+                  ) : (
+                    /* Honest Empty State when no appointments have been shared with partner yet */
+                    <div className="p-5 bg-[var(--lavender-50)] rounded-[14px] border border-[var(--border-hairline)] text-center space-y-1.5">
+                      <Calendar className="w-6 h-6 text-purple-400 mx-auto opacity-70" />
+                      <p className="font-display font-bold text-xs text-[var(--ink-800)]">
+                        No shared appointments yet
+                      </p>
+                      <p className="font-body text-[11px] text-[var(--ink-500)] max-w-xs mx-auto">
+                        When {displayMotherName} marks an upcoming clinic visit or antenatal contact to share with you, it will appear here.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Quick Shortcuts */}
@@ -236,7 +495,7 @@ export default function PartnerShell({
 
             {activeTab === 'birthplan' && (
               <PartnerBirthPlanView
-                motherName={linkedMother.motherName}
+                motherName={displayMotherName}
                 onSaveTransportPlan={() => {}}
               />
             )}
@@ -258,7 +517,7 @@ export default function PartnerShell({
                 </div>
 
                 <div className="p-3 bg-[var(--lavender-50)] rounded-[14px] text-xs text-[var(--ink-700)] space-y-1">
-                  <p><strong>Linked Mother:</strong> {linkedMother.motherName}</p>
+                  <p><strong>Linked Mother:</strong> {displayMotherName}</p>
                   <p><strong>Connection Scope:</strong> Birth Logistics, Emergency Transport, Shared Reminders</p>
                 </div>
 

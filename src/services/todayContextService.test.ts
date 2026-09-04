@@ -359,4 +359,38 @@ assert.strictEqual(
 );
 console.log('✓ reminders: uses real reminders when present and NEVER fabricates fake clinic appointments');
 
+// 10. Daily Check-in & Micro-insights (P2.1)
+const unloggedContext = deriveTodayContext({
+  healthContext: pregnancyHealthContext,
+  clinicalPregnancy,
+  todaysMoodLog: null,
+  now: mockNowMorning,
+});
+assert.strictEqual(unloggedContext.checkInStatus?.completed, false);
+assert.strictEqual(unloggedContext.checkInStatus?.mood, undefined);
+
+const mockMoodLog: any = {
+  id: 'mood-log-1',
+  userId: 'user-1',
+  timestamp: mockNowMorning.toISOString(),
+  category: 'JOURNAL',
+  type: 'mood',
+  values: {
+    mood: 'anxious',
+    energyLevel: 3,
+  },
+};
+
+const loggedContext = deriveTodayContext({
+  healthContext: pregnancyHealthContext,
+  clinicalPregnancy,
+  todaysMoodLog: mockMoodLog,
+  now: mockNowMorning,
+});
+assert.strictEqual(loggedContext.checkInStatus?.completed, true);
+assert.strictEqual(loggedContext.checkInStatus?.mood, 'anxious');
+assert.strictEqual(typeof loggedContext.checkInStatus?.microInsight, 'string');
+assert.strictEqual((loggedContext.checkInStatus?.microInsight?.length || 0) > 10, true);
+console.log('✓ daily check-in: computes checkInStatus and deterministic micro-insight accurately');
+
 console.log('All Today Context Derivation Engine tests passed successfully!');

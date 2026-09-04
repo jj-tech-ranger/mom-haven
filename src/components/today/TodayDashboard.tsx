@@ -1,5 +1,5 @@
 // src/components/today/TodayDashboard.tsx
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { 
   Bell, 
   Sparkles, 
@@ -17,6 +17,9 @@ import {
   MapPin,
   ChevronRight,
   Activity,
+  TrendingUp,
+  PhoneCall,
+  FileText,
   type LucideIcon,
 } from 'lucide-react';
 import { Pregnancy, Reminder, Child, AncEncounter } from '../../types';
@@ -26,9 +29,13 @@ import { getActivePregnancy } from '../../services/pregnancyService';
 import { getChildren } from '../../services/childService';
 import { getUpcomingReminders, createReminder } from '../../services/reminderService';
 import { deriveTodayContext, TodayContext } from '../../services/todayContextService';
+import { DailyHealthLog, SymptomsValues } from '../../types/healthLog';
+import { getTodaysMoodLog, getMoodStreak, getConsecutiveNegativeMoodCount, getDailyHealthLogsByType } from '../../services/healthLogService';
 import { DailyPlanItem, SuggestedReminder } from '../../types/advancedPersonalization';
 
-// Modals
+// Modals & Cards
+import ProgressRibbon from './ProgressRibbon';
+import DailyCheckInCard from './DailyCheckInCard';
 import EmergencySafetyHub from '../emergency/EmergencySafetyHub';
 import NotificationCenter from './NotificationCenter';
 import ReminderDetailModal from './ReminderDetailModal';
@@ -76,6 +83,27 @@ function getIconComponent(iconType: string): LucideIcon {
   }
 }
 
+function getPriorityEmoji(iconType: string, category?: string): string {
+  switch (iconType) {
+    case 'syringe': return '💉';
+    case 'pill': return '💊';
+    case 'calendar': return '🗓️';
+    case 'baby': return '👶';
+    case 'heart': return '🩺';
+    case 'shield': return '🛡️';
+    case 'alert': return '⚠️';
+    case 'book': return '📖';
+    case 'sparkles': return '✨';
+    case 'activity': return '📊';
+    default:
+      if (category === 'clinical') return '🩺';
+      if (category === 'reminder') return '🔔';
+      if (category === 'education') return '💡';
+      if (category === 'danger_sign') return '🚨';
+      return '🌸';
+  }
+}
+
 export default function TodayDashboard({
   userId,
   userName = 'Mama',
@@ -97,6 +125,10 @@ export default function TodayDashboard({
   const [internalPregnancy, setInternalPregnancy] = useState<Pregnancy | null>(propPregnancy ?? null);
   const [internalChildren, setInternalChildren] = useState<Child[]>(propChildren ?? []);
   const [internalReminders, setInternalReminders] = useState<Reminder[]>(propReminders ?? []);
+  const [todaysMoodLog, setTodaysMoodLog] = useState<DailyHealthLog | null>(null);
+  const [moodStreak, setMoodStreak] = useState<number>(0);
+  const [consecutiveNegativeDays, setConsecutiveNegativeDays] = useState<number>(0);
+  const [flaggedDangerLog, setFlaggedDangerLog] = useState<DailyHealthLog | null>(null);
   const [loading, setLoading] = useState<boolean>(!propContext && !propPregnancy && !!userId);
   const [error, setError] = useState<string | null>(null);
 
@@ -111,6 +143,7 @@ export default function TodayDashboard({
   const [selectedReminder, setSelectedReminder] = useState<Reminder | null>(null);
   const [reminderAddFeedback, setReminderAddFeedback] = useState<string | null>(null);
   const [addingReminderId, setAddingReminderId] = useState<string | null>(null);
+  const [showPersonalizationDetails, setShowPersonalizationDetails] = useState(false);
 
   // Safe navigation normalizer
   const handleNavigate = useCallback((targetTab: string) => {
@@ -127,17 +160,29 @@ export default function TodayDashboard({
     setLoading(true);
     setError(null);
     try {
-      const [ctx, preg, kids, rems] = await Promise.all([
+      const [ctx, preg, kids, rems, moodLog, streak, negCount, recentSymptoms] = await Promise.all([
         propContext !== undefined ? Promise.resolve(propContext) : getHealthContext(userId).catch(() => null),
         propPregnancy !== undefined ? Promise.resolve(propPregnancy) : getActivePregnancy(userId).catch(() => null),
         propChildren !== undefined ? Promise.resolve(propChildren) : getChildren(userId).catch(() => []),
         propReminders !== undefined ? Promise.resolve(propReminders) : getUpcomingReminders(userId).catch(() => []),
+        getTodaysMoodLog(userId).catch(() => null),
+        getMoodStreak(userId).catch(() => 0),
+        getConsecutiveNegativeMoodCount(userId).catch(() => 0),
+        getDailyHealthLogsByType(userId, 'symptoms', 5).catch(() => []),
       ]);
 
       setInternalContext(ctx);
       setInternalPregnancy(preg);
       setInternalChildren(kids);
       setInternalReminders(rems);
+      setTodaysMoodLog(moodLog);
+      setMoodStreak(streak);
+      setConsecutiveNegativeDays(negCount);
+
+      const dangerLog = (recentSymptoms as DailyHealthLog[]).find(
+        (l) => (l.values as SymptomsValues)?.hasDangerSigns === true
+      );
+      setFlaggedDangerLog(dangerLog || null);
     } catch (err) {
       console.error('Error fetching today dashboard data', err);
       setError('Unable to load some health updates right now.');
@@ -149,6 +194,14 @@ export default function TodayDashboard({
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handleMoodLogged = useCallback((newLog: DailyHealthLog) => {
+    setTodaysMoodLog(newLog);
+    if (userId) {
+      getMoodStreak(userId).then(setMoodStreak).catch(() => {});
+      getConsecutiveNegativeMoodCount(userId).then(setConsecutiveNegativeDays).catch(() => {});
+    }
+  }, [userId]);
 
   // Derive Today Context deterministically
   const effectiveContext = propContext ?? internalContext;
@@ -163,7 +216,35 @@ export default function TodayDashboard({
     reminders: effectiveReminders,
     userName,
     now: new Date(),
+    todaysMoodLog,
   });
+
+  const displayedPriorities = useMemo(() => {
+    const list = [...todayContext.priorities];
+    if (flaggedDangerLog) {
+      const vals = flaggedDangerLog.values as SymptomsValues;
+      const symptomsList = vals?.symptoms?.join(', ') || 'Reported red flag symptoms';
+      const exists = list.some((p) => p.id === `danger-symptom-${flaggedDangerLog.id}`);
+      if (!exists) {
+        list.unshift({
+          id: `danger-symptom-${flaggedDangerLog.id}`,
+          title: todayContext.language === 'sw' ? 'Tahadhari ya Dalili za Hatari' : 'Flagged Red Flag Symptoms',
+          description: todayContext.language === 'sw'
+            ? `Ulirekodi: ${symptomsList}. Rekodi ya kliniki imesasishwa kwa uchunguzi wa daktari au mkunga.`
+            : `You recorded: ${symptomsList}. A clinical record has been created for your healthcare provider.`,
+          badge: todayContext.language === 'sw' ? 'Kwenye Rekodi' : 'Records Linked',
+          category: 'danger_sign',
+          iconType: 'alert',
+          accentColor: 'rose',
+          actionLabel: todayContext.language === 'sw' ? 'Tazama Rekodi' : 'View in Records',
+          actionTab: 'records',
+        });
+      }
+    }
+    return list;
+  }, [todayContext.priorities, todayContext.language, flaggedDangerLog]);
+
+  const shouldShowCheckInNotification = !todaysMoodLog && new Date().getHours() >= 18;
 
   // Modal Handlers
   const handleOpenEmergency = () => {
@@ -323,6 +404,18 @@ export default function TodayDashboard({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Emergency 1199 Persistent Chip */}
+          <button
+            type="button"
+            onClick={handleOpenEmergency}
+            className="h-10 px-2.5 sm:px-3 rounded-full bg-rose-50 border border-rose-200 text-rose-700 font-display font-bold text-[12px] flex items-center gap-1.5 shadow-xs hover:bg-rose-100 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-rose-500"
+            aria-label="Emergency Guide and Kenya MOH 1199 hotline"
+            title="Kenya MOH Emergency Hotline 1199 & Danger Signs Guide"
+          >
+            <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span className="text-[11px] font-extrabold tracking-tight">1199</span>
+          </button>
+
           {/* Notification Bell */}
           <button
             type="button"
@@ -331,7 +424,7 @@ export default function TodayDashboard({
             aria-label="View notifications and reminders"
           >
             <Bell className="w-5 h-5" />
-            {effectiveReminders.some(r => !r.completed) && (
+            {(effectiveReminders.some(r => !r.completed) || shouldShowCheckInNotification) && (
               <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
             )}
           </button>
@@ -399,45 +492,14 @@ export default function TodayDashboard({
                 </p>
 
                 {/* Organic Haven Ribbon Curve SVG with Dot Indicator */}
-                <div className="my-4 relative">
-                  <svg 
-                    className="w-full h-12 overflow-visible" 
-                    viewBox="0 0 300 40" 
-                    fill="none" 
-                    preserveAspectRatio="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M 10 28 C 75 14, 150 36, 225 18 C 260 10, 280 14, 290 16"
-                      stroke="rgba(255, 255, 255, 0.25)"
-                      strokeWidth="6"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M 10 28 C 75 14, 150 36, 225 18 C 260 10, 280 14, 290 16"
-                      stroke="#FFFFFF"
-                      strokeWidth="6"
-                      strokeLinecap="round"
-                      strokeDasharray="300"
-                      strokeDashoffset={300 - (300 * todayContext.hero.progressRatio)}
-                      className="transition-all duration-700 ease-out"
-                    />
-                  </svg>
-
-                  <div 
-                    className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.9)] ring-4 ring-[#4B27A8] transition-all duration-700"
-                    style={{
-                      left: `clamp(12px, ${todayContext.hero.progressPercent}%, calc(100% - 16px))`
-                    }}
-                  />
-                </div>
-
-                <div className="flex justify-between items-center text-[12px] font-display font-semibold text-[#E5DFF0] pt-1">
-                  <span>Week 1</span>
-                  <span>
-                    {todayContext.hero.eddFormatted ? `EDD ${todayContext.hero.eddFormatted}` : 'Week 40'}
-                  </span>
-                </div>
+                <ProgressRibbon
+                  progressRatio={todayContext.hero.progressRatio}
+                  progressPercent={todayContext.hero.progressPercent}
+                  startLabel="Week 1"
+                  endLabel={todayContext.hero.eddFormatted ? `EDD ${todayContext.hero.eddFormatted}` : 'Week 40'}
+                  ringColorClass="ring-[#4B27A8]"
+                  labelColorClass="text-[#E5DFF0]"
+                />
               </>
             ) : (
               <div className="py-2">
@@ -489,6 +551,16 @@ export default function TodayDashboard({
               {todayContext.hero.subheadline}
             </p>
 
+            {/* Organic Haven Ribbon Curve for Postpartum Recovery */}
+            <ProgressRibbon
+              progressRatio={todayContext.hero.progressRatio ?? 0.25}
+              progressPercent={todayContext.hero.progressPercent ?? 25}
+              startLabel={todayContext.hero.progressStartLabel || 'Birth (Day 1)'}
+              endLabel={todayContext.hero.progressEndLabel || '6 Weeks PNC Check'}
+              ringColorClass="ring-[#2563EB]"
+              labelColorClass="text-blue-100"
+            />
+
             <div className="mt-4 pt-3 border-t border-white/20 flex justify-between items-center text-xs font-display text-blue-100">
               <span>Rest, hydration & gentle pelvic healing</span>
               <button
@@ -532,6 +604,16 @@ export default function TodayDashboard({
             <p className="font-body text-[14px] text-emerald-100 mt-2 leading-relaxed">
               {todayContext.hero.subheadline}
             </p>
+
+            {/* Organic Haven Ribbon Curve for Early Childhood Milestones */}
+            <ProgressRibbon
+              progressRatio={todayContext.hero.progressRatio ?? 0.35}
+              progressPercent={todayContext.hero.progressPercent ?? 35}
+              startLabel={todayContext.hero.progressStartLabel || 'Birth'}
+              endLabel={todayContext.hero.progressEndLabel || 'KEPI Schedule'}
+              ringColorClass="ring-[#059669]"
+              labelColorClass="text-emerald-100"
+            />
 
             <div className="mt-4 pt-3 border-t border-white/20 flex justify-between items-center text-xs font-display text-emerald-100">
               <span>Growth & Immunization Tracking</span>
@@ -651,6 +733,67 @@ export default function TodayDashboard({
       )}
 
       {/* ========================================================================= */}
+      {/* 2.5 DAILY MOOD & ENERGY CHECK-IN */}
+      {/* ========================================================================= */}
+      {userId && (
+        <section aria-label="Daily Check-In">
+          <DailyCheckInCard
+            userId={userId}
+            lifecycleStage={todayContext.lifecycleStage}
+            todaysMoodLog={todaysMoodLog}
+            streak={moodStreak}
+            consecutiveNegativeDays={consecutiveNegativeDays}
+            microInsight={todayContext.checkInStatus?.microInsight}
+            language={todayContext.language}
+            onLogged={handleMoodLogged}
+            onNavigate={handleNavigate}
+          />
+        </section>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 2.8 INSIGHTS TEASER ENTRY POINT */}
+      {/* ========================================================================= */}
+      <section aria-label="Health and Wellbeing Insights Teaser">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => handleNavigate('journey')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleNavigate('journey');
+            }
+          }}
+          className="bg-gradient-to-r from-[var(--lavender-50)] via-white to-white border border-[var(--border-hairline)] rounded-[20px] p-3.5 sm:p-4 flex items-center justify-between gap-3 shadow-card-1 hover:border-[var(--haven-orchid)] hover:shadow-card-2 transition-all cursor-pointer group focus-visible:ring-2 focus-visible:ring-[var(--haven-orchid)]"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-[14px] bg-white border border-[var(--lavender-200)] flex items-center justify-center text-[var(--haven-orchid)] shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+              <TrendingUp className="w-5 h-5 text-[var(--haven-orchid)]" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h4 className="font-display font-bold text-[13px] sm:text-[14px] text-[var(--ink-900)] truncate">
+                  Wellbeing & Health Patterns
+                </h4>
+                <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[var(--lavender-100)] text-[var(--haven-deep)]">
+                  Insights
+                </span>
+              </div>
+              <p className="text-[11px] text-[var(--ink-600)] font-body truncate">
+                See your patterns in mood reflections, vital checks, and milestones
+              </p>
+            </div>
+          </div>
+
+          <div className="shrink-0 flex items-center gap-1 text-[12px] font-display font-bold text-[var(--haven-orchid)] group-hover:translate-x-0.5 transition-transform">
+            <span className="hidden xs:inline">See patterns</span>
+            <ChevronRight className="w-4 h-4" />
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
       {/* 3. WHAT MATTERS TODAY (DETERMINISTIC PRIORITIES) */}
       {/* ========================================================================= */}
       <section aria-labelledby="priorities-heading">
@@ -676,7 +819,7 @@ export default function TodayDashboard({
         </div>
 
         <div className="space-y-3">
-          {todayContext.priorities.map((item) => {
+          {displayedPriorities.map((item) => {
             const Icon = getIconComponent(item.iconType);
 
             // Subtle color schemes matching MomHaven palette
@@ -724,6 +867,9 @@ export default function TodayDashboard({
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
+                      <span className="text-[15px] select-none shrink-0" aria-hidden="true">
+                        {getPriorityEmoji(item.iconType, item.category)}
+                      </span>
                       <h4 className="font-display font-bold text-[14px] sm:text-[15px] text-[var(--ink-900)] leading-snug truncate">
                         {item.title}
                       </h4>
@@ -736,6 +882,22 @@ export default function TodayDashboard({
                     <p className="font-body text-[12px] text-[var(--ink-600)] mt-0.5 line-clamp-2">
                       {item.description}
                     </p>
+                    {item.category === 'danger_sign' && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleNavigate('records');
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-display font-bold transition-colors cursor-pointer"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-rose-600" />
+                          <span>View in Health Records</span>
+                          <ArrowRight className="w-3 h-3 text-rose-600" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -938,23 +1100,46 @@ export default function TodayDashboard({
               Log BP, movement, rest
             </div>
           </button>
+        </div>
 
-          {/* Emergency Guide (1199) */}
-          <button
-            type="button"
-            onClick={handleOpenEmergency}
-            className="bg-white rounded-[20px] border border-[var(--border-hairline)] p-4 text-left shadow-card-1 hover:border-rose-400 hover:shadow-card-2 transition-all cursor-pointer group focus-visible:ring-2 focus-visible:ring-rose-500"
-          >
-            <div className="w-9 h-9 rounded-xl bg-rose-100 flex items-center justify-center text-rose-700 mb-2.5 group-hover:scale-105 transition-transform">
+        {/* Dedicated Emergency Safety Card */}
+        <div className="mt-3 bg-rose-50/90 border border-rose-200/90 rounded-[20px] p-3.5 sm:p-4 flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-rose-700 shrink-0">
               <AlertTriangle className="w-5 h-5" />
             </div>
-            <div className="font-display font-bold text-[14px] text-[var(--ink-900)]">
-              Emergency Guide
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h4 className="font-display font-bold text-[13px] sm:text-[14px] text-rose-900 truncate">
+                  Emergency Guide & 1199
+                </h4>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-200/70 text-rose-800 uppercase tracking-wider shrink-0">
+                  MOH Hotline
+                </span>
+              </div>
+              <p className="text-[11px] text-rose-700/90 font-body truncate mt-0.5">
+                Immediate danger signs & toll-free emergency response
+              </p>
             </div>
-            <div className="font-body text-[12px] text-[var(--ink-600)] mt-0.5">
-              Danger signs & 1199
-            </div>
-          </button>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href="tel:1199"
+              onClick={(e) => e.stopPropagation()}
+              className="px-3 py-1.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-display font-bold text-xs flex items-center gap-1 shadow-xs transition-colors"
+              aria-label="Call Kenya MOH 1199 Emergency hotline"
+            >
+              <PhoneCall className="w-3.5 h-3.5" />
+              <span>Call 1199</span>
+            </a>
+            <button
+              type="button"
+              onClick={handleOpenEmergency}
+              className="px-3 py-1.5 rounded-full bg-white border border-rose-200 hover:bg-rose-100 text-rose-700 font-display font-bold text-xs transition-colors cursor-pointer"
+            >
+              Guide
+            </button>
+          </div>
         </div>
       </section>
 
@@ -980,38 +1165,55 @@ export default function TodayDashboard({
       {(todayContext.county || todayContext.userInterests.length > 0) && (
         <aside 
           aria-label="Your personalization preferences"
-          className="rounded-2xl border border-[var(--border)] bg-white p-4"
+          className="rounded-2xl border border-[var(--border-hairline)] bg-white p-3.5 shadow-xs transition-all"
         >
-          <div className="flex items-center justify-between text-xs font-display font-bold text-[var(--text-secondary)]">
-            <span className="flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-[var(--haven-orchid)]" /> 
-              <span>Your Personalization</span>
-            </span>
-            <button
-              type="button"
-              onClick={() => handleNavigate('profile')}
-              className="text-[var(--haven-orchid)] hover:underline inline-flex items-center gap-0.5 text-[11px]"
-            >
-              <span>Edit</span>
-              <ChevronRight className="h-3 w-3" />
-            </button>
-          </div>
-          <div className="mt-2.5 flex flex-wrap gap-2">
-            {todayContext.county && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[var(--lavender-50)] px-3 py-1 text-xs text-[var(--ink-700)]">
-                <MapPin className="h-3.5 w-3.5 text-[var(--haven-orchid)]" /> 
-                <span>{todayContext.county}</span>
+          <div className="flex items-center justify-between text-xs font-display font-semibold text-[var(--ink-600)]">
+            <div className="flex items-center gap-2 min-w-0">
+              <Sparkles className="h-4 w-4 text-[var(--haven-orchid)] shrink-0" /> 
+              <span className="truncate">
+                {todayContext.county ? `${todayContext.county} · ` : ''}
+                {todayContext.userInterests.length > 0 
+                  ? `${todayContext.userInterests.length} topic${todayContext.userInterests.length > 1 ? 's' : ''}` 
+                  : 'Personalized'}
               </span>
-            )}
-            {todayContext.userInterests.slice(0, 5).map(interest => (
-              <span 
-                key={interest} 
-                className="rounded-full bg-[var(--lavender-50)] px-3 py-1 text-xs text-[var(--ink-700)] capitalize"
+            </div>
+            <div className="flex items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowPersonalizationDetails(!showPersonalizationDetails)}
+                className="text-[11px] font-bold text-[var(--haven-orchid)] hover:underline cursor-pointer"
               >
-                {interest.replace(/_/g, ' ')}
-              </span>
-            ))}
+                {showPersonalizationDetails ? 'Hide' : 'View topics'}
+              </button>
+              <span className="text-stone-300">|</span>
+              <button
+                type="button"
+                onClick={() => handleNavigate('profile')}
+                className="text-[11px] text-[var(--ink-500)] hover:underline inline-flex items-center gap-0.5 cursor-pointer"
+              >
+                <span>Edit</span>
+                <ChevronRight className="h-3 w-3" />
+              </button>
+            </div>
           </div>
+          {showPersonalizationDetails && (
+            <div className="mt-2.5 pt-2.5 border-t border-[var(--border-hairline)] flex flex-wrap gap-1.5">
+              {todayContext.county && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--lavender-50)] px-2.5 py-0.5 text-xs text-[var(--ink-700)]">
+                  <MapPin className="h-3.5 w-3.5 text-[var(--haven-orchid)]" /> 
+                  <span>{todayContext.county}</span>
+                </span>
+              )}
+              {todayContext.userInterests.slice(0, 5).map(interest => (
+                <span 
+                  key={interest} 
+                  className="rounded-full bg-[var(--lavender-50)] px-2.5 py-0.5 text-xs text-[var(--ink-700)] capitalize"
+                >
+                  {interest.replace(/_/g, ' ')}
+                </span>
+              ))}
+            </div>
+          )}
         </aside>
       )}
 
@@ -1030,10 +1232,67 @@ export default function TodayDashboard({
       {showNotifications && (
         <NotificationCenter
           onBack={() => setShowNotifications(false)}
+          onNavigateRecords={() => {
+            setShowNotifications(false);
+            handleNavigate('records');
+          }}
           onSelectReminder={(r) => {
             setShowNotifications(false);
+            if (r.id === 'notif-checkin') {
+              return;
+            }
+            if (r.id.startsWith('notif-danger-')) {
+              handleNavigate('records');
+              return;
+            }
             setSelectedReminder(r);
           }}
+          extraNotifications={[
+            ...(flaggedDangerLog
+              ? [
+                  {
+                    id: `notif-danger-${flaggedDangerLog.id}`,
+                    userId: userId || 'user',
+                    title:
+                      todayContext.language === 'sw'
+                        ? 'Tahadhari ya Dalili za Hatari'
+                        : 'Urgent: Flagged Danger Signs Recorded',
+                    description:
+                      todayContext.language === 'sw'
+                        ? 'Ulirekodi dalili zenye ishara za hatari. Tafadhali pitia rekodi zako za kliniki au tafuta msaada wa matibabu mara moja.'
+                        : 'You recorded symptoms flagged with clinical danger signs. A provider summary has been updated in your Clinical Records.',
+                    dueDate: todayContext.language === 'sw' ? 'Muhimu' : 'Urgent review',
+                    category: 'Danger Signs' as const,
+                    priority: 'urgent' as const,
+                    read: false,
+                    dateString: todayContext.language === 'sw' ? 'Kliniki' : 'Clinical priority',
+                    hasDangerSigns: true,
+                    recordsLink: true,
+                  },
+                ]
+              : []),
+            ...(shouldShowCheckInNotification
+              ? [
+                  {
+                    id: 'notif-checkin',
+                    userId: userId || 'user',
+                    title:
+                      todayContext.language === 'sw'
+                        ? 'Ukumbusho wa Jioni: Kujichunguza'
+                        : 'Evening Check-in: How was your day?',
+                    description:
+                      todayContext.language === 'sw'
+                        ? 'Chukua muda mfupi kurekodi hisia na nguvu zako za leo ili kuelewa vyema safari yako.'
+                        : 'Take a gentle moment to log your mood and energy today to track your wellness journey.',
+                    dueDate: todayContext.language === 'sw' ? 'Leo jioni' : 'Tonight',
+                    category: 'Insights' as const,
+                    priority: 'high' as const,
+                    read: false,
+                    dateString: todayContext.language === 'sw' ? 'Ukumbusho wa jioni' : 'Evening reminder',
+                  },
+                ]
+              : []),
+          ]}
         />
       )}
 

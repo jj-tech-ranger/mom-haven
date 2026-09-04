@@ -6,6 +6,7 @@ interface PersonalizedTodayProps {
   userId: string;
   userName?: string;
   onNavigate: (tab: 'haven' | 'journey' | 'records' | 'profile') => void;
+  onOpenAskHaven?: (prompt?: string) => void;
 }
 
 /**
@@ -16,12 +17,14 @@ export default function PersonalizedToday({
   userId,
   userName,
   onNavigate,
+  onOpenAskHaven,
 }: PersonalizedTodayProps) {
   return (
     <TodayDashboard
       userId={userId}
       userName={userName}
       onNavigate={onNavigate}
+      onOpenAskHaven={onOpenAskHaven}
     />
   );
 }

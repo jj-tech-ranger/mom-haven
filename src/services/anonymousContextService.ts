@@ -7,11 +7,20 @@ import {
   type HealthContext,
   type LifecycleStage,
 } from '../types/healthContext';
+import type { MoodType } from '../types/healthLog';
 import {
   getHealthContext,
   mergeHealthContext,
   saveHealthContext,
 } from './healthContextService';
+import { createHealthLog } from './healthLogService';
+
+export interface GuestMoodEntry {
+  mood: MoodType;
+  energyLevel?: 1 | 2 | 3 | 4 | 5;
+  timestamp: string;
+  notes?: string;
+}
 
 export interface AnonymousContextDraft {
   lifecycleStage: LifecycleStage;
@@ -24,6 +33,8 @@ export interface AnonymousContextDraft {
   county?: string;
   subcounty?: string;
   preferredName?: string;
+  todaysMood?: GuestMoodEntry;
+  moodHistory?: GuestMoodEntry[];
   createdAt: string;
   expiresAt: string;
 }
@@ -133,6 +144,46 @@ export function sanitizeAnonymousDraftInput(
     result.preferredName = clean.preferredName.trim();
   }
 
+  // Allowed moods
+  const validMoods: MoodType[] = ['calm', 'happy', 'tired', 'anxious', 'sad', 'overwhelmed'];
+
+  const sanitizeMoodEntry = (entry: unknown): GuestMoodEntry | undefined => {
+    if (!entry || typeof entry !== 'object') return undefined;
+    const e = entry as Record<string, unknown>;
+    if (typeof e.mood !== 'string' || !validMoods.includes(e.mood as MoodType)) {
+      return undefined;
+    }
+    const sanitizedEntry: GuestMoodEntry = {
+      mood: e.mood as MoodType,
+      timestamp:
+        typeof e.timestamp === 'string' && !Number.isNaN(Date.parse(e.timestamp))
+          ? e.timestamp
+          : new Date().toISOString(),
+    };
+    if (typeof e.energyLevel === 'number' && [1, 2, 3, 4, 5].includes(e.energyLevel)) {
+      sanitizedEntry.energyLevel = e.energyLevel as 1 | 2 | 3 | 4 | 5;
+    }
+    if (typeof e.notes === 'string' && e.notes.trim()) {
+      sanitizedEntry.notes = e.notes.trim().slice(0, 500);
+    }
+    return sanitizedEntry;
+  };
+
+  if (clean.todaysMood) {
+    const sanitizedToday = sanitizeMoodEntry(clean.todaysMood);
+    if (sanitizedToday) result.todaysMood = sanitizedToday;
+  }
+
+  if (Array.isArray(clean.moodHistory)) {
+    const validEntries = clean.moodHistory
+      .map(sanitizeMoodEntry)
+      .filter((entry): entry is GuestMoodEntry => Boolean(entry))
+      .slice(-30);
+    if (validEntries.length > 0) {
+      result.moodHistory = validEntries;
+    }
+  }
+
   return result;
 }
 
@@ -187,6 +238,8 @@ export function saveAnonymousContextDraft(
       county: sanitized.county,
       subcounty: sanitized.subcounty,
       preferredName: sanitized.preferredName,
+      todaysMood: sanitized.todaysMood,
+      moodHistory: sanitized.moodHistory,
       createdAt,
       expiresAt,
     };
@@ -197,6 +250,54 @@ export function saveAnonymousContextDraft(
     console.warn('[AnonymousContext] Failed to persist anonymous draft to localStorage', error);
     return null;
   }
+}
+
+export function saveGuestMoodLog(
+  mood: MoodType,
+  energyLevel?: 1 | 2 | 3 | 4 | 5,
+  notes?: string,
+): AnonymousContextDraft | null {
+  const current = getAnonymousContextDraft() || {
+    lifecycleStage: 'pregnancy',
+    language: 'en',
+    interests: [],
+  };
+
+  const now = new Date();
+  const timestamp = now.toISOString();
+  const newEntry: GuestMoodEntry = {
+    mood,
+    energyLevel,
+    timestamp,
+    notes: notes ? notes.trim().slice(0, 500) : undefined,
+  };
+
+  const todayStr = timestamp.slice(0, 10);
+  const existingHistory = (current.moodHistory || []).filter(
+    (entry) => !entry.timestamp.startsWith(todayStr),
+  );
+  const updatedHistory = [...existingHistory, newEntry].slice(-30);
+
+  return saveAnonymousContextDraft({
+    ...current,
+    todaysMood: newEntry,
+    moodHistory: updatedHistory,
+  });
+}
+
+export function getGuestTodaysMood(): GuestMoodEntry | null {
+  const draft = getAnonymousContextDraft();
+  if (!draft || !draft.todaysMood) return null;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if (draft.todaysMood.timestamp.startsWith(todayStr)) {
+    return draft.todaysMood;
+  }
+  return null;
+}
+
+export function getGuestMoodHistory(): GuestMoodEntry[] {
+  const draft = getAnonymousContextDraft();
+  return draft?.moodHistory || [];
 }
 
 export function clearAnonymousContextDraft(): void {
@@ -313,6 +414,29 @@ export async function syncAnonymousContext(
         },
         { merge: true },
       );
+
+      // Sync guest mood history to real health logs if present
+      const moodsToSync =
+        draft.moodHistory && draft.moodHistory.length > 0
+          ? draft.moodHistory
+          : draft.todaysMood
+          ? [draft.todaysMood]
+          : [];
+      for (const m of moodsToSync) {
+        try {
+          await createHealthLog(user.uid, {
+            type: 'mood',
+            timestamp: m.timestamp,
+            values: {
+              mood: m.mood,
+              ...(m.energyLevel ? { energyLevel: m.energyLevel } : {}),
+            },
+            notes: m.notes,
+          });
+        } catch (logErr) {
+          console.warn('[AnonymousContext] Failed to migrate guest mood log to healthLog', logErr);
+        }
+      }
 
       clearAnonymousContextDraft();
 

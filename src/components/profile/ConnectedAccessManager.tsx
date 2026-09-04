@@ -60,7 +60,7 @@ export default function ConnectedAccessManager({ motherId }: ConnectedAccessMana
     }
   };
 
-  const activePartners = partners.filter(p => p.status === 'connected');
+  const activePartners = partners.filter(p => p.status === 'active');
   const pendingPartners = partners.filter(p => p.status === 'pending');
   const activeClinicians = clinicians.filter(c => c.status === 'active' && c.expiresAt > new Date().toISOString());
 

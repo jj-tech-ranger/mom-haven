@@ -1,13 +1,29 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Bell, Calendar, Syringe, Sparkles, Check, Clock } from 'lucide-react';
+import { ArrowLeft, Bell, Calendar, Syringe, Sparkles, Check, Clock, FileText } from 'lucide-react';
 import { Reminder } from '../../types';
+
+export interface NotificationCenterItem {
+  id: string;
+  userId?: string;
+  title: string;
+  description: string;
+  dueDate: string;
+  category: 'Appointments' | 'Vaccines' | 'Insights' | 'Danger Signs';
+  priority?: 'urgent' | 'high' | 'medium' | 'normal';
+  read?: boolean;
+  dateString?: string;
+  hasDangerSigns?: boolean;
+  recordsLink?: boolean;
+}
 
 interface NotificationCenterProps {
   onBack: () => void;
   onSelectReminder: (reminder: Reminder | any) => void;
+  extraNotifications?: NotificationCenterItem[];
+  onNavigateRecords?: () => void;
 }
 
-const SAMPLE_NOTIFICATIONS = [
+const SAMPLE_NOTIFICATIONS: NotificationCenterItem[] = [
   {
     id: 'notif-1',
     userId: 'user',
@@ -54,9 +70,17 @@ const SAMPLE_NOTIFICATIONS = [
   }
 ];
 
-export default function NotificationCenter({ onBack, onSelectReminder }: NotificationCenterProps) {
+export default function NotificationCenter({
+  onBack,
+  onSelectReminder,
+  extraNotifications = [],
+  onNavigateRecords,
+}: NotificationCenterProps) {
   const [activeTab, setActiveTab] = useState<'All' | 'Appointments' | 'Vaccines' | 'Insights'>('All');
-  const [notifications, setNotifications] = useState(SAMPLE_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationCenterItem[]>(() => [
+    ...extraNotifications,
+    ...SAMPLE_NOTIFICATIONS,
+  ]);
 
   const filtered = notifications.filter(n => {
     if (activeTab === 'All') return true;
@@ -151,13 +175,29 @@ export default function NotificationCenter({ onBack, onSelectReminder }: Notific
                 <p className="font-body text-[12px] text-[var(--ink-600)] mt-1 line-clamp-2">
                   {item.description}
                 </p>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--haven-deep)] bg-[var(--lavender-100)] px-2.5 py-0.5 rounded-full">
-                    <Clock className="w-3 h-3" />
-                    {item.dueDate}
-                  </span>
-                  {!item.read && (
-                    <span className="w-2 h-2 rounded-full bg-rose-500" />
+                <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--haven-deep)] bg-[var(--lavender-100)] px-2.5 py-0.5 rounded-full">
+                      <Clock className="w-3 h-3" />
+                      {item.dueDate}
+                    </span>
+                    {!item.read && (
+                      <span className="w-2 h-2 rounded-full bg-rose-500" />
+                    )}
+                  </div>
+
+                  {(item.hasDangerSigns || item.recordsLink) && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onNavigateRecords?.();
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-display font-semibold transition-colors cursor-pointer"
+                    >
+                      <FileText className="w-3 h-3 text-rose-600" />
+                      <span>View in Clinical Records</span>
+                    </button>
                   )}
                 </div>
               </div>

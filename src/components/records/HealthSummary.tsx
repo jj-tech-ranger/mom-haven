@@ -368,7 +368,7 @@ export default function HealthSummary({
       )}
 
       {/* Section 4: Recent Home Monitoring & Danger Signs (Layer 2/3) */}
-      <section className="bg-white border border-[var(--border-hairline)] rounded-[22px] p-5 shadow-card-1 space-y-3">
+      <section id="recent-health-logs" className="bg-white border border-[var(--border-hairline)] rounded-[22px] p-5 shadow-card-1 space-y-3">
         <div className="flex items-center justify-between gap-2 pb-2 border-b border-[var(--border-hairline)]">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-[var(--haven-deep)]" />

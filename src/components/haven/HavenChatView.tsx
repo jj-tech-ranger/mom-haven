@@ -16,64 +16,121 @@ import ReactMarkdown from 'react-markdown';
 import { askHavenChat, ChatMessage, MaternalContext } from '../../services/geminiService';
 import { InterceptorResult } from '../../services/safetyInterceptor';
 import { usePreferences } from '../../context/PreferencesContext';
+import { getActivePregnancy } from '../../services/pregnancyService';
+import { getChildren, calculateChildAge } from '../../services/childService';
 
 interface HavenChatViewProps {
+  userId?: string;
   context?: MaternalContext;
   initialPrompt?: string;
   onOpenEmergencyHub?: () => void;
   onTriggerEmergency?: () => void;
 }
 
+function buildWelcomeMessage(ctx: MaternalContext, lang: string): ChatMessage {
+  return {
+    id: 'welcome-1',
+    sender: 'haven',
+    text: lang === 'sw'
+      ? ctx.mode === 'PREGNANCY'
+        ? `Habari Mama! Mimi ni **Haven**, mshauri wako wa afya katika safari yako ya ujauzito na malezi. Kwa sasa uko katika **wiki ya ${ctx.gestationalWeeks || 24}**.\n\nUnajisikiaje leo? Unaweza kuniuliza kuhusu lishe bora, miadi ya kliniki, dalili za kawaida, au maandalizi ya uzazi.`
+        : `Habari Mama! Mimi ni **Haven**, niko hapa kukusaidia katika kumtunza **${ctx.childName || 'mwanao'}** (${ctx.childAgeFormatted || 'mwenye miezi 4'}).\n\nNiulize chochote kuhusu ratiba ya chanjo, unyonyeshaji, vyakula vya nyongeza, au ukuaji wa mtoto.`
+      : ctx.mode === 'PREGNANCY'
+      ? `Hello Mama! I am **Haven**, your companion through pregnancy and early motherhood. You are currently at **${ctx.gestationalWeeks || 24} weeks**.\n\nHow are you feeling today? You can ask me about nutrition, clinic appointments, common symptoms, or labor preparation.`
+      : `Hello Mama! I am **Haven**, here to support you in caring for **${ctx.childName || 'your baby'}** (${ctx.childAgeFormatted || '4 months old'}).\n\nAsk me anything about immunization schedules, breastfeeding, complementary feeding, or developmental milestones.`,
+    timestamp: new Date().toISOString(),
+    provenanceTag: lang === 'sw' ? 'Miongozo ya Kitabu cha Afya ya Mama na Mtoto (MOH Kenya)' : 'Kenya MOH Mother & Child Health Handbook Guidance',
+    suggestedFollowups: lang === 'sw'
+      ? ctx.mode === 'PREGNANCY'
+        ? [
+            'Vyakula vipi vya kienyeji vinaongeza damu?',
+            'Ratiba ya ziara 8 za kliniki ya ANC Kenya ikoje?',
+            'Nipakie nini kwenye begi la kwenda kujifungua hospitali?'
+          ]
+        : [
+            'Chanjo inayofuata ya KEPI ni lini?',
+            'Nitaanzaje kumpa mtoto vyakula vya nyongeza akifikisha miezi 6?',
+            'Ni hatua gani za kawaida za mtoto wa miezi 4?'
+          ]
+      : ctx.mode === 'PREGNANCY'
+      ? [
+          'What traditional foods build strong blood?',
+          'What are the 8 ANC visits in Kenya?',
+          'How do I pack my hospital birth bag?'
+        ]
+      : [
+          'When is the next KEPI vaccine dose?',
+          'How do I start complementary foods at 6 months?',
+          'What are normal 4-month milestones?'
+        ]
+  };
+}
+
 export default function HavenChatView({ 
-  context = { mode: 'PREGNANCY', gestationalWeeks: 24 }, 
+  userId,
+  context: propContext, 
   initialPrompt,
   onOpenEmergencyHub,
   onTriggerEmergency 
 }: HavenChatViewProps) {
   const { language } = usePreferences();
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome-1',
-      sender: 'haven',
-      text: language === 'sw'
-        ? context.mode === 'PREGNANCY'
-          ? `Habari Mama! Mimi ni **Haven**, mshauri wako wa afya katika safari yako ya ujauzito na malezi. Kwa sasa uko katika **wiki ya ${context.gestationalWeeks || 24}**.\n\nUnajisikiaje leo? Unaweza kuniuliza kuhusu lishe bora, miadi ya kliniki, dalili za kawaida, au maandalizi ya uzazi.`
-          : `Habari Mama! Mimi ni **Haven**, niko hapa kukusaidia katika kumtunza **${context.childName || 'mwanao'}** (${context.childAgeFormatted || 'mwenye miezi 4'}).\n\nNiulize chochote kuhusu ratiba ya chanjo, unyonyeshaji, vyakula vya nyongeza, au ukuaji wa mtoto.`
-        : context.mode === 'PREGNANCY'
-        ? `Hello Mama! I am **Haven**, your companion through pregnancy and early motherhood. You are currently at **${context.gestationalWeeks || 24} weeks**.\n\nHow are you feeling today? You can ask me about nutrition, clinic appointments, common symptoms, or labor preparation.`
-        : `Hello Mama! I am **Haven**, here to support you in caring for **${context.childName || 'your baby'}** (${context.childAgeFormatted || '4 months old'}).\n\nAsk me anything about immunization schedules, breastfeeding, complementary feeding, or developmental milestones.`,
-      timestamp: new Date().toISOString(),
-      provenanceTag: language === 'sw' ? 'Miongozo ya Kitabu cha Afya ya Mama na Mtoto (MOH Kenya)' : 'Kenya MOH Mother & Child Health Handbook Guidance',
-      suggestedFollowups: language === 'sw'
-        ? context.mode === 'PREGNANCY'
-          ? [
-              'Vyakula vipi vya kienyeji vinaongeza damu?',
-              'Ratiba ya ziara 8 za kliniki ya ANC Kenya ikoje?',
-              'Nipakie nini kwenye begi la kwenda kujifungua hospitali?'
-            ]
-          : [
-              'Chanjo inayofuata ya KEPI ni lini?',
-              'Nitaanzaje kumpa mtoto vyakula vya nyongeza akifikisha miezi 6?',
-              'Ni hatua gani za kawaida za mtoto wa miezi 4?'
-            ]
-        : context.mode === 'PREGNANCY'
-        ? [
-            'What traditional foods build strong blood?',
-            'What are the 8 ANC visits in Kenya?',
-            'How do I pack my hospital birth bag?'
-          ]
-        : [
-            'When is the next KEPI vaccine dose?',
-            'How do I start complementary foods at 6 months?',
-            'What are normal 4-month milestones?'
-          ]
-    }
+  const [activeContext, setActiveContext] = useState<MaternalContext>(
+    propContext || { mode: 'PREGNANCY', gestationalWeeks: 24 }
+  );
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
+    buildWelcomeMessage(activeContext, language)
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [privacyWarning, setPrivacyWarning] = useState<InterceptorResult | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Fetch real maternal context if userId is provided and no explicit propContext was passed
+  useEffect(() => {
+    if (propContext) {
+      setActiveContext(propContext);
+      return;
+    }
+    if (!userId) return;
+
+    let isMounted = true;
+    Promise.all([
+      getActivePregnancy(userId).catch(() => null),
+      getChildren(userId).catch(() => []),
+    ]).then(([preg, kids]) => {
+      if (!isMounted) return;
+      let newCtx: MaternalContext | null = null;
+      if (preg && preg.status === 'active') {
+        newCtx = {
+          mode: 'PREGNANCY',
+          gestationalWeeks: preg.gestationalAgeWeeks || 24,
+          edd: preg.edd,
+          parity: preg.parity,
+        };
+      } else if (kids && kids.length > 0) {
+        const first = kids[0];
+        const age = first.dob ? calculateChildAge(first.dob) : null;
+        newCtx = {
+          mode: 'CHILD',
+          childName: first.name,
+          childAgeFormatted: age?.ageFormatted || undefined,
+          childAgeMonths: age?.months || undefined,
+        };
+      }
+      if (newCtx) {
+        setActiveContext(newCtx);
+        setMessages((prev) => {
+          if (prev.length === 1 && prev[0].id === 'welcome-1') {
+            return [buildWelcomeMessage(newCtx!, language)];
+          }
+          return prev;
+        });
+      }
+    }).catch(console.error);
+
+    return () => { isMounted = false; };
+  }, [userId, propContext, language]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -99,7 +156,7 @@ export default function HavenChatView({
     setLoading(true);
 
     try {
-      const havenResponse = await askHavenChat(query, messages, { ...context, language });
+      const havenResponse = await askHavenChat(query, messages, { ...activeContext, language });
       setMessages((prev) => [...prev, havenResponse]);
 
       if (havenResponse.escalationData?.action === 'PRIVACY_WARNING') {
@@ -112,6 +169,13 @@ export default function HavenChatView({
     }
   };
 
+  // Pre-fill initial prompt if provided
+  useEffect(() => {
+    if (initialPrompt && initialPrompt !== input) {
+      setInput(initialPrompt);
+    }
+  }, [initialPrompt]);
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -120,11 +184,12 @@ export default function HavenChatView({
   };
 
   const lastMessage = messages[messages.length - 1];
+  const hasPriorHistory = messages.some((m) => m.sender === 'user');
 
   return (
-    <div className="flex flex-col h-[calc(100vh-5rem)] bg-[var(--lavender-50)]">
+    <div className="flex flex-col h-[calc(100vh-7.5rem)] sm:h-[calc(100vh-7.5rem)] bg-[var(--lavender-50)]">
       {/* Active Maternal Context Banner */}
-      <div className="bg-white border-b border-[var(--border-hairline)] px-4 py-2.5 flex items-center justify-between shadow-xs">
+      <div className="bg-white border-b border-[var(--border-hairline)] px-4 py-2.5 flex items-center justify-between shadow-xs shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-[var(--lavender-100)] flex items-center justify-center text-[var(--haven-orchid)]">
             <Sparkles className="w-4 h-4" />
@@ -134,9 +199,9 @@ export default function HavenChatView({
               Haven Clinical AI Companion
             </span>
             <p className="font-body text-[11px] text-[var(--haven-deep)] font-semibold">
-              {context.mode === 'PREGNANCY'
-                ? `Pregnancy · Week ${context.gestationalWeeks || 24} (EDD: ${context.edd || 'Upcoming'})`
-                : `Child: ${context.childName || 'Baby'} · ${context.childAgeFormatted || '4 months'}`}
+              {activeContext.mode === 'PREGNANCY'
+                ? `Pregnancy · Week ${activeContext.gestationalWeeks || 24} (EDD: ${activeContext.edd || 'Upcoming'})`
+                : `Child: ${activeContext.childName || 'Baby'} · ${activeContext.childAgeFormatted || '4 months'}`}
             </p>
           </div>
         </div>
@@ -145,6 +210,15 @@ export default function HavenChatView({
           <ShieldCheck className="w-3.5 h-3.5" />
           <span>MOH Grounded</span>
         </div>
+      </div>
+
+      {/* Persistent Non-Diagnostic Disclaimer */}
+      <div className="bg-white border-b border-[var(--border-hairline)] px-4 py-2 text-[11px] text-[var(--ink-600)] flex items-start sm:items-center gap-2 shrink-0 shadow-2xs">
+        <Info className="w-3.5 h-3.5 text-[var(--haven-orchid)] shrink-0 mt-0.5 sm:mt-0" />
+        <p className="font-body leading-tight">
+          <strong className="text-[var(--ink-800)] font-semibold">Educational companion: </strong>
+          Haven offers calm, culturally grounded answers guided by Kenya Ministry of Health standards. Haven does not diagnose or prescribe medicine.
+        </p>
       </div>
 
       {/* Messages Scroll Area */}
@@ -206,6 +280,32 @@ export default function HavenChatView({
             </div>
           );
         })}
+
+        {/* First open: Sample starter prompts (mirroring AnonymousMotherShell pattern) */}
+        {!hasPriorHistory && (
+          <div className="bg-white border border-[var(--border-hairline)] rounded-2xl p-4 shadow-2xs space-y-3 max-w-[95%] sm:max-w-[85%] mt-2">
+            <h3 className="font-display font-bold text-xs uppercase tracking-wider text-[var(--ink-500)]">
+              Sample questions you can ask
+            </h3>
+            <div className="space-y-2 text-xs">
+              {[
+                'What are normal symptoms vs warning signs in week 18?',
+                'How many ANC visits are recommended in Kenya MOH 216?',
+                'What traditional Kenyan foods help boost low hemoglobin?',
+                'What should I pack in my hospital maternity bag?',
+              ].map((q, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setInput(q)}
+                  className="w-full text-left p-3 rounded-xl bg-[var(--surface-2)] border border-[var(--border-hairline)] text-[var(--ink-800)] font-medium hover:border-[var(--haven-orchid)] hover:bg-[var(--lavender-50)] transition-colors cursor-pointer"
+                >
+                  &ldquo;{q}&rdquo;
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {loading && (
           <div className="flex items-center gap-2 text-xs text-gray-500 bg-white p-3 rounded-[16px] w-fit border border-gray-200">

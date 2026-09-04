@@ -10,11 +10,23 @@ import { classifyLayerOneRemote } from './server/safetyConfig.js';
 import { adminAuth, adminDb } from './server/clinicianAccess.js';
 import { buildHavenContext, formatHavenContext } from './server/services/havenContextBuilder.js';
 
-const PORT = Number(process.env.PORT || 8080);
+const PORT = 3000;
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mom-haven';
 const GOOGLE_CLOUD_LOCATION = process.env.GOOGLE_CLOUD_LOCATION || 'europe-west1';
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-const ai = new GoogleGenAI({ vertexai: true, project: PROJECT_ID, location: GOOGLE_CLOUD_LOCATION });
+
+let genAIClient: GoogleGenAI | null = null;
+function getGenAI(): GoogleGenAI {
+  if (!genAIClient) {
+    if (process.env.GEMINI_API_KEY) {
+      genAIClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    } else {
+      genAIClient = new GoogleGenAI({ vertexai: true, project: PROJECT_ID, location: GOOGLE_CLOUD_LOCATION });
+    }
+  }
+  return genAIClient;
+}
+
 const SYSTEM_INSTRUCTION = `You are Haven, MomHaven's supportive companion for Kenyan mothers navigating pregnancy and their child's first five years. You are not a doctor and you do not diagnose. Never provide a diagnosis, medication dose, or prescribing instruction. Keep answers short, warm, culturally grounded, and plain language. Defer Kenyan clinical schedules, thresholds and dosing to MomHaven records and clinicians. Use the supplied MomHaven context to make answers relevant, but respect provenance: user-reported personalization is not clinical confirmation. Never invent missing clinical facts.`;
 const responseSchema = {
   type: 'object',
@@ -87,7 +99,7 @@ async function startServer() {
       } catch (contextError) {
         console.warn('Haven context unavailable; continuing without personalization', contextError);
       }
-      const response = await ai.models.generateContent({
+      const response = await getGenAI().models.generateContent({
         model: GEMINI_MODEL,
         contents: `${context}\n\nLanguage preference: ${language === 'sw' ? 'Kiswahili' : 'English'}\n${languageInstruction}\n\nMother's message:\n${text}`,
         config: { systemInstruction: SYSTEM_INSTRUCTION, responseMimeType: 'application/json', responseSchema, temperature: 0.4, maxOutputTokens: 600 },

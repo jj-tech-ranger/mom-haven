@@ -324,3 +324,105 @@ export async function getDailyHealthLogsByType(
   return getHealthLogs(userId, { type, limit });
 }
 
+function getLocalCalendarDayKey(dateStringOrDate: string | Date): string {
+  const d = typeof dateStringOrDate === 'string' ? new Date(dateStringOrDate) : dateStringOrDate;
+  if (isNaN(d.getTime())) return '';
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Returns the most recent mood log for the given user from today's local calendar day, or null.
+ * Follows the existing Firestore query pattern with fallback to local storage.
+ */
+export async function getTodaysMoodLog(userId: string): Promise<DailyHealthLog | null> {
+  if (!userId) return null;
+  const logs = await getHealthLogs(userId, { type: 'mood', limit: 20 });
+  const todayKey = getLocalCalendarDayKey(new Date());
+  for (const log of logs) {
+    if (log.type === 'mood' && getLocalCalendarDayKey(log.timestamp) === todayKey) {
+      return log;
+    }
+  }
+  return null;
+}
+
+/**
+ * Returns the number of consecutive calendar days (ending today or yesterday) with at least one mood log.
+ * Bounded lookback: max 30 days.
+ */
+export async function getMoodStreak(userId: string): Promise<number> {
+  if (!userId) return 0;
+  const logs = await getHealthLogs(userId, { type: 'mood', limit: 60 });
+  if (!logs || logs.length === 0) return 0;
+
+  const daySet = new Set<string>();
+  for (const log of logs) {
+    if (log.type === 'mood' && log.timestamp) {
+      const key = getLocalCalendarDayKey(log.timestamp);
+      if (key) daySet.add(key);
+    }
+  }
+
+  const now = new Date();
+  const todayKey = getLocalCalendarDayKey(now);
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  const yesterdayKey = getLocalCalendarDayKey(yesterday);
+
+  let startDate: Date;
+  if (daySet.has(todayKey)) {
+    startDate = now;
+  } else if (daySet.has(yesterdayKey)) {
+    startDate = yesterday;
+  } else {
+    return 0;
+  }
+
+  let streak = 0;
+  for (let i = 0; i < 30; i++) {
+    const target = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() - i);
+    const key = getLocalCalendarDayKey(target);
+    if (daySet.has(key)) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+const NEGATIVE_MOOD_TYPES = new Set<string>(['sad', 'anxious', 'overwhelmed']);
+
+/**
+ * Returns the number of consecutive recent days where the latest logged mood was negative (sad, anxious, or overwhelmed).
+ */
+export async function getConsecutiveNegativeMoodCount(userId: string): Promise<number> {
+  if (!userId) return 0;
+  const logs = await getHealthLogs(userId, { type: 'mood', limit: 20 });
+  if (!logs || logs.length === 0) return 0;
+
+  const dayMoodMap = new Map<string, string>();
+  for (const log of logs) {
+    if (log.type === 'mood' && log.values && (log.values as any).mood) {
+      const dayKey = getLocalCalendarDayKey(log.timestamp);
+      if (dayKey && !dayMoodMap.has(dayKey)) {
+        dayMoodMap.set(dayKey, (log.values as any).mood);
+      }
+    }
+  }
+
+  let count = 0;
+  for (const [, mood] of dayMoodMap) {
+    if (NEGATIVE_MOOD_TYPES.has(mood)) {
+      count++;
+    } else {
+      break;
+    }
+  }
+  return count;
+}
+
+
