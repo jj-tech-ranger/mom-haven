@@ -13,7 +13,6 @@ import ClinicianPendingScreen from './components/auth/ClinicianPendingScreen';
 import AdminMfaModal from './components/auth/AdminMfaModal';
 import PremiumOnboardingWizard from './components/auth/PremiumOnboardingWizard';
 import {
-  clearAnonymousContextDraft,
   syncAnonymousContext,
   hasAnonymousContextDraft,
 } from './services/anonymousContextService';
@@ -47,9 +46,24 @@ export default function App() {
     setNeedsOnboarding(false);
 
     try {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      let userDoc = await getDoc(doc(db, 'users', user.uid));
       if (requestId !== fetchRequestRef.current) return;
-      const data = userDoc.exists() ? userDoc.data() : {};
+      let data = userDoc.exists() ? userDoc.data() : {};
+
+      // Initialize a missing profile, then re-read it. The second read is
+      // important after email verification and anonymous-partner sign-in because
+      // another auth callback may have created the profile while this read was in flight.
+      if (!userDoc.exists()) {
+        try {
+          await ensureUserProfile(user);
+          userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (requestId !== fetchRequestRef.current) return;
+          data = userDoc.exists() ? userDoc.data() : {};
+        } catch (err) {
+          console.warn('Could not initialize MomHaven user profile', err);
+        }
+      }
+
       const role = (data?.role as UserRole) || 'MOTHER';
 
       if (role === 'ADMIN') {
@@ -105,16 +119,14 @@ export default function App() {
         }
       }
 
-      if (role === 'MOTHER' && !userDoc.exists()) {
-        try { await ensureUserProfile(user); } catch (err) { console.warn('Could not initialize MomHaven user profile', err); }
-      }
-
       const hydrated = await hydrateAnonymousContext(user);
       if (requestId !== fetchRequestRef.current) return;
       setUserRole('MOTHER');
       setClinicianData(null);
       const isDismissed = sessionStorage.getItem(`onboarding_dismissed_${user.uid}`) === 'true';
-      setNeedsOnboarding(!isDismissed && !hydrated && data?.onboardingVersion !== 1);
+      const localCompletion = localStorage.getItem(`momhaven_onboarding_complete_${user.uid}`) === 'true';
+      const firestoreCompletion = data?.onboardingVersion === 1 || Boolean(data?.onboardingCompletedAt);
+      setNeedsOnboarding(!isDismissed && !localCompletion && !firestoreCompletion && !hydrated);
     } catch (err) {
       if (requestId !== fetchRequestRef.current) return;
       console.warn('Could not read user role from Firestore', err);
@@ -130,9 +142,6 @@ export default function App() {
       setVerificationMessage(null);
 
       if (user) {
-        // Password accounts are authenticated immediately after signup, but that
-        // must not be treated as verified. Keep unverified users outside all
-        // application data until Firebase confirms their email address.
         const requiresEmailVerification = user.providerData.some(
           provider => provider.providerId === 'password',
         ) && !user.emailVerified;
@@ -238,11 +247,13 @@ export default function App() {
         userId={currentUser.uid}
         initialDisplayName={currentUser.displayName || ''}
         onCompleted={() => {
+          localStorage.setItem(`momhaven_onboarding_complete_${currentUser.uid}`, 'true');
           sessionStorage.removeItem(`onboarding_dismissed_${currentUser.uid}`);
           setNeedsOnboarding(false);
           void fetchUserData(currentUser);
         }}
         onCancel={() => {
+          localStorage.setItem(`momhaven_onboarding_complete_${currentUser.uid}`, 'true');
           sessionStorage.setItem(`onboarding_dismissed_${currentUser.uid}`, 'true');
           setNeedsOnboarding(false);
         }}
