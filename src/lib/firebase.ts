@@ -14,13 +14,36 @@ import {
   updateProfile,
   type User,
 } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp, getDocFromServer } from 'firebase/firestore';
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+  getDocFromServer,
+  type Firestore,
+} from 'firebase/firestore';
 import { firebaseConfig } from './firebaseConfig';
 
 export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const FIRESTORE_DATABASE_ID = 'mom-haven';
 
-export const db = getFirestore(app, FIRESTORE_DATABASE_ID);
+let firestoreDb: Firestore;
+try {
+  firestoreDb = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager(),
+    }),
+  }, FIRESTORE_DATABASE_ID);
+} catch (err) {
+  // Fallback if already initialized (e.g., during testing or SSR)
+  firestoreDb = getFirestore(app, FIRESTORE_DATABASE_ID);
+}
+
+export const db = firestoreDb;
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 

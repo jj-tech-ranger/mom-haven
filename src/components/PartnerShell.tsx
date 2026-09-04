@@ -283,7 +283,7 @@ export default function PartnerShell({
               <div className="space-y-4">
                 {/* Refresh indicator or active syncing */}
                 {motherDataLoading && (
-                  <div className="flex items-center justify-center gap-2 p-2.5 bg-white/80 backdrop-blur-xs border border-[var(--border-hairline)] rounded-[16px] text-xs text-[var(--haven-deep)] shadow-xs">
+                  <div className="flex items-center justify-center gap-2 p-2.5 bg-white border border-[var(--border-hairline)] rounded-md text-xs text-[var(--haven-deep)] shadow-xs">
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-[var(--haven-orchid)]" />
                     <span>Syncing {displayMotherName}’s latest updates...</span>
                   </div>
@@ -575,7 +575,7 @@ export default function PartnerShell({
 
       {/* Partner Bottom Navigation */}
       {linkedMother && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-[var(--border-hairline)] py-2 px-3 z-40">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--border-hairline)] shadow-xs py-2 px-3 z-40">
           <div className="max-w-md mx-auto grid grid-cols-5 gap-1">
             {[
               { id: 'home', label: 'Home', icon: Home },

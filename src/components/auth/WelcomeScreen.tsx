@@ -28,11 +28,11 @@ export default function WelcomeScreen({
       {/* Main Centered Content */}
       <div className="flex-1 flex flex-col items-center justify-center text-center my-auto z-10 max-w-sm mx-auto">
         {/* Logo Container */}
-        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-[28px] bg-white/15 backdrop-blur-md p-3.5 mb-6 shadow-2xl flex items-center justify-center border border-white/20 transition-transform hover:scale-105 duration-300">
+        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-white p-3.5 mb-6 shadow-md flex items-center justify-center border border-white/30 transition-transform hover:scale-105 duration-300">
           <img
             src="/assets/logo.png"
             alt="MomHaven Logo"
-            className="w-full h-full object-contain filter drop-shadow-md"
+            className="w-full h-full object-contain"
             referrerPolicy="no-referrer"
           />
         </div>
@@ -70,7 +70,7 @@ export default function WelcomeScreen({
           type="button"
           onClick={onGoogleSignIn}
           disabled={loading}
-          className="w-full py-3.5 px-6 rounded-full bg-white/10 hover:bg-white/15 active:scale-[0.98] border border-white/25 text-white font-display font-semibold text-[15px] flex items-center justify-center gap-3 backdrop-blur-sm transition-all cursor-pointer"
+          className="w-full py-3.5 px-6 rounded-full bg-white/10 hover:bg-white/20 active:scale-[0.98] border border-white/30 text-white font-display font-semibold text-[15px] flex items-center justify-center gap-3 transition-all cursor-pointer"
         >
           <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
           <span>Continue with Google</span>

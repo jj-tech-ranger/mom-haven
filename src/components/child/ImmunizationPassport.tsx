@@ -70,45 +70,56 @@ export default function ImmunizationPassport({
   });
 
   return (
-    <div className="min-h-screen bg-[var(--lavender-50)] pb-28">
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-28">
+      {/* Official Kenya MOH Handbook Banner */}
+      <div className="bg-slate-800 text-slate-200 px-4 py-1.5 border-b border-slate-700 flex items-center justify-between text-[10px] font-mono tracking-wider">
+        <span className="flex items-center gap-1.5 font-semibold uppercase">
+          <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
+          REPUBLIC OF KENYA · MINISTRY OF HEALTH
+        </span>
+        <span className="text-slate-400 font-mono">MOH 216 · KEPI PASSPORT</span>
+      </div>
+
       {/* Header */}
-      <div className="px-5 pt-6 pb-4 bg-white border-b border-[var(--border-hairline)] sticky top-0 z-10">
+      <div className="px-5 pt-4 pb-3 bg-white border-b border-slate-200 sticky top-0 z-10 shadow-xs">
         <div className="flex items-center justify-between mb-3">
           <button
             type="button"
             onClick={onBack}
-            className="w-10 h-10 rounded-full bg-[var(--lavender-50)] flex items-center justify-center text-[var(--ink-900)] cursor-pointer"
+            className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 cursor-pointer transition-colors"
+            aria-label="Go back"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
           </button>
           <div className="text-center">
-            <h1 className="font-display font-extrabold text-[17px] text-[var(--ink-900)]">
-              Immunization Passport
+            <h1 className="font-display font-bold text-base text-slate-900">
+              Immunization Register
             </h1>
-            <span className="text-[11px] font-semibold text-[var(--haven-orchid)]">
-              {childName} · KEPI Protocol
+            <span className="text-[11px] font-mono text-teal-700 font-medium">
+              {childName} · KEPI Protocol (pp. 31–34)
             </span>
           </div>
           <button
             type="button"
             onClick={() => onLogVaccine()}
-            className="w-10 h-10 rounded-full bg-[var(--haven-deep)] text-white flex items-center justify-center shadow-xs cursor-pointer hover:opacity-90"
+            className="w-9 h-9 rounded-lg bg-teal-700 hover:bg-teal-800 text-white flex items-center justify-center shadow-xs cursor-pointer transition-colors"
+            aria-label="Record vaccine"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Filter Chips */}
+        {/* Filter Tabs */}
         <div className="flex gap-2">
           {(['All', 'Given', 'Pending'] as const).map(tab => (
             <button
               key={tab}
               type="button"
               onClick={() => setFilter(tab)}
-              className={`px-4 py-1.5 rounded-full text-[12px] font-display font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer ${
                 filter === tab
-                  ? 'bg-[var(--haven-deep)] text-white shadow-xs'
-                  : 'bg-[var(--lavender-100)] text-[var(--ink-600)] hover:bg-[var(--lavender-200)]'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
               {tab}
@@ -119,28 +130,28 @@ export default function ImmunizationPassport({
 
       <div className="p-4 sm:p-6 space-y-4 max-w-lg mx-auto">
         {/* Compliance Summary Card */}
-        <div className="bg-white rounded-[22px] p-5 border border-[var(--border-hairline)] shadow-card-1 space-y-3">
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-2.5">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-[11px] font-display font-bold text-[var(--haven-orchid)] uppercase tracking-wider">
+              <span className="text-[10px] font-mono font-bold text-teal-800 uppercase tracking-wider">
                 KEPI Protection Status
               </span>
-              <h3 className="font-display font-bold text-[20px] text-[var(--ink-900)]">
-                {givenCount} of {KEPI_SCHEDULE.length} Doses Recorded
+              <h3 className="font-display font-bold text-lg text-slate-900">
+                <span className="font-mono text-teal-700 font-bold">{givenCount}</span> of {KEPI_SCHEDULE.length} Doses Recorded
               </h3>
             </div>
-            <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[12px] font-display font-bold">
-              {verifiedCount} Verified
+            <span className="px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-mono font-bold">
+              {verifiedCount} Clinician Verified
             </span>
           </div>
 
-          <p className="font-body text-[12px] text-[var(--ink-600)]">
-            Immunizations provide lifelong defense against preventable childhood diseases. Carry your MOH 216 card to every clinic visit.
+          <p className="font-body text-xs text-slate-600 leading-relaxed">
+            Immunizations provide lifelong defense against preventable childhood diseases. Ensure entries match your official MOH 216 card stamps.
           </p>
         </div>
 
         {/* Schedule List */}
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {filteredSchedule.map(item => {
             const recorded = vaccines.find(
               v => v.vaccineName.toLowerCase().includes(item.id) || v.vaccineName.toLowerCase() === item.name.toLowerCase()
@@ -150,52 +161,54 @@ export default function ImmunizationPassport({
             return (
               <div
                 key={item.id}
-                className={`p-4 rounded-[20px] border transition-all ${
+                className={`p-3.5 rounded-xl border transition-all ${
                   isGiven
-                    ? 'bg-white border-[var(--border-hairline)] shadow-card-1'
-                    : 'bg-white/80 border-dashed border-[var(--border-hairline)] hover:bg-white'
+                    ? 'bg-white border-slate-200 shadow-xs'
+                    : 'bg-white/70 border-dashed border-slate-300'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
                         isGiven
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-[var(--lavender-100)] text-[var(--ink-600)]'
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                          : 'bg-slate-100 text-slate-600 border-slate-200'
                       }`}
                     >
                       {isGiven ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-700" />
+                        <CheckCircle2 className="w-4 h-4 text-emerald-700" />
                       ) : (
-                        <Syringe className="w-4 h-4 text-[var(--haven-deep)]" />
+                        <Syringe className="w-4 h-4 text-teal-700" />
                       )}
                     </div>
 
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-display font-bold text-[14px] text-[var(--ink-900)]">
+                        <h4 className="font-display font-bold text-sm text-slate-900">
                           {item.name}
                         </h4>
-                        <span className="text-[11px] font-semibold text-[var(--haven-orchid)] bg-[var(--lavender-100)] px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-mono font-bold text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
                           {item.ageBracket}
                         </span>
+                        {recorded && (
+                          <ProvenanceBadge provenance={recorded.provenance} />
+                        )}
                       </div>
 
-                      <p className="font-body text-[12px] text-[var(--ink-600)] mt-0.5">
-                        Protects against: {item.targetDisease}
+                      <p className="font-mono text-[10px] uppercase text-slate-500 mt-0.5">
+                        Route: {item.route} · Target: {item.targetDisease}
                       </p>
 
                       {isGiven && recorded ? (
-                        <div className="mt-2 flex items-center gap-2 flex-wrap">
-                          <span className="text-[11px] font-semibold text-[var(--ink-700)]">
+                        <div className="mt-1.5 flex items-center gap-2 flex-wrap text-[11px] font-mono text-slate-700 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md">
+                          <span>
                             Given: {recorded.dateAdministered ? new Date(recorded.dateAdministered).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recorded'}
                             {recorded.facilityName ? ` at ${recorded.facilityName}` : ''}
                           </span>
-                          <ProvenanceBadge provenance={recorded.provenance} />
                         </div>
                       ) : (
-                        <span className="text-[11px] text-[var(--ink-400)] block mt-1">
+                        <span className="text-[11px] font-mono text-slate-400 block mt-1">
                           Route: {item.route}
                         </span>
                       )}
@@ -206,9 +219,9 @@ export default function ImmunizationPassport({
                     <button
                       type="button"
                       onClick={() => onLogVaccine(item.name, item.ageBracket)}
-                      className="px-3 py-1.5 rounded-full bg-[var(--lavender-100)] text-[var(--haven-deep)] font-display font-bold text-[12px] hover:bg-[var(--lavender-200)] transition-colors shrink-0 cursor-pointer"
+                      className="px-2.5 py-1 rounded-md text-xs font-mono font-semibold bg-teal-50 border border-teal-200 text-teal-800 hover:bg-teal-100 shrink-0 cursor-pointer transition-colors"
                     >
-                      + Log
+                      Record
                     </button>
                   )}
                 </div>
@@ -219,14 +232,14 @@ export default function ImmunizationPassport({
 
         {/* Action Button */}
         <div className="pt-2">
-          <Button
-            variant="primary"
+          <button
+            type="button"
             onClick={() => onLogVaccine()}
-            className="w-full py-3.5 flex items-center justify-center gap-2"
+            className="w-full py-3 px-4 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-display font-bold text-sm flex items-center justify-center gap-2 shadow-xs cursor-pointer transition-colors"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Record Administered Vaccine</span>
-          </Button>
+            <span>Record Administered Vaccine</span>
+          </button>
         </div>
       </div>
     </div>

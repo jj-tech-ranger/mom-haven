@@ -35,6 +35,7 @@ interface JourneyMainViewProps {
   userName?: string;
   onNavigateToday: () => void;
   onChildCreated?: (childId: string) => void;
+  onTriggerEmergency?: () => void;
 }
 
 type SubView = 'overview' | 'anc' | 'birth-plan' | 'timeline';

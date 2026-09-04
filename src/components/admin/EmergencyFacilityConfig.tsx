@@ -149,7 +149,7 @@ export const EmergencyFacilityConfig: React.FC = () => {
 
       {/* Add Modal */}
       {isAddOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100">
             <h3 className="text-base font-bold text-gray-900 mb-4">Add Emergency Dispatch Contact</h3>
             <form onSubmit={handleAdd} className="space-y-3 text-xs">

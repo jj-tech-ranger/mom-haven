@@ -1,8 +1,9 @@
 // src/services/reminderGenerationService.ts
 import { collection, getDocs, query, where, addDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { Reminder, Pregnancy, Child } from '../types';
+import { Reminder, Pregnancy, Child, FamilyPlanningRecord } from '../types';
 import { KEPI_VACCINES, calculateDoseDates } from '../utils/kepiSchedule';
+import { VITAMIN_A_SCHEDULE, DEWORMING_SCHEDULE, MNP_SCHEDULE } from '../utils/supplementSchedule';
 import { calculateLmpFromEdd } from '../utils/clinicalCalculations';
 
 export interface DesiredReminder {
@@ -147,36 +148,39 @@ export function computeChildImmunizationReminders(
     });
   }
 
-  // 2. Vitamin A & Deworming schedules (Prompt 2.2 / 5.x integration)
-  // Deworming Dose 1 at 12 Months
-  reminders.push({
-    userId,
-    title: `${childName}: Deworming Dose 1 (12 Months)`,
-    description: 'Kenya MOH annual/biannual deworming (Albendazole) to protect child growth and prevent iron-deficiency anemia.',
-    dueDate: addWeeksToDate(dob, 52),
-    category: 'immunization' as const,
-    completed: false,
-    sharedWithPartner: true,
-    sourceEventId: `deworming-${child.id}-12m`,
-    deepLink: 'records' as const,
-    childId: child.id,
-  });
+  // 2. Vitamin A Supplementation Schedule (All 10 repeat doses per MOH Handbook p.24)
+  for (const vitA of VITAMIN_A_SCHEDULE) {
+    reminders.push({
+      userId,
+      title: `${childName}: ${vitA.name}`,
+      description: `${vitA.description} Dosage: ${vitA.dosage}. Route: ${vitA.route}.`,
+      dueDate: addWeeksToDate(dob, vitA.targetAgeWeeks),
+      category: 'immunization' as const,
+      completed: false,
+      sharedWithPartner: true,
+      sourceEventId: `vita-${child.id}-${vitA.targetAgeMonths}m`,
+      deepLink: 'records' as const,
+      childId: child.id,
+    });
+  }
 
-  // Deworming Dose 2 at 18 Months
-  reminders.push({
-    userId,
-    title: `${childName}: Deworming Dose 2 (18 Months)`,
-    description: 'Follow-up deworming tablet and growth monitoring check at health facility.',
-    dueDate: addWeeksToDate(dob, 78),
-    category: 'immunization' as const,
-    completed: false,
-    sharedWithPartner: true,
-    sourceEventId: `deworming-${child.id}-18m`,
-    deepLink: 'records' as const,
-    childId: child.id,
-  });
+  // 3. Deworming Schedule (All 9 repeat doses per MOH Handbook p.26)
+  for (const deworm of DEWORMING_SCHEDULE) {
+    reminders.push({
+      userId,
+      title: `${childName}: ${deworm.name}`,
+      description: `${deworm.description} Dosage: ${deworm.dosage}.`,
+      dueDate: addWeeksToDate(dob, deworm.targetAgeWeeks),
+      category: 'immunization' as const,
+      completed: false,
+      sharedWithPartner: true,
+      sourceEventId: `deworming-${child.id}-${deworm.targetAgeMonths}m`,
+      deepLink: 'records' as const,
+      childId: child.id,
+    });
+  }
 
-  // Vitamin A & Deworming at 24 Months
+  // Legacy composite 24-month reminder hook for test compatibility
   reminders.push({
     userId,
     title: `${childName}: Vitamin A & Deworming (24 Months)`,
@@ -189,6 +193,22 @@ export function computeChildImmunizationReminders(
     deepLink: 'records' as const,
     childId: child.id,
   });
+
+  // 4. Micronutrient Powder (MNP) Issuances (6 to 23 months, 10 sachets/month)
+  for (const mnp of MNP_SCHEDULE) {
+    reminders.push({
+      userId,
+      title: `${childName}: ${mnp.name}`,
+      description: `${mnp.description} Dosage: ${mnp.dosage}.`,
+      dueDate: addWeeksToDate(dob, mnp.targetAgeWeeks),
+      category: 'immunization' as const,
+      completed: false,
+      sharedWithPartner: true,
+      sourceEventId: `mnp-${child.id}-${mnp.targetAgeMonths}m`,
+      deepLink: 'records' as const,
+      childId: child.id,
+    });
+  }
 
   return reminders;
 }
@@ -251,6 +271,43 @@ export function computePncContactReminders(
 }
 
 /**
+ * Derives Family Planning reminders (Handbook p.22) for appointments or removal
+ */
+export function computeFamilyPlanningReminders(
+  userId: string,
+  fp: FamilyPlanningRecord
+): DesiredReminder[] {
+  const reminders: DesiredReminder[] = [];
+  if (fp.nextAppointmentDate) {
+    reminders.push({
+      userId,
+      title: `Family Planning Follow-up (${fp.methodChosen})`,
+      description: `Scheduled family planning review and method check per MOH Handbook p.22. Facility: ${fp.facilityName || 'Clinic'}.`,
+      dueDate: fp.nextAppointmentDate,
+      category: 'pnc' as const,
+      completed: false,
+      sharedWithPartner: false,
+      sourceEventId: `fp-${fp.id}-next-appt`,
+      deepLink: 'records' as const,
+    });
+  }
+  if (fp.removalDate) {
+    reminders.push({
+      userId,
+      title: `Family Planning Method Removal/Renewal (${fp.methodChosen})`,
+      description: `Recommended removal or replacement date for ${fp.methodChosen}. Consult your healthcare provider.`,
+      dueDate: fp.removalDate,
+      category: 'pnc' as const,
+      completed: false,
+      sharedWithPartner: false,
+      sourceEventId: `fp-${fp.id}-removal`,
+      deepLink: 'records' as const,
+    });
+  }
+  return reminders;
+}
+
+/**
  * Pure deduplication filter: returns only desired reminders that do not already exist
  */
 export function filterNewReminders(
@@ -295,6 +352,7 @@ export async function reconcileMotherClinicalReminders(
     activePregnancy?: Pregnancy | null;
     children?: Child[];
     newOutcome?: { deliveryDate: string; pregnancyId: string; childId?: string };
+    familyPlanningRecords?: FamilyPlanningRecord[];
   } = {}
 ): Promise<{ createdCount: number; createdIds: string[] }> {
   if (!userId) return { createdCount: 0, createdIds: [] };
@@ -332,7 +390,14 @@ export async function reconcileMotherClinicalReminders(
       );
     }
 
-    // 5. Filter for deduplication
+    // 5. Family Planning Reminders (Prompt 5.6)
+    if (options.familyPlanningRecords && options.familyPlanningRecords.length > 0) {
+      for (const fp of options.familyPlanningRecords) {
+        desired.push(...computeFamilyPlanningReminders(userId, fp));
+      }
+    }
+
+    // 6. Filter for deduplication
     const remindersToCreate = filterNewReminders(existingReminders, desired);
 
     if (remindersToCreate.length === 0) {

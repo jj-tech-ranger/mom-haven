@@ -92,12 +92,12 @@ export default function ChildTimeline({ childName, childDob, onBack }: ChildTime
 
                 {/* Content Card */}
                 <div
-                  className={`rounded-[18px] p-4 border transition-all ${
+                  className={`rounded-xl p-4 border transition-all ${
                     isCurrent
-                      ? 'bg-white border-[var(--haven-orchid)] shadow-card-2 ring-1 ring-purple-200'
+                      ? 'bg-white border-teal-600 shadow-xs ring-1 ring-teal-200'
                       : isCompleted
-                      ? 'bg-white/80 border-[var(--border-hairline)] shadow-xs'
-                      : 'bg-white/60 border-dashed border-gray-200'
+                      ? 'bg-white border-[var(--border-hairline)] shadow-xs'
+                      : 'bg-slate-50 border-dashed border-slate-200'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">

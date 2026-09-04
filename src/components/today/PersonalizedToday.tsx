@@ -19,11 +19,16 @@ export default function PersonalizedToday({
   onNavigate,
   onOpenAskHaven,
 }: PersonalizedTodayProps) {
+  const handleNavigate = (tab: 'today' | 'journey' | 'child' | 'haven' | 'records' | 'profile' | 'Today' | 'Journey' | 'Child' | 'Haven' | 'Records' | 'Profile') => {
+    const normalized = tab.toLowerCase() as 'today' | 'journey' | 'child' | 'haven' | 'records' | 'profile';
+    onNavigate(normalized);
+  };
+
   return (
     <TodayDashboard
       userId={userId}
       userName={userName}
-      onNavigate={onNavigate}
+      onNavigate={handleNavigate}
       onOpenAskHaven={onOpenAskHaven}
     />
   );

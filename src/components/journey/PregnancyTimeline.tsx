@@ -207,7 +207,7 @@ export default function PregnancyTimeline({
 
       {/* ================= NODE DETAIL DRAWER / MODAL ================= */}
       {selectedNode && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white rounded-t-[28px] sm:rounded-[24px] w-full max-w-md p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-[var(--border-hairline)]">
               <span className="px-3 py-1 bg-[var(--lavender-100)] text-[var(--haven-deep)] font-display font-bold text-[12px] rounded-full">

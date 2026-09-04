@@ -122,7 +122,7 @@ export default function AdminMfaModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs font-body">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 font-body">
       <div className="bg-white w-full max-w-md rounded-[28px] shadow-card-3 border border-[var(--border-hairline)] overflow-hidden flex flex-col">
         
         {/* Header */}

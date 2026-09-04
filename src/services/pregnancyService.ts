@@ -12,7 +12,7 @@ import {
   addDoc
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { Pregnancy, AncEncounter, Child, Provenance, PregnancySummary } from '../types';
+import { Pregnancy, AncEncounter, Child, Provenance, PregnancySummary, PreviousPregnancyRecord } from '../types';
 import { reconcileMotherClinicalReminders } from './reminderGenerationService';
 import {
   calculateGestationFromLmp,
@@ -23,6 +23,21 @@ import {
 
 export type { GestationCalculation } from '../utils/clinicalCalculations';
 export { calculateGestationFromLmp, calculateLmpFromEdd } from '../utils/clinicalCalculations';
+
+/**
+ * Migration helper: converts string-based previousOutcomes into structured PreviousPregnancyRecord objects (MOH Handbook p.6)
+ */
+export function convertOutcomesToPreviousPregnancies(outcomes: string[]): PreviousPregnancyRecord[] {
+  return outcomes.map((outcomeStr, idx) => ({
+    id: `migrated-${idx + 1}-${Date.now()}`,
+    pregnancyOrder: idx + 1,
+    outcome: outcomeStr.includes('Alive') ? 'Alive and well'
+      : outcomeStr.includes('Stillbirth') ? 'Fresh stillbirth'
+      : outcomeStr.includes('Miscarriage') ? 'Abortion / Miscarriage'
+      : outcomeStr,
+    notes: outcomeStr,
+  }));
+}
 
 /**
  * Strategy Choice: Option (a) Narrowly-scoped partner projection.
@@ -189,11 +204,24 @@ export async function createActivePregnancy(
   motherId: string, 
   lmp: string, 
   edd: string, 
-  history?: { gravida?: number; parity?: number; previousOutcomes?: string[] }
+  history?: {
+    gravida?: number;
+    parity?: number;
+    previousOutcomes?: string[];
+    previousPregnancies?: PreviousPregnancyRecord[];
+  }
 ): Promise<string> {
   try {
     const calc = calculateGestationFromLmp(lmp);
     const pregRef = collection(db, 'pregnancies');
+
+    const structuredPrevious: PreviousPregnancyRecord[] =
+      history?.previousPregnancies && history.previousPregnancies.length > 0
+        ? history.previousPregnancies
+        : history?.previousOutcomes && history.previousOutcomes.length > 0
+        ? convertOutcomesToPreviousPregnancies(history.previousOutcomes)
+        : [];
+
     const newDoc = await addDoc(pregRef, {
       motherId,
       status: 'active',
@@ -203,6 +231,7 @@ export async function createActivePregnancy(
       gravida: history?.gravida || 1,
       parity: history?.parity || 0,
       previousOutcomes: history?.previousOutcomes || [],
+      previousPregnancies: structuredPrevious,
       createdAt: new Date().toISOString(),
     });
 
@@ -237,6 +266,37 @@ export async function createActivePregnancy(
   }
 }
 
+/**
+ * Migration routine: reads pregnancy document, and if it has previousOutcomes but no previousPregnancies,
+ * converts strings to structured PreviousPregnancyRecord[] and writes back to Firestore.
+ */
+export async function migratePregnancyOutcomes(pregnancyId: string): Promise<PreviousPregnancyRecord[]> {
+  try {
+    const pregRef = doc(db, 'pregnancies', pregnancyId);
+    const snap = await getDoc(pregRef);
+    if (!snap.exists()) return [];
+
+    const data = snap.data();
+    if (data.previousPregnancies && Array.isArray(data.previousPregnancies) && data.previousPregnancies.length > 0) {
+      return data.previousPregnancies;
+    }
+
+    if (data.previousOutcomes && Array.isArray(data.previousOutcomes) && data.previousOutcomes.length > 0) {
+      const migrated = convertOutcomesToPreviousPregnancies(data.previousOutcomes);
+      await updateDoc(pregRef, {
+        previousPregnancies: migrated,
+        updatedAt: new Date().toISOString(),
+      });
+      return migrated;
+    }
+
+    return [];
+  } catch (err) {
+    console.warn('[pregnancyService] migratePregnancyOutcomes notice:', err);
+    return [];
+  }
+}
+
 export async function updatePregnancy(pregnancyId: string, data: Partial<Pregnancy>): Promise<void> {
   try {
     const pregRef = doc(db, 'pregnancies', pregnancyId);
@@ -265,10 +325,17 @@ export async function getAncEncounters(pregnancyId: string): Promise<AncEncounte
   }
 }
 
+import { SyncEngine } from './syncEngine';
+
 export async function addAncEncounter(
   pregnancyId: string, 
   encounter: Omit<AncEncounter, 'id'>
 ): Promise<string> {
+  const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+  if (!isOnline) {
+    const res = await SyncEngine.saveAncEncounterOfflineAware(pregnancyId, encounter);
+    return res.id;
+  }
   try {
     const encRef = collection(db, `pregnancies/${pregnancyId}/ancEncounters`);
     const docRef = await addDoc(encRef, {
@@ -277,8 +344,9 @@ export async function addAncEncounter(
     });
     return docRef.id;
   } catch (err) {
-    handleFirestoreError(err, OperationType.WRITE, `pregnancies/${pregnancyId}/ancEncounters`);
-    throw err;
+    console.warn('[pregnancyService] Direct addAncEncounter failed, queuing offline outbox:', err);
+    const res = await SyncEngine.saveAncEncounterOfflineAware(pregnancyId, encounter);
+    return res.id;
   }
 }
 

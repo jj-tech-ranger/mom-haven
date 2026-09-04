@@ -88,19 +88,19 @@ export default function ChildOverview({
 
         {/* Quick Vitals Strip */}
         <div className="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-[var(--border-hairline)]">
-          <div className="bg-white/80 p-2.5 rounded-[14px] text-center border border-[var(--border-hairline)]">
+          <div className="bg-white p-2.5 rounded-md text-center border border-[var(--border-hairline)] shadow-xs">
             <span className="text-[10px] font-bold text-[var(--ink-500)] uppercase block">Weight</span>
             <span className="font-display font-extrabold text-[15px] text-[var(--ink-900)]">
               {latestGrowth?.weightKg ? `${latestGrowth.weightKg} kg` : child.birthWeightKg ? `${child.birthWeightKg} kg` : '—'}
             </span>
           </div>
-          <div className="bg-white/80 p-2.5 rounded-[14px] text-center border border-[var(--border-hairline)]">
+          <div className="bg-white p-2.5 rounded-md text-center border border-[var(--border-hairline)] shadow-xs">
             <span className="text-[10px] font-bold text-[var(--ink-500)] uppercase block">Height</span>
             <span className="font-display font-extrabold text-[15px] text-[var(--ink-900)]">
               {latestGrowth?.heightCm ? `${latestGrowth.heightCm} cm` : child.birthLengthCm ? `${child.birthLengthCm} cm` : '—'}
             </span>
           </div>
-          <div className="bg-white/80 p-2.5 rounded-[14px] text-center border border-[var(--border-hairline)]">
+          <div className="bg-white p-2.5 rounded-md text-center border border-[var(--border-hairline)] shadow-xs">
             <span className="text-[10px] font-bold text-[var(--ink-500)] uppercase block">Vaccines</span>
             <span className="font-display font-extrabold text-[15px] text-emerald-700">
               {completedVaccinesCount} Done

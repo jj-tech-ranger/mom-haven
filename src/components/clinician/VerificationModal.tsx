@@ -51,7 +51,7 @@ export default function VerificationModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-lg rounded-[24px] border border-[var(--border-hairline)] shadow-card-3 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="px-6 py-4 bg-[var(--haven-deep)] text-white flex items-center justify-between">

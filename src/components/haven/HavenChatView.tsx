@@ -365,7 +365,7 @@ export default function HavenChatView({
 
       {/* Sensitive Topic Privacy Warning Modal */}
       {privacyWarning && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
           <div className="bg-white max-w-sm rounded-[24px] p-5 shadow-card-2 border border-gray-200 space-y-4">
             <div className="w-10 h-10 rounded-full bg-purple-100 text-[var(--haven-deep)] flex items-center justify-center">
               <HeartHandshake className="w-6 h-6" />

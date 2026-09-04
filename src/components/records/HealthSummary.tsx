@@ -44,10 +44,69 @@ export default function HealthSummary({
     verifiedHighlights,
     questionsForClinician,
     sessionContext,
+    reproductiveScreening,
+    pmtct,
   } = summary;
 
   return (
     <div id="momhaven-health-summary-container" className="space-y-5">
+      {/* Reproductive Health / Screening Sensitive Alert Banner */}
+      {reproductiveScreening?.hasSuspiciousOrPositive && (
+        <div className="p-4 bg-pink-50/90 border border-pink-200 rounded-[20px] text-xs text-pink-950 flex items-start gap-3 shadow-xs">
+          <div className="w-8 h-8 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center shrink-0 mt-0.5">
+            <Heart className="w-4 h-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-display font-bold text-sm text-pink-950">
+              {isClinicianView
+                ? 'Clinical Referral Flag: Reproductive Screening Finding (MOH p.22)'
+                : 'Healthcare Provider Follow-up Recommendation'}
+            </h3>
+            <p className="mt-1 text-pink-900 leading-relaxed">
+              {isClinicianView ? (
+                <span>
+                  The patient's clinical screening record indicates an abnormal or suspicious examination result.
+                  {reproductiveScreening.alerts.length > 0 && ` Flags: ${reproductiveScreening.alerts.join('; ')}.`}
+                  {' '}Ensure timely referral for colposcopy/biopsy or surgical breast review per national guidelines.
+                </span>
+              ) : (
+                <span>
+                  Your healthcare provider noted an observation during your recent screening that deserves a specialized follow-up visit. Remember that many findings turn out to be easily treatable when checked early. Please visit your clinic or referral facility so your team can care for you with complete peace of mind.
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* PMTCT Sensitive Alert Banner */}
+      {pmtct?.hasAlerts && (
+        <div className="p-4 bg-rose-50/90 border border-rose-200 rounded-[20px] text-xs text-rose-950 flex items-start gap-3 shadow-xs">
+          <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 mt-0.5">
+            <AlertTriangle className="w-4 h-4 text-rose-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-display font-bold text-sm text-rose-950">
+              {isClinicianView
+                ? 'Clinical Alert: PMTCT / HEI Follow-up Indicated (MOH pp.11–12, 36)'
+                : 'Specialized Appointment Recommended'}
+            </h3>
+            <p className="mt-1 text-rose-900 leading-relaxed">
+              {isClinicianView ? (
+                <span>
+                  Active PMTCT / HEI flag: {pmtct.alerts.join('; ') || 'Follow-up indicated'}.
+                  Ensure immediate clinical review, adherence counseling, or pediatric ART initiation if positive.
+                </span>
+              ) : (
+                <span>
+                  Your healthcare team has highlighted a priority follow-up milestone for your care plan. Please visit your clinic at your earliest convenience so your nurse or doctor can review your routine medications and support you.
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Action Header / Banner */}
       <div className="bg-white border border-[var(--border-hairline)] p-5 rounded-[22px] shadow-card-1">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -131,7 +190,7 @@ export default function HealthSummary({
             {questionsForClinician.length > 0 ? (
               <ul className="mt-2.5 space-y-1.5">
                 {questionsForClinician.map((q, idx) => (
-                  <li key={idx} className="text-xs text-amber-900 flex items-start gap-2 bg-white/80 p-2.5 rounded-lg border border-amber-200/50">
+                  <li key={idx} className="text-xs text-amber-900 flex items-start gap-2 bg-white p-2.5 rounded-md border border-amber-200 shadow-xs">
                     <span className="font-bold text-amber-600 shrink-0">Q{idx + 1}:</span>
                     <span className="leading-relaxed">{q}</span>
                   </li>
@@ -270,6 +329,87 @@ export default function HealthSummary({
           )}
         </section>
       ) : null}
+
+      {/* Section 2.5: PMTCT & Infant Protection Protocol (MOH pp.11–12, 36) */}
+      {pmtct && (
+        <section className="bg-white border border-[var(--border-hairline)] rounded-[22px] p-5 shadow-card-1 space-y-4">
+          <div className="flex items-center justify-between gap-2 pb-3 border-b border-[var(--border-hairline)]">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-rose-600" />
+              <h2 className="font-display font-bold text-base text-[var(--ink-900)]">
+                {isClinicianView
+                  ? 'PMTCT & HEI Clinical Care Protocol (MOH pp.11–12, 36)'
+                  : 'Maternal & Baby Wellness Care Plan'}
+              </h2>
+            </div>
+            <span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
+              {isClinicianView ? 'Clinical Protocol' : 'Care Plan'}
+            </span>
+          </div>
+
+          {isClinicianView ? (
+            <div className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+                  <span className="text-slate-500 font-medium block">Maternal ART Regimen:</span>
+                  <span className="font-bold text-slate-900 font-mono">
+                    {pmtct.maternalArtRegimen || 'Standard First-Line (TDF+3TC+DTG)'}
+                  </span>
+                  <span className="text-[11px] text-slate-600 block mt-1">
+                    {pmtct.maternalArtVisitsCount} ART visits recorded
+                  </span>
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+                  <span className="text-slate-500 font-medium block">Viral Load Status:</span>
+                  <span className={`font-bold font-mono ${
+                    pmtct.maternalViralLoadStatus === 'unsuppressed' ? 'text-rose-700' : 'text-emerald-700'
+                  }`}>
+                    {pmtct.maternalViralLoadStatus || 'Suppressed (< 50 copies/mL)'}
+                  </span>
+                  {pmtct.maternalViralLoadResult && (
+                    <span className="text-[11px] text-slate-600 block">
+                      Result: {pmtct.maternalViralLoadResult}
+                    </span>
+                  )}
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+                  <span className="text-slate-500 font-medium block">Infant Prophylaxis:</span>
+                  <span className="font-bold text-slate-900 font-mono">
+                    {pmtct.infantArtProphylaxisRegimen || 'AZT + NVP Syrup'}
+                  </span>
+                  <span className="text-[11px] text-slate-600 block mt-1">
+                    CTX: {pmtct.infantCtxProphylaxisStatus || 'Active daily'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3 text-xs">
+              <p className="text-slate-600 leading-relaxed">
+                Your personalized preventive care plan helps protect you and your baby during pregnancy, childbirth, and breastfeeding.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3.5 bg-rose-50/50 border border-rose-100 rounded-xl space-y-1.5">
+                  <span className="font-bold text-rose-950 block">Daily Protection & Routine Care</span>
+                  <ul className="list-disc pl-4 space-y-1 text-slate-700">
+                    <li>Take prescribed maternal wellness medicines daily at the same time.</li>
+                    <li>Give baby daily protective drops as instructed by your healthcare provider.</li>
+                    <li>Continue balanced nutrition and plenty of clean water.</li>
+                  </ul>
+                </div>
+                <div className="p-3.5 bg-teal-50/50 border border-teal-100 rounded-xl space-y-1.5">
+                  <span className="font-bold text-teal-950 block">Appointments & Next Steps</span>
+                  <ul className="list-disc pl-4 space-y-1 text-slate-700">
+                    <li>Keep your scheduled antenatal and infant check-ups.</li>
+                    <li>Milestone infant check-up scheduled at 6 weeks of age.</li>
+                    <li>Ask your healthcare provider any questions about safe feeding at every visit.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Section 3: Children & Pediatric Health (Layer 3) */}
       {children.length > 0 && (
@@ -484,25 +624,25 @@ export default function HealthSummary({
       </section>
 
       {/* Section 6: Verified Clinical Highlights Summary */}
-      <section className="bg-emerald-50/70 border border-emerald-200/80 rounded-[20px] p-4.5">
+      <section className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
         <div className="flex items-center gap-2 text-emerald-950 font-display font-bold text-sm mb-2">
           <ShieldCheck className="w-4 h-4 text-emerald-700" />
           Verified Clinical Records Summary
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-          <div className="bg-white/80 p-2.5 rounded-lg border border-emerald-200/60">
+          <div className="bg-white p-2.5 rounded-md border border-emerald-200 shadow-xs">
             <span className="text-[11px] text-emerald-800 block">Verified Contacts</span>
             <strong className="text-base text-emerald-900">{verifiedHighlights.verifiedAncContactsCount}</strong>
           </div>
-          <div className="bg-white/80 p-2.5 rounded-lg border border-emerald-200/60">
+          <div className="bg-white p-2.5 rounded-md border border-emerald-200 shadow-xs">
             <span className="text-[11px] text-emerald-800 block">Verified Vaccines</span>
             <strong className="text-base text-emerald-900">{verifiedHighlights.verifiedVaccinesCount}</strong>
           </div>
-          <div className="bg-white/80 p-2.5 rounded-lg border border-emerald-200/60">
+          <div className="bg-white p-2.5 rounded-md border border-emerald-200 shadow-xs">
             <span className="text-[11px] text-emerald-800 block">Verified Labs</span>
             <strong className="text-base text-emerald-900">{verifiedHighlights.verifiedLabReportsCount}</strong>
           </div>
-          <div className="bg-white/80 p-2.5 rounded-lg border border-emerald-200/60">
+          <div className="bg-white p-2.5 rounded-md border border-emerald-200 shadow-xs">
             <span className="text-[11px] text-emerald-800 block">Verified Ultrasounds</span>
             <strong className="text-base text-emerald-900">{verifiedHighlights.verifiedUltrasoundCount}</strong>
           </div>

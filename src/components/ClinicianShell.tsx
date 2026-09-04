@@ -262,7 +262,7 @@ export default function ClinicianShell({
 
         {/* Main Content Area */}
         <div className="flex-1 min-w-0 flex flex-col">
-          <header className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-[var(--border-hairline)] px-5 md:px-8 py-4 flex items-center justify-between">
+          <header className="sticky top-0 z-20 bg-white border-b border-[var(--border-hairline)] shadow-xs px-5 md:px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               {activeTab !== 'dashboard' && (
                 <button
@@ -502,12 +502,15 @@ export default function ClinicianShell({
               <div>
                 {activeSession ? (
                   <ClinicianPatientWorkspace
+                    motherId={activeSession.motherId}
                     motherName={patientSummary?.mother?.displayName || activeSession.motherName}
-                    gestationWeeks={patientSummary?.pregnancy?.currentStage?.gestationalAgeWeeks || 28}
+                    gestationWeeks={patientSummary?.pregnancy?.currentStage?.gestationalAgeWeeks}
+                    bloodGroup={patientSummary?.pregnancy?.bloodGroup}
                     clinicianName={clinicianName || 'Verified Clinician'}
                     facilityName={facilityName || 'Kenya MOH Facility'}
                     summary={patientSummary || undefined}
                     onCloseSession={() => handleEndSession(activeSession.sessionId)}
+                    onRefreshSummary={() => fetchPatientSummary(activeSession.motherId)}
                   />
                 ) : (
                   <div className="bg-white rounded-2xl border border-[var(--border-hairline)] p-8 text-center space-y-4 max-w-md mx-auto shadow-card-1">

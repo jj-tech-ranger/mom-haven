@@ -3,6 +3,9 @@ import { adminDb, document } from '../clinicianAccess.js';
 export const CLINICAL_RECORD_GROUPS = [
   'ancEncounters', 'newbornRecords', 'postnatalEncounters', 'immunizationRecords',
   'growthMeasurements', 'muacMeasurements', 'nutritionRecords', 'developmentRecords',
+  'congenitalExams', 'familyPlanning',
+  'cancerScreenings', 'pmtctRecords', 'antenatalProfiles', 'eyeCareAssessments', 'toothEruptions',
+  'aefiReports', 'hospitalAdmissions', 'specialClinicalAttendances',
 ] as const;
 
 /**

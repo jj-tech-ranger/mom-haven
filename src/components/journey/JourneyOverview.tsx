@@ -10,7 +10,8 @@ import {
   Plus, 
   ShieldCheck, 
   FileText,
-  Clock
+  Clock,
+  Baby
 } from 'lucide-react';
 import { Pregnancy, AncEncounter } from '../../types';
 
@@ -22,6 +23,7 @@ interface JourneyOverviewProps {
   onOpenHealthHistory: () => void;
   onOpenBirthPlan: () => void;
   onOpenDeliveryTransition: () => void;
+  onRefresh?: () => void | Promise<void>;
 }
 
 export default function JourneyOverview({
@@ -32,6 +34,7 @@ export default function JourneyOverview({
   onOpenHealthHistory,
   onOpenBirthPlan,
   onOpenDeliveryTransition,
+  onRefresh,
 }: JourneyOverviewProps) {
   const [expandedTrimester, setExpandedTrimester] = useState<number>(() => {
     const weeks = pregnancy.gestationalAgeWeeks || 24;

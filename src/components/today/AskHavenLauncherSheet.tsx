@@ -32,7 +32,7 @@ export default function AskHavenLauncherSheet({
   const hasContextPrompts = contextPrompts && contextPrompts.length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="bg-white rounded-t-[28px] sm:rounded-[24px] w-full max-w-md p-6 shadow-2xl animate-in slide-in-from-bottom duration-300">
         <div className="flex items-center justify-between pb-3 border-b border-[var(--border-hairline)]">
           <div className="flex items-center gap-2.5">
@@ -70,10 +70,10 @@ export default function AskHavenLauncherSheet({
                     onClose();
                     onOpenFullChat(cp.prompt);
                   }}
-                  className="w-full text-left p-3 rounded-[16px] bg-[var(--lavender-50)] hover:bg-[var(--lavender-100)] border border-[var(--border-hairline)] flex flex-col transition-colors cursor-pointer group"
+                  className="w-full text-left p-3 rounded-md bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border-hairline)] flex flex-col transition-colors cursor-pointer group"
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/80 text-[var(--haven-deep)] font-medium">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-[var(--border)] text-[var(--text-primary)] font-medium shadow-2xs">
                       {cp.reason}
                     </span>
                     <ArrowUpRight className="w-3.5 h-3.5 text-[var(--haven-orchid)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />

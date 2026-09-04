@@ -338,7 +338,7 @@ export const PersonalizedResources: React.FC<PersonalizedResourcesProps> = ({
 
       {/* Full Article Reading Modal */}
       {selectedArticle && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <div className="bg-[var(--surface-1)] w-full max-w-2xl rounded-3xl border border-[var(--border)] shadow-xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
             <div className="p-5 border-b border-[var(--border)] flex items-start justify-between gap-4">

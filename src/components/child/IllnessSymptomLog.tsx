@@ -229,7 +229,7 @@ export default function IllnessSymptomLog({
 
       {/* ================= ADD ILLNESS MODAL ================= */}
       {isAdding && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white rounded-t-[28px] sm:rounded-[24px] w-full max-w-md p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-[var(--border-hairline)]">
               <h2 className="font-display font-extrabold text-[18px] text-[var(--ink-900)]">

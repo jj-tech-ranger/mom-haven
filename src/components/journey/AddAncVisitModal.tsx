@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Calendar, AlertCircle, Info, ShieldCheck, UserCheck } from 'lucide-react';
+import { X, Calendar, AlertCircle, Info, ShieldCheck, UserCheck, WifiOff, CheckCircle2 } from 'lucide-react';
 import { AncEncounter, Provenance } from '../../types';
 import { KENYA_FACILITIES } from '../../data/kenyaFacilities';
 import { addAncEncounter } from '../../services/pregnancyService';
@@ -43,12 +43,14 @@ export default function AddAncVisitModal({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [offlineSavedMessage, setOfflineSavedMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setLoading(true);
       setError(null);
+      const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
 
       const provenance: Provenance = {
         status: 'REPORTED',
@@ -82,8 +84,16 @@ export default function AddAncVisitModal({
         provenance,
       });
 
-      onSaved();
-      onClose();
+      if (isOffline) {
+        setOfflineSavedMessage("Saved locally — will sync automatically when you're back online.");
+        setTimeout(() => {
+          onSaved();
+          onClose();
+        }, 1400);
+      } else {
+        onSaved();
+        onClose();
+      }
     } catch (err: any) {
       console.error('Failed to save ANC record', err);
       setError(err?.message || 'Failed to save visit record. Please try again.');
@@ -93,25 +103,37 @@ export default function AddAncVisitModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-white rounded-t-[28px] sm:rounded-[24px] w-full max-w-lg p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between pb-3 border-b border-[var(--border-hairline)]">
+    <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white rounded-t-[24px] sm:rounded-[20px] w-full max-w-lg p-6 shadow-2xl animate-in slide-in-from-bottom duration-200 max-h-[90vh] overflow-y-auto border border-slate-200">
+        {/* Handbook Header Band */}
+        <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-200">
           <div>
-            <h2 className="font-display font-extrabold text-[19px] text-[var(--ink-900)]">
-              Log Antenatal Care Visit
+            <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-teal-800 font-bold">
+              <ShieldCheck className="w-3.5 h-3.5 text-teal-700" />
+              MOH 216 ANTENATAL CARE LOG
+            </div>
+            <h2 className="font-display font-bold text-lg text-slate-900 mt-0.5">
+              Log Antenatal Care Contact
             </h2>
-            <p className="font-body text-[12px] text-[var(--ink-600)]">
+            <p className="font-body text-xs text-slate-600">
               Record measurements directly from your MOH 216 clinic card
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[var(--lavender-50)] flex items-center justify-center text-[var(--ink-600)] hover:text-[var(--ink-900)] cursor-pointer"
+            className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:text-slate-900 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {offlineSavedMessage && (
+          <div className="my-3 p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-950 flex items-center gap-2.5 shadow-xs">
+            <WifiOff className="w-4 h-4 text-amber-700 shrink-0" />
+            <span className="font-medium">{offlineSavedMessage}</span>
+          </div>
+        )}
 
         {/* Provenance Disclaimer Banner */}
         <div className="mt-3 p-3.5 rounded-[16px] bg-[#FBF0DC] border border-[#A15E06]/30 flex items-start gap-2.5 text-[12px] text-[#A15E06]">

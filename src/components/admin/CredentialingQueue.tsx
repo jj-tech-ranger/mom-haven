@@ -454,7 +454,7 @@ export const CredentialingQueue: React.FC = () => {
 
       {/* Inspect Clinician Detail Modal */}
       {selectedClinician && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-gray-100 animate-in fade-in zoom-in duration-150">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-5">
               <div className="flex items-center gap-3">
@@ -524,7 +524,7 @@ export const CredentialingQueue: React.FC = () => {
 
       {/* Approve / Reject / Suspend Action Modal */}
       {actionModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 animate-in fade-in zoom-in duration-150">
             <h3 className="font-bold text-gray-900 text-base mb-2">
               {actionModal.type === 'APPROVE' && 'Confirm Clinician Credential Approval'}

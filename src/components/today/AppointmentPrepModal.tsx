@@ -63,7 +63,7 @@ export default function AppointmentPrepModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-white rounded-[28px] w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-5 my-8 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-start justify-between pb-3 border-b border-[var(--border-hairline)]">

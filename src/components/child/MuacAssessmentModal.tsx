@@ -51,7 +51,7 @@ export default function MuacAssessmentModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
       <div className="bg-white w-full max-w-md rounded-[24px] shadow-card-2 border border-[var(--border-hairline)] overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-[var(--border-hairline)] flex items-center justify-between">

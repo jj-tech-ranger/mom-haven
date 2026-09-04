@@ -239,7 +239,14 @@ export async function getGrowthMeasurements(childId: string): Promise<GrowthMeas
   }
 }
 
+import { SyncEngine } from './syncEngine';
+
 export async function addGrowthMeasurement(childId: string, measurement: Omit<GrowthMeasurement, 'id'>): Promise<string> {
+  const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+  if (!isOnline) {
+    const res = await SyncEngine.saveGrowthMeasurementOfflineAware(childId, measurement);
+    return res.id;
+  }
   try {
     const colRef = collection(db, `children/${childId}/growthMeasurements`);
     const docRef = await addDoc(colRef, {
@@ -248,8 +255,9 @@ export async function addGrowthMeasurement(childId: string, measurement: Omit<Gr
     });
     return docRef.id;
   } catch (err) {
-    handleFirestoreError(err, OperationType.CREATE, `children/${childId}/growthMeasurements`);
-    throw err;
+    console.warn('[childService] Direct addGrowthMeasurement failed, queuing offline outbox:', err);
+    const res = await SyncEngine.saveGrowthMeasurementOfflineAware(childId, measurement);
+    return res.id;
   }
 }
 

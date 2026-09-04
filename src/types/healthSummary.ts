@@ -71,6 +71,7 @@ export interface AuthoritativePregnancySummary {
   eddSource?: string;
   gravida?: number;
   parity?: number;
+  bloodGroup?: string;
   clinicalConditions: string[];
   provenance: SummaryProvenance;
   currentStage?: {
@@ -158,6 +159,33 @@ export interface VerifiedClinicalHighlights {
   verifiedBy?: string;
 }
 
+export interface ReproductiveScreeningSummary {
+  totalScreenings: number;
+  latestScreeningDate?: string;
+  hasSuspiciousOrPositive: boolean;
+  alerts: string[];
+  records: any[];
+}
+
+export interface PmtctHeiSummary {
+  isHivExposed: boolean;
+  maternalArtRegimen?: string;
+  maternalArtVisitsCount: number;
+  maternalViralLoadStatus?: string;
+  maternalViralLoadResult?: string | number;
+  infantArtProphylaxisRegimen?: string;
+  infantCtxProphylaxisStatus?: string;
+  infantTestsCompletedCount: number;
+  hasAlerts: boolean;
+  alerts: string[];
+  carePlan?: {
+    nextAppointmentDate?: string;
+    activeMedications: string[];
+    infantFeedingCounseling?: string;
+  };
+  records: any[];
+}
+
 export interface MomHavenHealthSummary {
   summaryId: string;
   generatedAt: string;
@@ -178,4 +206,6 @@ export interface MomHavenHealthSummary {
   appointments: ClinicalAppointmentSummary[];
   verifiedHighlights: VerifiedClinicalHighlights;
   questionsForClinician: string[];
+  reproductiveScreening?: ReproductiveScreeningSummary;
+  pmtct?: PmtctHeiSummary;
 }

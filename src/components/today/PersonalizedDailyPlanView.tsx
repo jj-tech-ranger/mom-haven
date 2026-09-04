@@ -189,14 +189,14 @@ export default function PersonalizedDailyPlanView({
                 if (onOpenResource) onOpenResource(topResource.id);
               }
             }}
-            className="rounded-[20px] p-4 bg-gradient-to-r from-purple-50 via-indigo-50 to-pink-50 border border-purple-200/80 shadow-xs hover:border-[var(--haven-orchid)] transition-all cursor-pointer"
+            className="rounded-xl p-4 bg-white border border-slate-200 shadow-xs hover:border-slate-300 transition-all cursor-pointer"
           >
             <div className="flex items-center justify-between text-[11px] font-display font-bold text-[var(--haven-deep)] mb-1">
               <span className="flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-[var(--haven-orchid)]" />
+                <BookOpen className="w-3.5 h-3.5 text-teal-700" />
                 <span>Today's Recommended Guide</span>
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/80 text-[var(--haven-deep)] font-medium">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 font-medium">
                 {topResource.reason}
               </span>
             </div>

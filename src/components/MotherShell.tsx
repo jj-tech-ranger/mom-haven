@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Milestone, Baby, MessageSquare, FileText, User, LogOut, ChevronLeft, type LucideIcon } from 'lucide-react';
+import { Home, Milestone, Baby, MessageSquare, FileText, User, LogOut, ChevronLeft, Globe, type LucideIcon } from 'lucide-react';
 import EmptyState from './EmptyState';
 import PersonalizedToday from './today/PersonalizedToday';
 import JourneyMainView from './journey/JourneyMainView';
@@ -11,26 +11,29 @@ import AppLockPinModal from './profile/AppLockPinModal';
 import PartnerSharingModal from './profile/PartnerSharingModal';
 import PrintExportModal from './records/PrintExportModal';
 import EmergencySafetyHub from './emergency/EmergencySafetyHub';
+import { OfflineSyncBanner } from './common/OfflineSyncNotice';
+import { usePreferences } from '../context/PreferencesContext';
 
 type MotherTab = 'today' | 'journey' | 'child' | 'haven' | 'records' | 'profile';
 interface MotherShellProps { userId?: string; userEmail?: string; userName?: string; onSignOut?: () => void; }
 
-const tabs: { id: MotherTab; label: string; icon: LucideIcon }[] = [
-  { id: 'today', label: 'Today', icon: Home },
-  { id: 'journey', label: 'Journey', icon: Milestone },
-  { id: 'child', label: 'Child', icon: Baby },
-  { id: 'haven', label: 'Haven', icon: MessageSquare },
-  { id: 'records', label: 'Records', icon: FileText },
-  { id: 'profile', label: 'Profile', icon: User },
-];
-
 export default function MotherShell({ userId, userName, userEmail, onSignOut }: MotherShellProps) {
+  const { language, toggleLanguage, t } = usePreferences();
   const [activeTab, setActiveTab] = useState<MotherTab>('today');
   const [showPinSetup, setShowPinSetup] = useState(false);
   const [showPartnerShare, setShowPartnerShare] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showEmergencyHub, setShowEmergencyHub] = useState(false);
   const [havenInitialPrompt, setHavenInitialPrompt] = useState<string | undefined>();
+
+  const tabs: { id: MotherTab; label: string; icon: LucideIcon }[] = [
+    { id: 'today', label: language === 'sw' ? 'Leo' : 'Today', icon: Home },
+    { id: 'journey', label: language === 'sw' ? 'Safari' : 'Journey', icon: Milestone },
+    { id: 'child', label: language === 'sw' ? 'Mtoto' : 'Child', icon: Baby },
+    { id: 'haven', label: 'Haven', icon: MessageSquare },
+    { id: 'records', label: language === 'sw' ? 'Rekodi' : 'Records', icon: FileText },
+    { id: 'profile', label: language === 'sw' ? 'Wasifu' : 'Profile', icon: User },
+  ];
 
   const current = tabs.find(t => t.id === activeTab) || tabs[0];
   const Icon = current.icon;
@@ -41,8 +44,10 @@ export default function MotherShell({ userId, userName, userEmail, onSignOut }: 
     setActiveTab('haven');
   };
 
+  const greetingPrefix = language === 'sw' ? 'Habari' : 'Hello';
+
   return <div className="min-h-screen bg-[var(--lavender-50)] text-[var(--ink-900)] pb-20">
-    <header className="sticky top-0 z-20 border-b border-[var(--border-hairline)] bg-white/95 px-4 py-3 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-[var(--border-hairline)] bg-white px-4 py-3 shadow-xs">
       <div className="mx-auto flex max-w-lg items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           {activeTab !== 'today' && (
@@ -50,21 +55,45 @@ export default function MotherShell({ userId, userName, userEmail, onSignOut }: 
               type="button"
               onClick={() => setActiveTab('today')}
               className="p-1.5 -ml-1 rounded-full text-[var(--haven-deep)] hover:bg-[var(--lavender-100)] flex items-center gap-0.5 font-display font-bold text-xs transition-colors cursor-pointer shrink-0"
-              aria-label="Back to Today"
+              aria-label={language === 'sw' ? 'Rudi Leo' : 'Back to Today'}
             >
               <ChevronLeft className="w-5 h-5" />
-              <span className="hidden sm:inline">Today</span>
+              <span className="hidden sm:inline">{language === 'sw' ? 'Leo' : 'Today'}</span>
             </button>
           )}
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-wider font-display font-bold text-[var(--haven-orchid)]">MomHaven</p>
-            <h1 className="truncate font-display text-lg font-extrabold">{activeTab === 'today' ? `Hello, ${userName || 'Mama'}` : current.label}</h1>
+            <h1 className="truncate font-display text-lg font-extrabold">{activeTab === 'today' ? `${greetingPrefix}, ${userName || 'Mama'}` : current.label}</h1>
             {userEmail && activeTab !== 'today' && <p className="truncate text-[11px] text-[var(--ink-500)]">{userEmail}</p>}
           </div>
         </div>
-        {onSignOut && <button type="button" onClick={onSignOut} aria-label="Sign out" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--lavender-50)] hover:bg-[var(--lavender-100)]"><LogOut className="h-4 w-4" /></button>}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            title={language === 'en' ? 'Badili lugha hadi Kiswahili' : 'Switch language to English'}
+            aria-label={language === 'en' ? 'Badili lugha hadi Kiswahili' : 'Switch language to English'}
+            className="flex h-9 items-center gap-1 px-2.5 rounded-full bg-[var(--lavender-50)] hover:bg-[var(--lavender-100)] text-xs font-mono font-bold text-[var(--haven-deep)] transition-colors cursor-pointer border border-[var(--border-hairline)]"
+          >
+            <Globe className="h-3.5 w-3.5" />
+            <span>{language.toUpperCase()}</span>
+          </button>
+          {onSignOut && (
+            <button
+              type="button"
+              onClick={onSignOut}
+              aria-label={t('common.signOut', 'Sign out')}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--lavender-50)] hover:bg-[var(--lavender-100)] cursor-pointer"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
     </header>
+
+    {/* Real-time offline connectivity & outbox sync status banner */}
+    <OfflineSyncBanner />
 
     <main className={`mx-auto max-w-lg ${activeTab === 'haven' ? 'p-0' : 'p-4 sm:p-5'}`}>
       {activeTab === 'today' && userId ? (
@@ -154,6 +183,6 @@ export default function MotherShell({ userId, userName, userEmail, onSignOut }: 
       </div>
     )}
 
-    <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-[var(--border-hairline)] bg-white/95 backdrop-blur" aria-label="Main navigation"><div className="mx-auto flex h-16 max-w-lg items-center justify-around">{tabs.map(tab => { const TabIcon = tab.icon; const active = activeTab === tab.id; return <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} aria-current={active ? 'page' : undefined} className={`flex min-w-[56px] flex-col items-center gap-1 rounded-xl px-3 py-2 transition-colors ${active ? 'text-[var(--haven-deep)]' : 'text-[var(--ink-400)] hover:text-[var(--ink-700)]'}`}><TabIcon className="h-5 w-5" /><span className="text-[10px] font-display font-bold">{tab.label}</span></button>; })}</div></nav>
+    <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-[var(--border-hairline)] bg-white shadow-xs" aria-label="Main navigation"><div className="mx-auto flex h-16 max-w-lg items-center justify-around">{tabs.map(tab => { const TabIcon = tab.icon; const active = activeTab === tab.id; return <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} aria-current={active ? 'page' : undefined} className={`flex min-w-[56px] flex-col items-center gap-1 rounded-xl px-3 py-2 transition-colors ${active ? 'text-[var(--haven-deep)]' : 'text-[var(--ink-400)] hover:text-[var(--ink-700)]'}`}><TabIcon className="h-5 w-5" /><span className="text-[10px] font-display font-bold">{tab.label}</span></button>; })}</div></nav>
   </div>;
 }

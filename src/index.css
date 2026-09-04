@@ -39,6 +39,10 @@
   font-family: var(--font-body);
 }
 
+.font-mono {
+  font-family: var(--font-mono);
+}
+
 .bg-haven-grad {
   background: var(--grad-haven);
 }

@@ -56,7 +56,7 @@ export interface TodayDashboardProps {
   children?: Child[];
   reminders?: Reminder[];
   ancEncounters?: AncEncounter[];
-  onNavigate?: (tab: 'today' | 'journey' | 'haven' | 'records' | 'profile' | 'Today' | 'Journey' | 'Haven' | 'Records' | 'Profile') => void;
+  onNavigate?: (tab: 'today' | 'journey' | 'child' | 'haven' | 'records' | 'profile' | 'Today' | 'Journey' | 'Child' | 'Haven' | 'Records' | 'Profile') => void;
   onOpenNotifications?: () => void;
   onOpenContextSelector?: () => void;
   onOpenReminderDetail?: (reminder: Reminder) => void;
@@ -516,7 +516,7 @@ export default function TodayDashboard({
               <span className="text-[11px] font-display font-bold tracking-widest uppercase text-blue-200">
                 Postpartum Recovery
               </span>
-              <span className="px-3 py-0.5 rounded-full bg-white/20 text-[11px] font-display font-semibold backdrop-blur-xs">
+              <span className="px-3 py-0.5 rounded-full bg-white/20 text-[11px] font-display font-semibold border border-white/25">
                 MOH Postnatal Guidance
               </span>
             </div>
@@ -569,7 +569,7 @@ export default function TodayDashboard({
                 Parenting & Child Health
               </span>
               {todayContext.hero.hasChildRecord && (
-                <span className="px-3 py-0.5 rounded-full bg-white/20 text-[11px] font-display font-semibold backdrop-blur-xs">
+                <span className="px-3 py-0.5 rounded-full bg-white/20 text-[11px] font-display font-semibold border border-white/25">
                   KEPI Schedule Active
                 </span>
               )}
@@ -622,7 +622,7 @@ export default function TodayDashboard({
               <span className="text-[11px] font-display font-bold tracking-widest uppercase text-pink-200">
                 Preconception Preparation
               </span>
-              <span className="px-3 py-0.5 rounded-full bg-white/20 text-[11px] font-display font-semibold backdrop-blur-xs">
+              <span className="px-3 py-0.5 rounded-full bg-white/20 text-[11px] font-display font-semibold border border-white/25">
                 Baseline Wellness
               </span>
             </div>
@@ -656,7 +656,7 @@ export default function TodayDashboard({
               <span className="text-[11px] font-display font-bold tracking-widest uppercase text-purple-200">
                 Supporter & Partner Guide
               </span>
-              <span className="px-3 py-0.5 rounded-full bg-white/20 text-[11px] font-display font-semibold backdrop-blur-xs">
+              <span className="px-3 py-0.5 rounded-full bg-white/20 text-[11px] font-display font-semibold border border-white/25">
                 Care Companion
               </span>
             </div>
@@ -690,7 +690,7 @@ export default function TodayDashboard({
               <span className="text-[11px] font-display font-bold tracking-widest uppercase text-slate-300">
                 Health Learning
               </span>
-              <span className="px-3 py-0.5 rounded-full bg-white/20 text-[11px] font-display font-semibold backdrop-blur-xs">
+              <span className="px-3 py-0.5 rounded-full bg-white/20 text-[11px] font-display font-semibold border border-white/25">
                 Kenya MOH Guidance
               </span>
             </div>
@@ -1322,7 +1322,7 @@ export default function TodayDashboard({
 
       {/* Personalized Resources Full Modal */}
       {showResourcesModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
           <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-[var(--surface-1)] rounded-3xl border border-[var(--border)] shadow-2xl p-4 sm:p-6">
             <PersonalizedResources
               healthContext={internalContext}

@@ -370,7 +370,7 @@ export const FacilitiesDirectory: React.FC = () => {
 
       {/* Add Facility Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
               <Building2 className="w-5 h-5 text-teal-600" /> Add KMHFL Facility
@@ -528,7 +528,7 @@ export const FacilitiesDirectory: React.FC = () => {
 
       {/* Facility Detail Modal */}
       {selectedFacility && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100">
             <h3 className="text-lg font-bold text-gray-900 mb-1">{selectedFacility.name}</h3>
             <p className="text-xs text-gray-500 font-mono mb-4">KMHFL #{selectedFacility.mflCode} • {selectedFacility.level}</p>

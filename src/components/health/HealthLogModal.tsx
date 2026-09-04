@@ -277,7 +277,7 @@ export const HealthLogModal: React.FC<HealthLogModalProps> = ({
   const isClinicalType = LOG_TYPES_CONFIG.find((c) => c.id === selectedType)?.isClinical;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="w-full max-w-lg max-h-[92vh] flex flex-col bg-white rounded-[24px] border border-[var(--border-hairline)] shadow-2xl overflow-hidden">
         {/* Modal Header */}
         <div className="px-5 py-4 border-b border-[var(--border-hairline)] flex items-center justify-between bg-white shrink-0">

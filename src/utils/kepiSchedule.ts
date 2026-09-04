@@ -229,3 +229,6 @@ export function calculateCatchUpSchedule(dobString: string, lastAdministeredCode
     guidance: `Per Kenya Ministry of Health catch-up protocols, do NOT restart the series. Administer ${nextDose.name} at least ${minInterval} weeks after the last dose received.`
   };
 }
+
+// Re-export full supplement schedules for Vitamin A, Deworming, and MNP (Prompt 5.4)
+export * from './supplementSchedule';

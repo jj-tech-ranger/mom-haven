@@ -465,6 +465,28 @@ export function assembleHealthSummary(
     ]),
   );
 
+  // 8. Reproductive Organ Cancer Screening (MOH Handbook p.22)
+  const rawCancerScreenings = ((records as any).cancerScreenings || []) as any[];
+  rawCancerScreenings.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+  const hasSuspiciousOrPositive = rawCancerScreenings.some(s =>
+    s.hasPositiveOrSuspicious === true ||
+    s.cervicalResult === 'positive' ||
+    s.cervicalResult === 'suspicious' ||
+    s.breastResult === 'suspicious lump'
+  );
+  const screeningAlerts: string[] = [];
+  rawCancerScreenings.forEach(s => {
+    if (Array.isArray(s.alerts)) screeningAlerts.push(...s.alerts);
+  });
+
+  const reproductiveScreening = {
+    totalScreenings: rawCancerScreenings.length,
+    latestScreeningDate: rawCancerScreenings[0]?.date,
+    hasSuspiciousOrPositive,
+    alerts: Array.from(new Set(screeningAlerts)),
+    records: rawCancerScreenings,
+  };
+
   return {
     summaryId: `summary-${motherId}-${asOf.getTime()}`,
     generatedAt: asOf.toISOString(),
@@ -487,6 +509,7 @@ export function assembleHealthSummary(
     appointments,
     verifiedHighlights,
     questionsForClinician,
+    reproductiveScreening,
   };
 }
 

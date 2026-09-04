@@ -11,7 +11,7 @@ export default function AboutModal({ onClose, onExplore }: AboutModalProps) {
   const { t } = usePreferences();
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div 
         className="relative w-full max-w-2xl bg-[var(--surface-1)] rounded-[28px] border border-[var(--border)] p-6 sm:p-8 shadow-2xl animate-fade-in text-[var(--text-primary)] max-h-[90vh] overflow-y-auto"
         role="dialog"

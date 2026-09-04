@@ -154,7 +154,7 @@ export default function AnonymousMotherShell({
       {/* ========================================================================= */}
       {/* HEADER */}
       {/* ========================================================================= */}
-      <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[var(--border-hairline)] px-4 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-20 bg-white border-b border-[var(--border-hairline)] shadow-xs px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -412,10 +412,10 @@ export default function AnonymousMotherShell({
                 return (
                   <div
                     key={st.id}
-                    className={`p-4 rounded-2xl border transition-all ${
+                    className={`p-4 rounded-xl border transition-all ${
                       isCurrent
                         ? 'bg-white border-[var(--haven-deep)] ring-2 ring-[var(--haven-deep)]/10 shadow-xs'
-                        : 'bg-white/80 border-[var(--border-hairline)]'
+                        : 'bg-white border-[var(--border-hairline)] shadow-xs'
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -646,7 +646,7 @@ export default function AnonymousMotherShell({
       {/* ========================================================================= */}
       {/* BOTTOM NAVIGATION BAR */}
       {/* ========================================================================= */}
-      <nav className="fixed bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-md border-t border-[var(--border-hairline)]">
+      <nav className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-[var(--border-hairline)] shadow-xs">
         <div className="max-w-lg mx-auto h-16 flex items-center justify-around px-2">
           {tabs.map((tab) => {
             const TabIcon = tab.icon;

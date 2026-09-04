@@ -23,16 +23,7 @@ export default function PrivateNotesPanel({
   clinicianName,
   facilityName,
 }: PrivateNotesPanelProps) {
-  const [notes, setNotes] = useState<NoteItem[]>([
-    {
-      id: '1',
-      author: 'Dr. Sarah Kimani (MO ObsGyn)',
-      facility: 'Kenyatta National Hospital',
-      category: 'Obstetric Risk',
-      text: 'Patient previously had borderline BP at 20w. Advised home BP monitoring. Watch closely for proteinuria or sudden pedal edema.',
-      createdAt: '2025-02-14 11:20 AM',
-    }
-  ]);
+  const [notes, setNotes] = useState<NoteItem[]>([]);
   const [newNoteText, setNewNoteText] = useState('');
   const [category, setCategory] = useState('Obstetric Risk');
   const [loading, setLoading] = useState(false);
@@ -128,28 +119,35 @@ export default function PrivateNotesPanel({
 
       {/* Existing Notes Feed */}
       <div className="space-y-3">
-        {notes.map(n => (
-          <div key={n.id} className="bg-white border border-[var(--border-hairline)] p-4 rounded-[18px] shadow-xs space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full">
-                {n.category}
-              </span>
-              <span className="text-[11px] text-gray-400 flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {n.createdAt}
-              </span>
-            </div>
-
-            <p className="text-xs text-[var(--ink-800)] font-body leading-relaxed">
-              {n.text}
-            </p>
-
-            <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
-              <span className="font-semibold">{n.author}</span>
-              <span>{n.facility}</span>
-            </div>
+        {notes.length === 0 ? (
+          <div className="p-6 text-center bg-white border border-[var(--border-hairline)] rounded-[18px] text-xs text-gray-500">
+            <FileText className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+            No confidential clinical notes recorded yet for this patient. Use the form above to add a confidential note.
           </div>
-        ))}
+        ) : (
+          notes.map(n => (
+            <div key={n.id} className="bg-white border border-[var(--border-hairline)] p-4 rounded-[18px] shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full">
+                  {n.category}
+                </span>
+                <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {n.createdAt}
+                </span>
+              </div>
+
+              <p className="text-xs text-[var(--ink-800)] font-body leading-relaxed">
+                {n.text}
+              </p>
+
+              <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
+                <span className="font-semibold">{n.author}</span>
+                <span>{n.facility}</span>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

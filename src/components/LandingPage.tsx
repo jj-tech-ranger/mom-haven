@@ -260,7 +260,7 @@ export default function LandingPage({ onSignedIn, onPartnerConnected }: LandingP
       {/* ========================================================================= */}
       {/* TOP NAVIGATION BAR */}
       {/* ========================================================================= */}
-      <header className="sticky top-0 z-30 bg-[var(--surface-1)]/90 backdrop-blur-md border-b border-[var(--border)] px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <header className="sticky top-0 z-30 bg-[var(--surface-1)] border-b border-[var(--border)] shadow-xs px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[var(--surface-2)] p-2 shadow-2xs flex items-center justify-center">
             <img
@@ -1162,7 +1162,7 @@ export default function LandingPage({ onSignedIn, onPartnerConnected }: LandingP
       {/* AUTHENTICATION MODAL */}
       {/* ========================================================================= */}
       {authModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
           <div 
             className="relative w-full max-w-md bg-[var(--surface-1)] rounded-[28px] border border-[var(--border)] p-6 sm:p-8 shadow-2xl animate-fade-in text-[var(--text-primary)]"
             role="dialog"
