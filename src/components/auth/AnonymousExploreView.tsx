@@ -31,7 +31,7 @@ export default function AnonymousExploreView({ onBack, onCreateAccount }: Anonym
 
   const content = {
     EN: {
-      title: 'Explore MomHaven Privately',
+      title: 'Explore MomHaven (Guest Mode)',
       subtitle: 'Verified Kenya MOH 216 maternal, neonatal, and child health guidance available 100% offline without creating an account.',
       emergencyTitle: 'Emergency Danger Signs & Hotlines',
       emergencyDesc: 'Immediate help and clinical protocols for severe bleeding, convulsions, or high fever.',
@@ -46,7 +46,7 @@ export default function AnonymousExploreView({ onBack, onCreateAccount }: Anonym
       languageLabel: 'Lugha / Language',
     },
     SW: {
-      title: 'Chunguza MomHaven Faragha',
+      title: 'Chunguza MomHaven (Hali ya Wageni)',
       subtitle: 'Mwongozo uliothibitishwa wa MOH 216 wa afya ya mama, mtoto mchanga na mtoto unaopatikana bila akaunti.',
       emergencyTitle: 'Dalili za Hatari & Nambari za Dharura',
       emergencyDesc: 'Msaada wa haraka kwa kuvuja damu nyingi, degedege au homa kali.',
@@ -87,7 +87,7 @@ export default function AnonymousExploreView({ onBack, onCreateAccount }: Anonym
           </button>
           <div className="flex items-center gap-2">
             <img src="/assets/logo.png" alt="MomHaven" className="w-7 h-7 object-contain" referrerPolicy="no-referrer" />
-            <span className="font-display font-bold text-sm text-[var(--ink-900)]">MomHaven Public</span>
+            <span className="font-display font-bold text-sm text-[var(--ink-900)]">MomHaven Explore</span>
           </div>
         </div>
 
@@ -121,7 +121,7 @@ export default function AnonymousExploreView({ onBack, onCreateAccount }: Anonym
         <div className="bg-gradient-to-br from-[#33178A] to-[#6B3DB8] text-white p-5 rounded-[24px] shadow-card-2 space-y-2.5">
           <div className="inline-flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full text-[11px] font-display font-bold uppercase tracking-wider">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-            <span>Private Offline Mode</span>
+            <span>Guest Explore Mode</span>
           </div>
           <h2 className="font-display font-extrabold text-[22px] leading-tight">
             {t.title}

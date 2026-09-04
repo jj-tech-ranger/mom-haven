@@ -19,10 +19,12 @@ import {
   Lock,
   ArrowRight,
   Trash2,
+  X,
   type LucideIcon,
 } from 'lucide-react';
 import Button from '../Button';
 import AnonymousOnboarding from '../onboarding/AnonymousOnboarding';
+import GuestDailyCheckInCard from './GuestDailyCheckInCard';
 import {
   getAnonymousContextDraft,
   clearAnonymousContextDraft,
@@ -99,6 +101,17 @@ export default function AnonymousMotherShell({
   const [activeTab, setActiveTab] = useState<MotherTab>(initialTab);
   const [showPersonalization, setShowPersonalization] = useState(false);
   const [draft, setDraft] = useState(getAnonymousContextDraft());
+  const [interactionCount, setInteractionCount] = useState(0);
+  const [nudgeDismissed, setNudgeDismissed] = useState(false);
+
+  const handleInteraction = () => {
+    setInteractionCount((prev) => prev + 1);
+  };
+
+  const handleTabSwitch = (tabId: MotherTab) => {
+    setActiveTab(tabId);
+    handleInteraction();
+  };
 
   const reloadDraft = () => setDraft(getAnonymousContextDraft());
 
@@ -120,12 +133,13 @@ export default function AnonymousMotherShell({
             className="mb-5 flex items-center gap-2 text-xs font-display font-bold text-[var(--haven-deep)] cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to anonymous experience</span>
+            <span>Back to guest experience</span>
           </button>
           <AnonymousOnboarding
             onComplete={() => {
               reloadDraft();
               setShowPersonalization(false);
+              handleInteraction();
             }}
             onCreateAccount={onCreateAccount}
             onCancel={() => setShowPersonalization(false)}
@@ -152,7 +166,7 @@ export default function AnonymousMotherShell({
           </button>
           <div>
             <p className="text-[10px] uppercase tracking-wider font-display font-bold text-[var(--haven-orchid)] leading-tight">
-              MomHaven Private Mode
+              MomHaven Guest Mode
             </p>
             <h1 className="font-display font-extrabold text-base leading-tight">
               {currentTab.label}
@@ -185,11 +199,57 @@ export default function AnonymousMotherShell({
           </div>
         </div>
 
+        {/* Soft "Save your journey" nudge (after 2-3 interactions, dismissible, non-modal) */}
+        {interactionCount >= 2 && !nudgeDismissed && (
+          <div
+            id="guest-save-journey-nudge"
+            className="bg-white border border-[var(--haven-orchid)]/40 rounded-2xl p-3.5 shadow-card-1 flex items-start justify-between gap-3 animate-fadeIn"
+          >
+            <div className="flex items-start gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-[var(--lavender-100)] text-[var(--haven-deep)] flex items-center justify-center shrink-0 mt-0.5">
+                <Sparkles className="w-4 h-4 text-[var(--haven-orchid)]" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="font-display font-bold text-xs text-[var(--ink-900)]">
+                  Save your journey
+                </h4>
+                <p className="text-[11px] text-[var(--ink-600)] mt-0.5 leading-relaxed">
+                  You've started exploring and logging on this device. Create a free account anytime to keep your progress safe.
+                </p>
+                <button
+                  type="button"
+                  onClick={onCreateAccount}
+                  className="mt-2 text-xs font-display font-bold text-[var(--haven-deep)] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Create free account</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setNudgeDismissed(true)}
+              className="text-[var(--ink-400)] hover:text-[var(--ink-700)] p-1 rounded-lg transition-colors cursor-pointer shrink-0"
+              aria-label="Dismiss prompt"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* ======================================================================= */}
         {/* TAB 1: TODAY */}
         {/* ======================================================================= */}
         {activeTab === 'today' && (
           <div className="space-y-4">
+            {/* Daily Local Check-in Card */}
+            <GuestDailyCheckInCard
+              lifecycleStage={draft?.lifecycleStage || 'pregnancy'}
+              language={draft?.language || 'en'}
+              onLogged={() => handleInteraction()}
+              onCreateAccount={onCreateAccount}
+            />
+
             {/* Personalization Prompt Card */}
             <button
               type="button"
@@ -305,7 +365,7 @@ export default function AnonymousMotherShell({
                   Save your journey with an account
                 </h3>
                 <p className="font-body text-xs text-[var(--ink-600)] mt-1 max-w-sm mx-auto">
-                  When you sign up, your anonymous preferences are seamlessly synchronized to your secure profile.
+                  When you sign up, your guest preferences are seamlessly synchronized to your secure profile.
                 </p>
               </div>
               <Button
@@ -520,12 +580,12 @@ export default function AnonymousMotherShell({
           <div className="space-y-4">
             <div className="bg-white border border-[var(--border-hairline)] p-5 rounded-[24px] shadow-2xs space-y-3">
               <h2 className="font-display font-extrabold text-base text-[var(--ink-900)]">
-                Anonymous Session Settings
+                Guest Session Settings
               </h2>
               <div className="space-y-2 text-xs divide-y divide-[var(--border-hairline)]">
                 <div className="flex justify-between py-2">
                   <span className="text-[var(--ink-500)]">Session Mode:</span>
-                  <span className="font-bold text-emerald-700">Private (On-Device)</span>
+                  <span className="font-bold text-emerald-700">Guest Mode (On-Device)</span>
                 </div>
                 <div className="flex justify-between py-2">
                   <span className="text-[var(--ink-500)]">Lifecycle Stage:</span>
@@ -558,7 +618,7 @@ export default function AnonymousMotherShell({
                   className="w-full py-2.5 rounded-xl border border-red-200 text-red-600 font-display font-bold text-xs hover:bg-red-50 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  <span>Clear private device preferences</span>
+                  <span>Clear guest device preferences</span>
                 </button>
               </div>
             </div>
@@ -568,7 +628,7 @@ export default function AnonymousMotherShell({
                 Ready to save your progress?
               </h3>
               <p className="text-xs text-[var(--ink-600)]">
-                Create an account anytime. Your current preferences will automatically be preserved and linked.
+                Create an account anytime. Your current preferences and logs will automatically be preserved and linked.
               </p>
               <Button
                 type="button"
@@ -595,7 +655,7 @@ export default function AnonymousMotherShell({
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabSwitch(tab.id)}
                 className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                   isCurrent
                     ? 'text-[var(--haven-deep)]'

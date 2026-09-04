@@ -257,10 +257,12 @@ export function saveGuestMoodLog(
   energyLevel?: 1 | 2 | 3 | 4 | 5,
   notes?: string,
 ): AnonymousContextDraft | null {
-  const current = getAnonymousContextDraft() || {
+  const current: AnonymousContextDraft = getAnonymousContextDraft() || {
     lifecycleStage: 'pregnancy',
     language: 'en',
     interests: [],
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + DEFAULT_ANONYMOUS_TTL_MS).toISOString(),
   };
 
   const now = new Date();

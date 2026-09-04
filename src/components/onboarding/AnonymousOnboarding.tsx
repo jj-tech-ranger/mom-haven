@@ -174,7 +174,7 @@ export default function AnonymousOnboarding({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-[var(--haven-orchid)] text-xs font-display font-bold uppercase tracking-wider">
           <Sparkles className="w-4 h-4" />
-          <span>Anonymous Personalization</span>
+          <span>Guest Personalization</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs font-display font-semibold text-[var(--ink-500)]">
@@ -387,7 +387,7 @@ export default function AnonymousOnboarding({
           {stage !== 'pregnancy' && stage !== 'parenting' && stage !== 'postpartum' && (
             <div className="bg-white border border-[var(--border-hairline)] rounded-2xl p-5 text-sm text-[var(--ink-600)] space-y-2">
               <p>
-                We will configure your anonymous session for general maternal care, preconception
+                We will configure your guest session for general maternal care, preconception
                 health, and clinical preparedness.
               </p>
             </div>
