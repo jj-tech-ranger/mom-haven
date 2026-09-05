@@ -16,20 +16,23 @@ import {
   RefreshCw,
   Plus,
   ChevronLeft,
+  CalendarDays,
   type LucideIcon,
 } from 'lucide-react';
 import EmptyState from './EmptyState';
 import ClinicianPatientWorkspace from './clinician/ClinicianPatientWorkspace';
+import FacilityRosterView from './clinician/FacilityRosterView';
 import type { MomHavenHealthSummary } from '../types/healthSummary';
 import { auth } from '../lib/firebase';
 import Button from './Button';
 
-type ClinicianTab = 'dashboard' | 'access' | 'workspace' | 'caseload' | 'audit';
+type ClinicianTab = 'dashboard' | 'access' | 'workspace' | 'caseload' | 'roster' | 'audit';
 
 interface ClinicianShellProps {
   clinicianId?: string;
   clinicianName?: string;
   facilityName?: string;
+  facilityId?: string;
   onSignOut?: () => void;
 }
 
@@ -52,6 +55,7 @@ const tabs: { id: ClinicianTab; label: string; icon: LucideIcon; description: st
   { id: 'access', label: 'Patient Access', icon: KeyRound, description: 'Authorized patient connections' },
   { id: 'workspace', label: 'Workspace', icon: Stethoscope, description: 'Clinical workspace' },
   { id: 'caseload', label: 'Caseload', icon: Users, description: 'Patient caseload & triage' },
+  { id: 'roster', label: 'Facility Roster', icon: CalendarDays, description: 'Due this week at facility' },
   { id: 'audit', label: 'Audit', icon: ClipboardList, description: 'Access and activity audit' },
 ];
 
@@ -59,6 +63,7 @@ export default function ClinicianShell({
   clinicianId,
   clinicianName,
   facilityName,
+  facilityId,
   onSignOut,
 }: ClinicianShellProps) {
   const [activeTab, setActiveTab] = useState<ClinicianTab>('dashboard');
@@ -707,6 +712,16 @@ export default function ClinicianShell({
                   </p>
                 )}
               </div>
+            )}
+
+            {/* TAB: FACILITY ROSTER */}
+            {activeTab === 'roster' && (
+              <FacilityRosterView
+                clinicianId={clinicianId}
+                facilityId={facilityId}
+                facilityName={facilityName}
+                onNavigateToAccess={() => setActiveTab('access')}
+              />
             )}
 
             {/* TAB 4: AUDIT */}

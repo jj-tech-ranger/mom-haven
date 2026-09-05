@@ -38,6 +38,7 @@ import { DailyPlanItem, SuggestedReminder } from '../../types/advancedPersonaliz
 import ProgressRibbon from './ProgressRibbon';
 import CircularPregnancyTracker from './CircularPregnancyTracker';
 import DailyCheckInCard from './DailyCheckInCard';
+import AggregateInsightCard from './AggregateInsightCard';
 import EmergencySafetyHub from '../emergency/EmergencySafetyHub';
 import NotificationCenter from './NotificationCenter';
 import ReminderDetailModal from './ReminderDetailModal';
@@ -725,6 +726,18 @@ export default function TodayDashboard({
             language={todayContext.language}
             onLogged={handleMoodLogged}
             onNavigate={handleNavigate}
+          />
+        </section>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 2.6 AGGREGATE "YOU'RE NOT ALONE" PEER INSIGHT (k >= 50 SILENT FALLBACK) */}
+      {/* ========================================================================= */}
+      {userId && (
+        <section aria-label="Peer Aggregate Insight">
+          <AggregateInsightCard
+            lifecycleStage={todayContext.lifecycleStage === 'postpartum' ? 'postnatal' : 'pregnancy'}
+            gestationalWeeks={internalPregnancy?.gestationalAgeWeeks}
           />
         </section>
       )}

@@ -1,6 +1,7 @@
 // src/components/today/PersonalizedToday.tsx
 import React from 'react';
 import TodayDashboard from './TodayDashboard';
+export { default as AggregateInsightCard } from './AggregateInsightCard';
 
 interface PersonalizedTodayProps {
   userId: string;

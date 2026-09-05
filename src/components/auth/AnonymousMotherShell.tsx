@@ -25,6 +25,7 @@ import {
 import Button from '../Button';
 import AnonymousOnboarding from '../onboarding/AnonymousOnboarding';
 import GuestDailyCheckInCard from './GuestDailyCheckInCard';
+import { GuestStorageNotice } from '../common/OfflineSyncNotice';
 import {
   getAnonymousContextDraft,
   clearAnonymousContextDraft,
@@ -190,6 +191,9 @@ export default function AnonymousMotherShell({
       {/* MAIN CONTAINER */}
       {/* ========================================================================= */}
       <main className="max-w-lg mx-auto p-4 space-y-4">
+        {/* Guest Storage Indicator */}
+        <GuestStorageNotice onCreateAccount={onCreateAccount} />
+
         {/* Ephemeral Privacy Badge */}
         <div className="bg-white rounded-2xl border border-[var(--border-hairline)] p-3.5 flex items-start gap-3 shadow-2xs">
           <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />

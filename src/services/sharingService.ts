@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { clearPartnerShare } from './partnerContextService';
+import type { ConsentRecord } from '../types';
 
 export interface PartnerSharingScopes {
   logistics: boolean;
@@ -333,6 +334,22 @@ export async function createClinicShareCode(motherId: string): Promise<Clinician
       expiresAt,
     };
     const docRef = await addDoc(colRef, docData);
+
+    // Record auditable consent record for clinician ephemeral access session
+    await writeConsentRecord({
+      motherId,
+      consentType: 'clinician_access',
+      targetType: 'clinician',
+      targetId: null,
+      targetName: 'Clinic Healthcare Provider',
+      scopes: ['clinical_records_review'],
+      shareCode: code,
+      expiresAt,
+      metadata: {
+        sessionId: docRef.id,
+      },
+    }).catch((err) => console.warn('[SharingService] Failed to write clinician consent record:', err));
+
     return {
       ...docData,
       id: docRef.id,
@@ -394,6 +411,21 @@ export async function revokePartnerAccess(relationshipId: string): Promise<void>
     // Also clear partnerShares for immediate privacy revocation
     if (motherId) {
       await clearPartnerShare(motherId).catch(() => {});
+      try {
+        const partnerId = snap.data()?.partnerId;
+        const code = snap.data()?.code;
+        const cSnap = await getDocs(query(collection(db, 'consentRecords'), where('motherId', '==', motherId)));
+        for (const cDoc of cSnap.docs) {
+          const cData = cDoc.data();
+          if (cData.consentType === 'partner_access' && !cData.revokedAt) {
+            if (!partnerId || cData.targetId === partnerId || cData.shareCode === code) {
+              await revokeConsentRecord(cDoc.id);
+            }
+          }
+        }
+      } catch (cErr) {
+        console.warn('Could not revoke matching consent records:', cErr);
+      }
     }
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `partnerRelationships/${relationshipId}`);
@@ -403,10 +435,30 @@ export async function revokePartnerAccess(relationshipId: string): Promise<void>
 
 export async function revokeClinicianSession(sessionId: string): Promise<void> {
   try {
-    await updateDoc(doc(db, 'clinicianAccessSessions', sessionId), {
+    const sRef = doc(db, 'clinicianAccessSessions', sessionId);
+    const sSnap = await getDoc(sRef);
+    const motherId = sSnap.exists() ? sSnap.data()?.motherId : null;
+
+    await updateDoc(sRef, {
       status: 'revoked',
       revokedAt: new Date().toISOString(),
     });
+
+    if (motherId) {
+      try {
+        const cSnap = await getDocs(query(collection(db, 'consentRecords'), where('motherId', '==', motherId)));
+        for (const cDoc of cSnap.docs) {
+          const cData = cDoc.data();
+          if (cData.consentType === 'clinician_access' && !cData.revokedAt) {
+            if (cData.metadata?.sessionId === sessionId || cData.shareCode === sSnap.data()?.shareCode) {
+              await revokeConsentRecord(cDoc.id);
+            }
+          }
+        }
+      } catch (cErr) {
+        console.warn('Could not revoke matching clinician consent records:', cErr);
+      }
+    }
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `clinicianAccessSessions/${sessionId}`);
     throw err;
@@ -466,6 +518,91 @@ export async function updatePartnerSharingScopesById(
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `partnerRelationships/${relationshipId}`);
     throw err;
+  }
+}
+
+// 6. Auditable Consent Records
+export interface WriteConsentRecordInput {
+  motherId: string;
+  consentType: 'partner_access' | 'clinician_access';
+  targetType: 'partner' | 'clinician';
+  targetId?: string | null;
+  targetName?: string | null;
+  scopes?: string[];
+  shareCode?: string | null;
+  expiresAt?: string | null;
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Writes an auditable consent record to /consentRecords/{id}
+ */
+export async function writeConsentRecord(input: WriteConsentRecordInput): Promise<ConsentRecord> {
+  const now = new Date().toISOString();
+  const docData: Omit<ConsentRecord, 'id'> = {
+    motherId: input.motherId,
+    consentType: input.consentType,
+    targetType: input.targetType,
+    targetId: input.targetId || null,
+    targetName: input.targetName || null,
+    scopes: input.scopes || (input.targetType === 'partner' ? ['logistics', 'emergencyContacts'] : ['clinical_records_review']),
+    shareCode: input.shareCode || null,
+    grantedAt: now,
+    expiresAt: input.expiresAt || null,
+    revokedAt: null,
+    metadata: input.metadata || {},
+    createdAt: now,
+  };
+
+  try {
+    const colRef = collection(db, 'consentRecords');
+    const docRef = await addDoc(colRef, docData);
+    return {
+      ...docData,
+      id: docRef.id,
+    };
+  } catch (err) {
+    console.warn('[SharingService] writeConsentRecord failed to persist to Firestore:', err);
+    return {
+      ...docData,
+      id: `local_${Date.now()}`,
+    };
+  }
+}
+
+/**
+ * Fetches all auditable consent records for a mother, sorted chronologically descending
+ */
+export async function getConsentRecords(motherId: string): Promise<ConsentRecord[]> {
+  if (!motherId) return [];
+  try {
+    const colRef = collection(db, 'consentRecords');
+    const q = query(colRef, where('motherId', '==', motherId));
+    const snap = await getDocs(q);
+    const records = snap.docs.map((d) => ({ ...d.data(), id: d.id } as ConsentRecord));
+    return records.sort((a, b) => {
+      const timeA = new Date(a.grantedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.grantedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+  } catch (err) {
+    console.warn('[SharingService] getConsentRecords failed:', err);
+    return [];
+  }
+}
+
+/**
+ * Updates a consent record with revokedAt timestamp
+ */
+export async function revokeConsentRecord(recordId: string): Promise<void> {
+  if (!recordId) return;
+  try {
+    const recordRef = doc(db, 'consentRecords', recordId);
+    await updateDoc(recordRef, {
+      revokedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.warn('[SharingService] revokeConsentRecord failed:', err);
   }
 }
 

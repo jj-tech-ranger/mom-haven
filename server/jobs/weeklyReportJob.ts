@@ -254,6 +254,19 @@ export async function processWeeklyReports(
       ...nationalSummaryRecord,
       generatedAt: periodEndStr,
     };
+
+    // Audit record: persist report export record for automated weekly report generation
+    try {
+      await adminDb.collection('reportExports').add({
+        generatedFor: 'platform',
+        reportType: 'weekly_facility',
+        fileUrl: null,
+        generatedAt: new Date().toISOString(),
+        generatedBy: 'system-cron',
+      });
+    } catch (exportLogErr) {
+      console.error('[WeeklyReportJob] Error writing reportExports record:', exportLogErr);
+    }
   } catch (err) {
     console.error('[WeeklyReportJob] Error running weekly report computation:', err);
     throw err;

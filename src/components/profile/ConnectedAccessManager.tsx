@@ -1,13 +1,15 @@
 // src/components/profile/ConnectedAccessManager.tsx
 import React, { useState, useEffect } from 'react';
-import { Shield, ShieldAlert, HeartHandshake, Stethoscope, Trash2, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Shield, ShieldAlert, HeartHandshake, Stethoscope, Trash2, CheckCircle2, RefreshCw, Clock, ShieldCheck } from 'lucide-react';
 import { 
   getConnectedAccessList, 
+  getConsentRecords,
   revokePartnerAccess, 
   revokeClinicianSession, 
   PartnerRelationship, 
   ClinicianAccessSession 
 } from '../../services/sharingService';
+import type { ConsentRecord } from '../../types';
 
 interface ConnectedAccessManagerProps {
   motherId: string;
@@ -16,15 +18,20 @@ interface ConnectedAccessManagerProps {
 export default function ConnectedAccessManager({ motherId }: ConnectedAccessManagerProps) {
   const [partners, setPartners] = useState<PartnerRelationship[]>([]);
   const [clinicians, setClinicians] = useState<ClinicianAccessSession[]>([]);
+  const [consentHistory, setConsentHistory] = useState<ConsentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
   const loadAccessList = async () => {
     try {
       setLoading(true);
-      const data = await getConnectedAccessList(motherId);
+      const [data, history] = await Promise.all([
+        getConnectedAccessList(motherId),
+        getConsentRecords(motherId),
+      ]);
       setPartners(data.partners);
       setClinicians(data.clinicians);
+      setConsentHistory(history);
     } catch (err) {
       console.error('Error fetching connected access list', err);
     } finally {
@@ -193,6 +200,106 @@ export default function ConnectedAccessManager({ motherId }: ConnectedAccessMana
               </button>
             </div>
           ))
+        )}
+      </div>
+
+      {/* Sharing & Consent History (Auditable Log) */}
+      <div className="space-y-2.5 pt-3 border-t border-[var(--border-hairline)]">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-[var(--haven-orchid)]" />
+            <h5 className="font-display font-semibold text-xs text-[var(--ink-700)] uppercase tracking-wider">
+              Sharing & Consent History
+            </h5>
+          </div>
+          <span className="text-[11px] text-gray-500 font-medium">
+            {consentHistory.length} {consentHistory.length === 1 ? 'event' : 'events'} logged
+          </span>
+        </div>
+        <p className="text-[11px] text-[var(--ink-600)]">
+          Auditable record of all partner link activations and clinical record access codes granted from your account.
+        </p>
+
+        {consentHistory.length === 0 ? (
+          <p className="text-xs text-gray-400 italic bg-gray-50 p-3 rounded-[12px]">
+            No consent events recorded yet.
+          </p>
+        ) : (
+          <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
+            {consentHistory.map((item) => {
+              const isRevoked = !!item.revokedAt;
+              const isExpired = !isRevoked && !!item.expiresAt && new Date(item.expiresAt).getTime() < Date.now();
+              const isPartner = item.consentType === 'partner_access';
+
+              return (
+                <div
+                  key={item.id}
+                  className="p-3 bg-gray-50 border border-gray-200 rounded-[14px] flex flex-col gap-1.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {isPartner ? (
+                        <HeartHandshake className="w-4 h-4 text-[var(--haven-orchid)] shrink-0" />
+                      ) : (
+                        <Stethoscope className="w-4 h-4 text-blue-600 shrink-0" />
+                      )}
+                      <span className="font-display font-bold text-xs text-[var(--ink-900)]">
+                        {isPartner ? (item.targetName || 'Partner Link') : (item.targetName || 'Clinical Access')}
+                      </span>
+                      {item.shareCode && (
+                        <span className="font-mono text-[10px] bg-white px-1.5 py-0.5 rounded border border-gray-200 text-gray-700">
+                          {item.shareCode}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      {isRevoked ? (
+                        <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-semibold rounded-full">
+                          Revoked
+                        </span>
+                      ) : isExpired ? (
+                        <span className="px-2 py-0.5 bg-gray-200 text-gray-600 text-[10px] font-semibold rounded-full">
+                          Expired
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-semibold rounded-full flex items-center gap-1">
+                          <CheckCircle2 className="w-2.5 h-2.5" />
+                          Active
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-[10px] text-gray-500 space-y-0.5">
+                    <p>
+                      Granted: {new Date(item.grantedAt || item.createdAt || '').toLocaleString([], {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                      {item.revokedAt && (
+                        <span className="ml-2 text-red-600">
+                          · Revoked: {new Date(item.revokedAt).toLocaleString([], {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      )}
+                    </p>
+                    {item.scopes && item.scopes.length > 0 && (
+                      <p className="text-gray-600">
+                        Scope: <span className="text-gray-700 font-medium">{item.scopes.join(', ')}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

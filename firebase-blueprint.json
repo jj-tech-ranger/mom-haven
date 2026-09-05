@@ -170,6 +170,40 @@
       },
       "required": ["clinicianId", "motherId", "text"]
     },
+    "CareTeamMessage": {
+      "title": "CareTeamMessage",
+      "description": "One-directional clinician-to-mother feedback and care team messaging that the mother can see",
+      "type": "object",
+      "properties": {
+        "motherId": { "type": "string" },
+        "clinicianId": { "type": "string" },
+        "childId": { "type": "string" },
+        "sentByRole": { "type": "string", "enum": ["CLINICIAN", "MOTHER"] },
+        "text": { "type": "string" },
+        "category": { "type": "string", "enum": ["general", "lab_result", "appointment", "reassurance"] },
+        "relatedRecordId": { "type": "string" },
+        "readByMother": { "type": "boolean" },
+        "readAt": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["motherId", "clinicianId", "sentByRole", "text", "category", "readByMother", "createdAt"]
+    },
+    "FacilityRosterEntry": {
+      "title": "FacilityRosterEntry",
+      "description": "Facility maternal and child health roster entry for clinic visits due",
+      "type": "object",
+      "properties": {
+        "facilityId": { "type": "string" },
+        "motherId": { "type": "string" },
+        "childId": { "type": "string" },
+        "nextDueType": { "type": "string", "enum": ["anc", "immunization", "pnc", "growth_check"] },
+        "nextDueDate": { "type": "string" },
+        "lastVisitDate": { "type": "string" },
+        "riskFlag": { "type": "string", "enum": ["none", "watch", "urgent"] },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["facilityId", "motherId", "nextDueType", "nextDueDate", "updatedAt"]
+    },
     "AuditEvent": {
       "title": "AuditEvent",
       "description": "Immutable security and access audit record",
@@ -237,6 +271,14 @@
     "/clinicianPrivateNotes/{noteId}": {
       "schema": { "$ref": "#/entities/ClinicianPrivateNote" },
       "description": "Private clinician clinical notes"
+    },
+    "/careTeamMessages/{messageId}": {
+      "schema": { "$ref": "#/entities/CareTeamMessage" },
+      "description": "Care team feedback messages visible to mother"
+    },
+    "/facilityRosters/{rosterId}": {
+      "schema": { "$ref": "#/entities/FacilityRosterEntry" },
+      "description": "Facility clinical rosters for maternal and child health visits due"
     },
     "/auditEvents/{eventId}": {
       "schema": { "$ref": "#/entities/AuditEvent" },

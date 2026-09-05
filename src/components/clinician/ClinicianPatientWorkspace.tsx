@@ -21,12 +21,14 @@ import {
   Building2,
   Stethoscope,
   Sparkles,
-  Pill
+  Pill,
+  MessageSquare
 } from 'lucide-react';
 import ProvenanceBadge from '../common/ProvenanceBadge';
 import VerificationModal from './VerificationModal';
 import NewEncounterModal from './NewEncounterModal';
 import PrivateNotesPanel from './PrivateNotesPanel';
+import ClinicianCareTeamMessagesPanel from './ClinicianCareTeamMessagesPanel';
 import ClinicianPatientContext from './ClinicianPatientContext';
 import { CongenitalAbnormalityExam } from './CongenitalAbnormalityExam';
 import { FamilyPlanningModal } from './FamilyPlanningModal';
@@ -76,6 +78,7 @@ export default function ClinicianPatientWorkspace({
     | 'growth'
     | 'familyPlanning'
     | 'aefiAndAdmissions'
+    | 'messages'
     | 'notes'
   >(summary ? 'summary' : 'overview');
   const [verificationTarget, setVerificationTarget] = useState<{
@@ -357,6 +360,7 @@ export default function ClinicianPatientWorkspace({
           { id: 'growth', label: 'Growth & MUAC', icon: TrendingUp },
           { id: 'familyPlanning', label: 'Family Planning (p.22)', icon: Heart },
           { id: 'aefiAndAdmissions', label: 'Safety & Admissions (pp.34, 40)', icon: Building2 },
+          { id: 'messages', label: 'Care Team Messages', icon: MessageSquare },
           { id: 'notes', label: 'Private Provider Notes', icon: Lock },
         ].map(tab => {
           const Icon = tab.icon;
@@ -707,6 +711,16 @@ export default function ClinicianPatientWorkspace({
             </div>
           </div>
         </div>
+      )}
+
+      {workspaceTab === 'messages' && (
+        <ClinicianCareTeamMessagesPanel
+          motherId={effectiveMotherId}
+          clinicianName={clinicianName}
+          facilityName={facilityName}
+          childId={childId}
+          childName={summary?.children?.[0]?.name}
+        />
       )}
 
       {workspaceTab === 'notes' && (

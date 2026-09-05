@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
   Search, 
@@ -11,9 +11,12 @@ import {
   Calendar, 
   Filter,
   Eye,
-  Lock
+  Lock,
+  Clock
 } from 'lucide-react';
-import { DocumentRecord } from '../../types';
+import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { db, auth } from '../../lib/firebase';
+import { DocumentRecord, ReportExportRecord } from '../../types';
 import ProvenanceBadge from '../common/ProvenanceBadge';
 import Button from '../Button';
 
@@ -35,6 +38,39 @@ export default function RecordsVault({
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [provenanceFilter, setProvenanceFilter] = useState<'All' | 'VERIFIED' | 'REPORTED'>('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [recentReports, setRecentReports] = useState<ReportExportRecord[]>([]);
+  const [loadingReports, setLoadingReports] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchRecentReports = async () => {
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+      try {
+        setLoadingReports(true);
+        const q = query(
+          collection(db, 'reportExports'),
+          where('generatedFor', '==', uid),
+          limit(10)
+        );
+        const snap = await getDocs(q);
+        if (isMounted) {
+          const items = snap.docs.map(d => ({ id: d.id, ...d.data() } as ReportExportRecord));
+          items.sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime());
+          setRecentReports(items);
+        }
+      } catch (err) {
+        console.warn('Error fetching recent report exports:', err);
+      } finally {
+        if (isMounted) setLoadingReports(false);
+      }
+    };
+
+    fetchRecentReports();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const filtered = records.filter(r => {
     if (activeCategory !== 'All' && r.category !== activeCategory) return false;
@@ -234,6 +270,63 @@ export default function RecordsVault({
           ))}
         </div>
       )}
+
+      {/* Recent Exported Reports Section */}
+      <div className="bg-white rounded-[22px] p-4 sm:p-5 border border-[var(--border-hairline)] shadow-card-1 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-[var(--lavender-100)] flex items-center justify-center text-[var(--haven-deep)]">
+              <Printer className="w-3.5 h-3.5 text-[var(--haven-orchid)]" />
+            </div>
+            <h3 className="font-display font-bold text-sm text-[var(--ink-900)]">
+              Recent Generated Reports
+            </h3>
+          </div>
+          <span className="text-[11px] font-semibold text-[var(--ink-500)]">
+            {recentReports.length} {recentReports.length === 1 ? 'record' : 'records'}
+          </span>
+        </div>
+
+        {recentReports.length === 0 ? (
+          <p className="text-xs text-[var(--ink-500)] italic py-2">
+            No generated reports recorded yet. Click the printer icon above to export your certified health summary.
+          </p>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {recentReports.map((report) => (
+              <div key={report.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
+                <div className="flex items-start gap-2.5">
+                  <FileText className="w-4 h-4 text-purple-700 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold text-gray-900 capitalize block">
+                      {report.reportType === 'monthly_summary'
+                        ? 'Maternal Health Summary (PDF)'
+                        : report.reportType === 'weekly_facility'
+                        ? 'Weekly Facility Report'
+                        : report.reportType === 'immunization_certificate'
+                        ? 'KEPI Immunization Certificate'
+                        : report.reportType.replace(/_/g, ' ')}
+                    </span>
+                    <span className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
+                      <Clock className="w-3 h-3 text-gray-400" />
+                      {new Date(report.generatedAt).toLocaleString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                </div>
+                <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700">
+                  Exported
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Quick Upload Floating Action */}
       <div className="pt-2">

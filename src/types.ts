@@ -328,6 +328,32 @@ export interface ClinicianPrivateNote {
   createdAt: string;
 }
 
+export interface CareTeamMessage {
+  id: string;
+  motherId: string;
+  clinicianId: string;
+  childId?: string | null;
+  sentByRole: 'CLINICIAN' | 'MOTHER';
+  text: string;
+  category: 'general' | 'lab_result' | 'appointment' | 'reassurance';
+  relatedRecordId?: string | null;
+  readByMother: boolean;
+  readAt?: string | null;
+  createdAt: string;
+}
+
+export interface FacilityRosterEntry {
+  id: string;
+  facilityId: string;
+  motherId: string;
+  childId?: string | null;
+  nextDueType: 'anc' | 'immunization' | 'pnc' | 'growth_check';
+  nextDueDate: string;
+  lastVisitDate?: string | null;
+  riskFlag?: 'none' | 'watch' | 'urgent';
+  updatedAt: string;
+}
+
 export interface Reminder {
   id: string;
   userId: string;
@@ -797,6 +823,47 @@ export interface PmtctHeiRecord {
   };
   provenance: Provenance;
   createdAt: string;
+  updatedAt: string;
+}
+
+// Auditable Consent Record
+export interface ConsentRecord {
+  id: string;
+  motherId: string;
+  consentType: 'partner_access' | 'clinician_access';
+  targetType: 'partner' | 'clinician';
+  targetId?: string | null;
+  targetName?: string | null;
+  scopes?: string[];
+  shareCode?: string | null;
+  grantedAt: string;
+  expiresAt?: string | null;
+  revokedAt?: string | null;
+  metadata?: Record<string, any>;
+  createdAt?: string;
+}
+
+// Persisted Report Generation Export Record
+export interface ReportExportRecord {
+  id: string;
+  generatedFor: string; // facilityId, motherId, or 'platform'
+  reportType: 'weekly_facility' | 'monthly_summary' | 'immunization_certificate' | 'growth_chart';
+  fileUrl?: string | null;
+  generatedAt: string;
+  generatedBy: string; // uid or 'system-cron'
+}
+
+// k >= 50 Anonymized Aggregate Insight Bucket
+export interface AggregateInsightBucket {
+  id: string;
+  cohortId: string; // e.g. 'trimester_1' | 'trimester_2' | 'trimester_3' | 'postnatal'
+  lifecycleStage: string;
+  trimester?: string | null;
+  cohortSize: number; // Mandatory >= 50 k-anonymity floor
+  roundedPercentage: number;
+  statDescription: string;
+  summaryText?: string;
+  period?: string;
   updatedAt: string;
 }
 

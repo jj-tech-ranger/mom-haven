@@ -11,6 +11,7 @@ import { adminAuth, adminDb } from './server/clinicianAccess.js';
 import { buildHavenContext, formatHavenContext } from './server/services/havenContextBuilder.js';
 import { processDueReminders, startReminderPushCron } from './server/jobs/reminderPush.js';
 import { startWeeklyReportCron } from './server/jobs/weeklyReportJob.js';
+import { startAggregateInsightsCron } from './server/services/aggregateInsightService.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mom-haven';
@@ -113,9 +114,31 @@ async function startServer() {
     }
   });
 
-  // Start background cron for hourly reminder checks and weekly facility reporting
+  // Start background crons for reminders, weekly reports, and k>=50 aggregate insights
   startReminderPushCron();
   startWeeklyReportCron();
+  startAggregateInsightsCron();
+
+  // Audit record export endpoint for reports and PDFs
+  app.post('/api/reports/record-export', async (req, res) => {
+    try {
+      const { generatedFor, reportType, fileUrl, generatedBy } = req.body || {};
+      if (!generatedFor || !reportType) {
+        return res.status(400).json({ error: 'generatedFor and reportType are required.' });
+      }
+      const ref = await adminDb.collection('reportExports').add({
+        generatedFor: String(generatedFor).trim(),
+        reportType: String(reportType).trim(),
+        fileUrl: fileUrl || null,
+        generatedAt: new Date().toISOString(),
+        generatedBy: String(generatedBy || 'client').trim(),
+      });
+      res.status(201).json({ id: ref.id, success: true });
+    } catch (err: any) {
+      console.error('Error persisting reportExport record:', err);
+      res.status(500).json({ error: err?.message || 'Failed to record report export' });
+    }
+  });
 
   app.post('/api/v1/chat', async (req, res) => {
     try {

@@ -1,8 +1,10 @@
 // src/components/records/PdfExportManager.tsx
 import React, { useState } from 'react';
 import { X, Printer, Download, CheckCircle2, ShieldCheck, FileText, Calendar, Building2 } from 'lucide-react';
+import { collection, addDoc } from 'firebase/firestore';
+import { db, auth } from '../../lib/firebase';
 import Button from '../Button';
-import { Pregnancy, Child, AncEncounter, ChildVaccineRecord } from '../../types';
+import { Pregnancy, Child, AncEncounter, ChildVaccineRecord, ReportExportRecord } from '../../types';
 
 interface PdfExportManagerProps {
   userName: string;
@@ -29,7 +31,29 @@ export default function PdfExportManager({
   const [includeGrowth, setIncludeGrowth] = useState(true);
   const [previewMode, setPreviewMode] = useState(false);
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
+    try {
+      const currentUid = auth.currentUser?.uid || pregnancy?.motherId || 'mother';
+      const recordPayload = {
+        generatedFor: pregnancy?.motherId || currentUid,
+        reportType: 'monthly_summary' as const,
+        fileUrl: null,
+        generatedAt: new Date().toISOString(),
+        generatedBy: currentUid,
+      };
+
+      // Write via client firestore
+      await addDoc(collection(db, 'reportExports'), recordPayload).catch(async () => {
+        // Fallback to server route if client direct write is restricted by security rules
+        await fetch('/api/reports/record-export', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(recordPayload),
+        }).catch(() => {});
+      });
+    } catch (err) {
+      console.warn('Could not record report export audit:', err);
+    }
     window.print();
   };
 

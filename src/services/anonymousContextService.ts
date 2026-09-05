@@ -14,6 +14,7 @@ import {
   saveHealthContext,
 } from './healthContextService';
 import { createHealthLog } from './healthLogService';
+import { getLocalAnonymousLogs, clearLocalAnonymousLogs } from './localHealthLogStore';
 
 export interface GuestMoodEntry {
   mood: MoodType;
@@ -310,6 +311,41 @@ export function getGuestMoodHistory(): GuestMoodEntry[] {
   return draft?.moodHistory || [];
 }
 
+/**
+ * Migrates any locally stored anonymous health logs into Firestore using
+ * the existing authenticated write path (createHealthLog), then clears local storage.
+ */
+export async function migrateLocalHealthLogs(
+  userId: string,
+): Promise<{ migratedCount: number; errors: number }> {
+  const localLogs = await getLocalAnonymousLogs();
+  if (!localLogs || localLogs.length === 0) {
+    return { migratedCount: 0, errors: 0 };
+  }
+
+  let migratedCount = 0;
+  let errors = 0;
+
+  for (const log of localLogs) {
+    try {
+      await createHealthLog(userId, {
+        type: log.type,
+        timestamp: log.timestamp,
+        values: log.values,
+        notes: log.notes,
+        sharedWithClinician: log.sharedWithClinician,
+      });
+      migratedCount++;
+    } catch (err) {
+      errors++;
+      console.warn('[AnonymousContext] Failed to migrate local health log entry:', err);
+    }
+  }
+
+  await clearLocalAnonymousLogs();
+  return { migratedCount, errors };
+}
+
 export function clearAnonymousContextDraft(): void {
   try {
     localStorage.removeItem(ANONYMOUS_STORAGE_KEY);
@@ -365,6 +401,9 @@ export async function syncAnonymousContext(
 
         if (response.ok) {
           const payload = await response.json();
+          await migrateLocalHealthLogs(user.uid).catch((err) =>
+            console.warn('[AnonymousContext] Health log migration failed after server sync:', err),
+          );
           clearAnonymousContextDraft();
           return {
             success: true,
@@ -451,6 +490,10 @@ export async function syncAnonymousContext(
           console.warn('[AnonymousContext] Failed to migrate guest mood log to healthLog', logErr);
         }
       }
+
+      await migrateLocalHealthLogs(user.uid).catch((err) =>
+        console.warn('[AnonymousContext] Health log migration failed during client fallback:', err),
+      );
 
       clearAnonymousContextDraft();
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, HeartHandshake, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 import Button from '../Button';
-import { redeemPartnerConnectionCode } from '../../services/sharingService';
+import { redeemPartnerConnectionCode, writeConsentRecord } from '../../services/sharingService';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, signInAsGuest } from '../../lib/firebase';
 
@@ -62,6 +62,21 @@ export default function PartnerConnectFlow({ onBack, onConnected }: PartnerConne
         setError(res.message || 'We could not verify that connection code. Ask the mother to generate a new code.');
         return;
       }
+
+      // Record auditable consent entry
+      await writeConsentRecord({
+        motherId: res.motherId,
+        consentType: 'partner_access',
+        targetType: 'partner',
+        targetId: partnerUid,
+        targetName: name.trim(),
+        scopes: ['logistics', 'emergencyContacts', 'sharedReminders'],
+        shareCode: codeToRedeem,
+        metadata: {
+          relationship,
+          partnerEmail: email,
+        },
+      }).catch((logErr) => console.warn('Could not write partner consent record:', logErr));
 
       const motherInfo = { motherId: res.motherId, motherName: res.motherName || 'Mother' };
       localStorage.setItem('momhaven_partner_link', JSON.stringify(motherInfo));

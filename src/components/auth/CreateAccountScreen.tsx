@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Button from '../Button';
+import { auth } from '../../lib/firebase';
+import { migrateLocalHealthLogs } from '../../services/anonymousContextService';
 
 interface CreateAccountScreenProps {
   onBack: () => void;
@@ -58,6 +60,14 @@ export default function CreateAccountScreen({
         phone: formattedPhone,
         password,
       });
+
+      if (auth?.currentUser?.uid) {
+        try {
+          await migrateLocalHealthLogs(auth.currentUser.uid);
+        } catch (migErr) {
+          console.warn('Failed to migrate local health logs on account creation:', migErr);
+        }
+      }
     } catch (err: any) {
       console.error('Registration failed', err);
       setError(err?.message || 'Failed to create your account. Please try again.');

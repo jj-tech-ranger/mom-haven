@@ -5,6 +5,7 @@ import PersonalizedToday from './today/PersonalizedToday';
 import JourneyMainView from './journey/JourneyMainView';
 import ChildMainView from './child/ChildMainView';
 import MotherRecordsView from './records/MotherRecordsView';
+import CareTeamMessagesMotherCard from './records/CareTeamMessagesMotherCard';
 import HavenChatView from './haven/HavenChatView';
 import MotherProfileSettings from './profile/MotherProfileSettings';
 import AppLockPinModal from './profile/AppLockPinModal';
@@ -97,12 +98,15 @@ export default function MotherShell({ userId, userName, userEmail, onSignOut }: 
 
     <main className={`mx-auto max-w-lg ${activeTab === 'haven' ? 'p-0' : 'p-4 sm:p-5'}`}>
       {activeTab === 'today' && userId ? (
-        <PersonalizedToday 
-          userId={userId} 
-          userName={userName} 
-          onNavigate={navigate} 
-          onOpenAskHaven={handleOpenAskHaven}
-        />
+        <div className="space-y-4">
+          <CareTeamMessagesMotherCard motherId={userId} />
+          <PersonalizedToday 
+            userId={userId} 
+            userName={userName} 
+            onNavigate={navigate} 
+            onOpenAskHaven={handleOpenAskHaven}
+          />
+        </div>
       ) : activeTab === 'today' ? (
         <EmptyState icon={Icon} title="Sign in to see your journey" message="Your personalized MomHaven home appears after your account is connected." />
       ) : activeTab === 'journey' && userId ? (
@@ -131,7 +135,10 @@ export default function MotherShell({ userId, userName, userEmail, onSignOut }: 
       ) : activeTab === 'haven' ? (
         <EmptyState icon={Icon} title="Sign in to talk with Haven" message="Your clinical AI companion appears after your account is connected." />
       ) : activeTab === 'records' && userId ? (
-        <MotherRecordsView userId={userId} userName={userName} />
+        <div className="space-y-4">
+          <CareTeamMessagesMotherCard motherId={userId} />
+          <MotherRecordsView userId={userId} userName={userName} />
+        </div>
       ) : activeTab === 'records' ? (
         <EmptyState icon={Icon} title="Sign in to see your records" message="Your clinical records and health passport appear after your account is connected." />
       ) : activeTab === 'profile' && userId ? (

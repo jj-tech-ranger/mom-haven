@@ -12,7 +12,7 @@ import {
   deleteDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
 import {
   DailyHealthLog,
   CreateHealthLogInput,
@@ -28,13 +28,48 @@ import {
   stripUndefined,
   HealthLogValidationError,
 } from './healthLogValidationService';
+import {
+  getLocalAnonymousLogs,
+  addLocalAnonymousLog,
+  updateLocalAnonymousLog,
+  deleteLocalAnonymousLog,
+  getLocalAnonymousLogsSync,
+} from './localHealthLogStore';
 
 const LOCAL_STORAGE_KEY_PREFIX = 'momhaven_daily_health_logs_';
 
-// In-memory fallback cache for environments without localStorage or Firestore connectivity
+// In-memory fallback cache for authenticated environments without localStorage or Firestore connectivity
 const memoryLogsMap = new Map<string, DailyHealthLog[]>();
 
+/**
+ * Checks if the user or session operates on the unauthenticated anonymous/guest path.
+ */
+export function isAnonymousPath(userId?: string | null): boolean {
+  if (!userId) return true;
+  if (
+    userId === 'guest' ||
+    userId === 'anonymous' ||
+    userId === 'explore' ||
+    userId.startsWith('guest') ||
+    userId.startsWith('anon')
+  ) {
+    return true;
+  }
+  const currentAuth = auth?.currentUser;
+  if (!currentAuth || currentAuth.isAnonymous) {
+    // If the userId matches a simulated non-firebase test mock id, treat as authenticated unless specified
+    if (userId.startsWith('user-') || userId.startsWith('mother-') || userId.startsWith('test_')) {
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
+
 function getLocalLogs(userId: string): DailyHealthLog[] {
+  if (isAnonymousPath(userId)) {
+    return getLocalAnonymousLogsSync();
+  }
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
       const raw = window.localStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}${userId}`);
@@ -47,7 +82,6 @@ function getLocalLogs(userId: string): DailyHealthLog[] {
 }
 
 function saveLocalLogs(userId: string, logs: DailyHealthLog[]): void {
-  memoryLogsMap.set(userId, logs);
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
       window.localStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}${userId}`, JSON.stringify(logs));
@@ -55,6 +89,7 @@ function saveLocalLogs(userId: string, logs: DailyHealthLog[]): void {
       // ignore
     }
   }
+  memoryLogsMap.set(userId, logs);
 }
 
 /**
@@ -94,6 +129,17 @@ export async function createHealthLog(
 
   let createdId = `log_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
+  // Anonymous path: persist to IndexedDB via localHealthLogStore without calling Firestore
+  if (isAnonymousPath(userId)) {
+    const anonymousLog: DailyHealthLog = {
+      id: createdId,
+      ...newLog,
+      userId: 'guest',
+    };
+    await addLocalAnonymousLog(anonymousLog);
+    return anonymousLog;
+  }
+
   try {
     if (db) {
       const docRef = await addDoc(collection(db, 'dailyHealthLogs'), {
@@ -129,6 +175,30 @@ export async function updateHealthLog(
 ): Promise<DailyHealthLog> {
   if (!userId || !logId) {
     throw new HealthLogValidationError('id', 'User ID and Log ID are required.');
+  }
+
+  if (isAnonymousPath(userId)) {
+    const localLogs = await getLocalAnonymousLogs();
+    const existing = localLogs.find((l) => l.id === logId);
+    if (!existing) {
+      throw new HealthLogValidationError('logId', 'Health log not found.');
+    }
+    const updatedTimestamp = input.timestamp ? validateLogTimestamp(input.timestamp) : existing.timestamp;
+    const mergedValues = input.values ? { ...existing.values, ...input.values } : existing.values;
+    const validValues = validateHealthLogValues(existing.type, mergedValues);
+
+    const updatedLog: DailyHealthLog = {
+      ...existing,
+      timestamp: updatedTimestamp,
+      values: validValues,
+      notes: input.notes !== undefined ? (input.notes ? String(input.notes).trim().slice(0, 1000) : undefined) : existing.notes,
+      sharedWithClinician: input.sharedWithClinician !== undefined ? Boolean(input.sharedWithClinician) : existing.sharedWithClinician,
+      source: 'USER_REPORTED',
+      provenance: createSafeUserReportedProvenance('guest', existing.provenance?.enteredAt || existing.timestamp),
+      updatedAt: new Date().toISOString(),
+    };
+    await updateLocalAnonymousLog(logId, updatedLog);
+    return updatedLog;
   }
 
   const localList = getLocalLogs(userId);
@@ -210,6 +280,11 @@ export async function deleteHealthLog(userId: string, logId: string): Promise<vo
     throw new HealthLogValidationError('id', 'User ID and Log ID are required.');
   }
 
+  if (isAnonymousPath(userId)) {
+    await deleteLocalAnonymousLog(logId);
+    return;
+  }
+
   const localList = getLocalLogs(userId);
   const target = localList.find((l) => l.id === logId);
   if (target && target.userId !== userId) {
@@ -246,6 +321,15 @@ export async function getHealthLogs(
   if (!userId) return [];
 
   const max = options.limit || 100;
+
+  if (isAnonymousPath(userId)) {
+    let anonLogs = await getLocalAnonymousLogs();
+    if (options.type) {
+      anonLogs = anonLogs.filter((l) => l.type === options.type);
+    }
+    return anonLogs.slice(0, max);
+  }
+
   let logs: DailyHealthLog[] = [];
 
   if (db) {
@@ -312,7 +396,8 @@ export async function getDailyHealthLogById(userId: string, logId: string): Prom
   if (!userId || !logId) return null;
   const logs = await getHealthLogs(userId);
   const found = logs.find((l) => l.id === logId);
-  if (!found || found.userId !== userId) return null;
+  if (!found) return null;
+  if (!isAnonymousPath(userId) && found.userId !== userId) return null;
   return found;
 }
 

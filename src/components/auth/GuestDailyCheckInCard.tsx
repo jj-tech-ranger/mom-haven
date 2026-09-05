@@ -9,6 +9,7 @@ import {
 } from '../../services/anonymousContextService';
 import { getMicroInsight } from '../../services/todayContextService';
 import MoodEmoji, { ALL_MOOD_TYPES, MOOD_CONFIG } from '../common/MoodEmoji';
+import { GuestStorageNotice } from '../common/OfflineSyncNotice';
 
 export interface GuestDailyCheckInCardProps {
   lifecycleStage: LifecycleStage;
@@ -93,18 +94,7 @@ export default function GuestDailyCheckInCard({
             </p>
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-[var(--ink-500)] pt-0.5">
-            <span>{isSw ? 'Imehifadhiwa kwenye kifaa hiki' : 'Saved locally on this device'}</span>
-            {onCreateAccount && (
-              <button
-                type="button"
-                onClick={onCreateAccount}
-                className="text-[var(--haven-deep)] font-semibold hover:underline cursor-pointer"
-              >
-                {isSw ? 'Hifadhi milele' : 'Save to account'}
-              </button>
-            )}
-          </div>
+          <GuestStorageNotice onCreateAccount={onCreateAccount} compact className="mt-1" />
         </div>
       ) : (
         /* ========================================================================= */

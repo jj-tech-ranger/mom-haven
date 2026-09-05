@@ -276,7 +276,7 @@ export default function App() {
             />
           );
         }
-        return <ClinicianShell clinicianId={currentUser?.uid} clinicianName={currentUser?.displayName || clinicianData?.name} facilityName={clinicianData?.facilityName} onSignOut={handleSignOut} />;
+        return <ClinicianShell clinicianId={currentUser?.uid} clinicianName={currentUser?.displayName || clinicianData?.name} facilityName={clinicianData?.facilityName} facilityId={clinicianData?.facilityId} onSignOut={handleSignOut} />;
       case 'ADMIN':
         if (!adminMfaVerified) return <div className="min-h-screen bg-[var(--lavender-50)] flex items-center justify-center p-4"><AdminMfaModal adminEmail={currentUser?.email || ''} onSuccess={handleAdminMfaSuccess} onCancel={handleSignOut} /></div>;
         return <AdminShell onRoleSwitch={(r) => setUserRole(r)} />;

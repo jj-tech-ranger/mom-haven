@@ -4,6 +4,7 @@ import { adminAuth, adminDb, ApiError, document, logAudit, requireActiveSession,
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { CLINICAL_RECORD_GROUPS, getPatientRecords } from '../services/patientRecordService.js';
 import { getAuthorizedHealthSummary } from '../services/healthSummaryService.js';
+import { getFacilityRoster, recomputeFacilityRoster } from '../services/facilityRosterService.js';
 
 export const clinicianRouter = Router();
 
@@ -1299,6 +1300,69 @@ clinicianRouter.get(['/caseload', '/clinician/caseload'], async (req, res) => {
     });
 
     res.json({ items: caseload, caseload });
+  } catch (e) {
+    sendError(res, e);
+  }
+});
+
+clinicianRouter.get(['/facility-roster', '/clinician/facility-roster'], async (req, res) => {
+  try {
+    const token = await auth(req);
+    const clinicianData = await requireClinician(token.uid);
+    const facilityId = clinicianData.clinician.facilityId || String(req.query.facilityId || '').trim();
+    if (!facilityId) {
+      return res.json({ facilityId: null, facilityName: null, items: [] });
+    }
+
+    const items = await getFacilityRoster(facilityId);
+
+    // Enrich with mother names
+    const enriched = await Promise.all(
+      items.map(async (entry) => {
+        const name = await motherName(entry.motherId).catch(() => 'Mother');
+        return {
+          ...entry,
+          motherName: name,
+        };
+      })
+    );
+
+    res.json({
+      facilityId,
+      facilityName: clinicianData.clinician.facilityName || `Facility ${facilityId}`,
+      items: enriched,
+    });
+  } catch (e) {
+    sendError(res, e);
+  }
+});
+
+clinicianRouter.post(['/facility-roster/recompute', '/clinician/facility-roster/recompute'], async (req, res) => {
+  try {
+    const token = await auth(req);
+    const clinicianData = await requireClinician(token.uid);
+    const facilityId = clinicianData.clinician.facilityId || String(req.body?.facilityId || '').trim();
+    if (!facilityId) {
+      throw new ApiError(400, 'Clinician has no assigned facility.');
+    }
+
+    const items = await recomputeFacilityRoster(facilityId);
+    const enriched = await Promise.all(
+      items.map(async (entry) => {
+        const name = await motherName(entry.motherId).catch(() => 'Mother');
+        return {
+          ...entry,
+          motherName: name,
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      facilityId,
+      facilityName: clinicianData.clinician.facilityName || `Facility ${facilityId}`,
+      items: enriched,
+    });
   } catch (e) {
     sendError(res, e);
   }

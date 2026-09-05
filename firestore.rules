@@ -34,6 +34,9 @@ service cloud.firestore {
   match /partnerShares/{motherId}{allow read:if owner(motherId)||activePartner(motherId);allow create,update:if owner(motherId);}
   match /pregnancySummaries/{motherId}{allow read:if owner(motherId)||activePartner(motherId);allow create,update:if owner(motherId);}
   match /clinicianAccessSessions/{id}{allow read:if owner(resource.data.motherId);allow create:if signed()&&request.resource.data.motherId==request.auth.uid&&request.resource.data.clinicianId==null&&request.resource.data.status=='active'&&request.resource.data.shareCode is string&&request.resource.data.shareCode.size()==6&&request.resource.data.expiresAt is timestamp&&request.resource.data.expiresAt>request.time;allow update:if owner(resource.data.motherId)&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])&&request.resource.data.status in ['active','expired','revoked'];}
+  match /consentRecords/{id}{allow read:if isAdmin()||(signed()&&resource.data.motherId==request.auth.uid);allow create:if owner(request.resource.data.motherId)||(signed()&&request.resource.data.targetId==request.auth.uid);allow update:if owner(resource.data.motherId)&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['revokedAt']);}
+  match /careTeamMessages/{id}{allow read:if signed()&&((resource.data.motherId==request.auth.uid)||(isClinician()&&(resource.data.clinicianId==request.auth.uid||resource.data.motherId is string)));allow write:if signed()&&((resource!=null&&resource.data.motherId==request.auth.uid)||(resource==null&&request.resource.data.motherId==request.auth.uid)||(isClinician()&&((resource==null&&request.resource.data.clinicianId==request.auth.uid)||(resource!=null&&resource.data.clinicianId==request.auth.uid))));}
+  match /facilityRosters/{id}{allow read:if isAdmin()||(isClinician()&&exists(/databases/$(database)/documents/clinicians/$(request.auth.uid))&&get(/databases/$(database)/documents/clinicians/$(request.auth.uid)).data.facilityId==resource.data.facilityId);allow write:if false;}
   match /clinicianPrivateNotes/{id}{allow read,write:if false;}
   match /auditEvents/{id}{allow read:if isAdmin();allow write:if false;}
   match /facilities/{id}{allow read:if signed();allow write:if isAdmin();}
@@ -44,6 +47,8 @@ service cloud.firestore {
   match /weeklySummaries/{id}{allow read,write:if isAdmin();}
   match /releaseGates/{id}{allow read,write:if isAdmin();}
   match /safetyPatterns/{id}{allow read:if signed();allow write:if isAdmin();}
+  match /aggregateInsightBuckets/{id}{allow read:if signed();allow write:if false;}
+  match /reportExports/{id}{allow read:if isAdmin()||(signed()&&resource.data.generatedFor==request.auth.uid);allow write:if false;}
   match /educationalContent/{id}{allow read:if (signed()&&resource.data.status=='published')||isAdmin();allow write:if isAdmin();}
   match /emergencyGuidance/{id}{allow read:if signed();allow write:if isAdmin();}
   match /havenSessions/{sessionId}{allow read,write:if owner(resource.data.userId)||owner(request.resource.data.userId);match /messages/{messageId}{allow read,write:if signed()&&get(/databases/$(database)/documents/havenSessions/$(sessionId)).data.userId==request.auth.uid;}}
