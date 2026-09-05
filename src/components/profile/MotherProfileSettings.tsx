@@ -23,11 +23,16 @@ import {
   Calendar,
   Sparkles,
   Loader2,
-  Check
+  Check,
+  Building2,
+  MapPin,
+  Edit3
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
+import { KENYA_COUNTIES } from '../../types';
+import { KENYA_KMHFL_FACILITIES } from '../../services/clinicianService';
 import { 
   getMotherPartnerRelationships, 
   getMotherPartnerRelationship,
@@ -37,7 +42,7 @@ import {
   PartnerSharingScopes,
   DEFAULT_SHARING_SCOPES 
 } from '../../services/sharingService';
-import { getHealthContext } from '../../services/healthContextService';
+import { getHealthContext, saveHealthContext } from '../../services/healthContextService';
 import { 
   requestNotificationPermissionAndToken, 
   showLocalSystemNotification, 
@@ -73,6 +78,16 @@ export default function MotherProfileSettings({
   const [copied, setCopied] = useState(false);
   const [phone, setPhone] = useState(propPhone || '');
   const [county, setCounty] = useState(propCounty || '');
+  const [primaryHospitalFacilityId, setPrimaryHospitalFacilityId] = useState('');
+  const [primaryHospitalName, setPrimaryHospitalName] = useState('');
+
+  // Residence edit state
+  const [isEditingResidence, setIsEditingResidence] = useState(false);
+  const [editCounty, setEditCounty] = useState(propCounty || 'Nairobi');
+  const [editHospitalId, setEditHospitalId] = useState('');
+  const [editHospitalName, setEditHospitalName] = useState('');
+  const [savingResidence, setSavingResidence] = useState(false);
+  const [residenceNotice, setResidenceNotice] = useState<string | null>(null);
 
   // Connected Partners State (Audit P6.1, P7.2)
   const [partners, setPartners] = useState<PartnerRelationship[]>([]);
@@ -136,7 +151,10 @@ export default function MotherProfileSettings({
         if (!isMounted || !snap.exists()) return;
         const data = snap.data();
         if (data?.phone) setPhone(data.phone);
-        if (data?.county) setCounty(data.county);
+        if (data?.county) {
+          setCounty(data.county);
+          setEditCounty(data.county);
+        }
         if (data?.checkInReminders) {
           if (typeof data.checkInReminders.enabled === 'boolean') {
             setRemindersEnabled(data.checkInReminders.enabled);
@@ -148,12 +166,45 @@ export default function MotherProfileSettings({
       })
       .catch(() => {});
 
-    // Also check health context for county
+    // Fetch motherProfiles document for residence and primary hospital
+    getDoc(doc(db, 'motherProfiles', userId))
+      .then((snap) => {
+        if (!isMounted || !snap.exists()) return;
+        const data = snap.data();
+        if (data?.county) {
+          setCounty(data.county);
+          setEditCounty(data.county);
+        }
+        if (data?.primaryHospitalFacilityId) {
+          setPrimaryHospitalFacilityId(data.primaryHospitalFacilityId);
+          setEditHospitalId(data.primaryHospitalFacilityId);
+        }
+        if (data?.primaryHospitalName) {
+          setPrimaryHospitalName(data.primaryHospitalName);
+          setEditHospitalName(data.primaryHospitalName);
+        }
+      })
+      .catch(() => {});
+
+    // Also check health context for county and primary hospital
     getHealthContext(userId)
       .then((ctx) => {
         if (!isMounted || !ctx) return;
         const resolvedCounty = ctx.location?.county || ctx.county;
-        if (resolvedCounty) setCounty(resolvedCounty);
+        if (resolvedCounty) {
+          setCounty(resolvedCounty);
+          setEditCounty(resolvedCounty);
+        }
+        const resolvedHId = ctx.location?.primaryHospitalFacilityId || ctx.primaryHospitalFacilityId;
+        const resolvedHName = ctx.location?.primaryHospitalName || ctx.primaryHospitalName;
+        if (resolvedHId) {
+          setPrimaryHospitalFacilityId(prev => prev || resolvedHId);
+          setEditHospitalId(prev => prev || resolvedHId);
+        }
+        if (resolvedHName) {
+          setPrimaryHospitalName(prev => prev || resolvedHName);
+          setEditHospitalName(prev => prev || resolvedHName);
+        }
       })
       .catch(() => {});
 
@@ -161,6 +212,73 @@ export default function MotherProfileSettings({
 
     return () => { isMounted = false; };
   }, [userId, loadPartners]);
+
+  // Filter KMHFL facilities by editCounty
+  const editAvailableHospitals = React.useMemo(() => {
+    return KENYA_KMHFL_FACILITIES.filter(
+      f => f.county.trim().toLowerCase() === editCounty.trim().toLowerCase()
+    );
+  }, [editCounty]);
+
+  const handleEditCountyChange = (newCounty: string) => {
+    setEditCounty(newCounty);
+    // If county changes, clear hospital if it doesn't belong to the newly selected county
+    if (editHospitalId) {
+      const match = KENYA_KMHFL_FACILITIES.find(
+        f => f.code === editHospitalId && f.county.trim().toLowerCase() === newCounty.trim().toLowerCase()
+      );
+      if (!match) {
+        setEditHospitalId('');
+        setEditHospitalName('');
+      }
+    }
+  };
+
+  const handleSaveResidence = async () => {
+    if (!userId) return;
+    try {
+      setSavingResidence(true);
+      setResidenceNotice(null);
+
+      // Save to motherProfiles
+      await setDoc(doc(db, 'motherProfiles', userId), {
+        userId,
+        county: editCounty,
+        primaryHospitalFacilityId: editHospitalId || null,
+        primaryHospitalName: editHospitalName || null,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+
+      // Update user document
+      await updateDoc(doc(db, 'users', userId), {
+        county: editCounty,
+      });
+
+      // Update healthContext
+      await saveHealthContext(userId, {
+        county: editCounty,
+        primaryHospitalFacilityId: editHospitalId || undefined,
+        primaryHospitalName: editHospitalName || undefined,
+        location: {
+          county: editCounty,
+          primaryHospitalFacilityId: editHospitalId || undefined,
+          primaryHospitalName: editHospitalName || undefined,
+        },
+      }, 'profile_edit');
+
+      setCounty(editCounty);
+      setPrimaryHospitalFacilityId(editHospitalId);
+      setPrimaryHospitalName(editHospitalName);
+      setIsEditingResidence(false);
+      setResidenceNotice('Residence and primary hospital updated successfully.');
+      setTimeout(() => setResidenceNotice(null), 4000);
+    } catch (err: any) {
+      console.error('Failed to update residence', err);
+      setResidenceNotice('Failed to update residence. Please try again.');
+    } finally {
+      setSavingResidence(false);
+    }
+  };
 
   const copyInvite = () => {
     navigator.clipboard.writeText(`Join my MomHaven pregnancy support circle with invite code: ${partnerInviteCode}`);
@@ -324,10 +442,146 @@ export default function MotherProfileSettings({
           <p className="text-[13px] text-[var(--ink-600)] font-body">
             {email}
           </p>
-          <span className="inline-block px-3 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-display font-bold mt-1.5">
-            County: {county} · Active Profile
-          </span>
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-display font-bold">
+              <MapPin className="w-3 h-3" />
+              County: {county || 'Not set'}
+            </span>
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[var(--lavender-100)] text-[var(--haven-deep)] text-[11px] font-display font-bold max-w-full">
+              <Building2 className="w-3 h-3 shrink-0" />
+              <span className="truncate">{primaryHospitalName || 'No primary hospital selected'}</span>
+            </span>
+          </div>
         </div>
+      </div>
+
+      {/* Residence & Health Facility Section */}
+      <div className="bg-white rounded-[24px] p-4 sm:p-5 border border-[var(--border-hairline)] shadow-card-1 space-y-4">
+        <div className="flex items-center justify-between border-b border-[var(--border-hairline)] pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center">
+              <MapPin className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="font-display font-bold text-[15px] text-[var(--ink-900)]">
+                Residence &amp; Primary Hospital
+              </h3>
+              <p className="text-[11px] text-[var(--ink-600)]">
+                County of residence and optional delivery hospital
+              </p>
+            </div>
+          </div>
+          {!isEditingResidence && (
+            <button
+              type="button"
+              onClick={() => {
+                setEditCounty(county || 'Nairobi');
+                setEditHospitalId(primaryHospitalFacilityId);
+                setEditHospitalName(primaryHospitalName);
+                setIsEditingResidence(true);
+              }}
+              className="px-3 py-1.5 rounded-full border border-[var(--border-hairline)] hover:bg-[var(--surface-2)] text-xs font-display font-bold text-[var(--haven-deep)] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              Edit
+            </button>
+          )}
+        </div>
+
+        {residenceNotice && (
+          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{residenceNotice}</span>
+          </div>
+        )}
+
+        {!isEditingResidence ? (
+          <div className="grid sm:grid-cols-2 gap-3 text-sm">
+            <div className="p-3.5 rounded-2xl bg-[var(--surface-2)] border border-[var(--border-hairline)]">
+              <span className="text-xs text-[var(--ink-500)] block mb-0.5">County of Residence</span>
+              <strong className="font-display font-bold text-[var(--ink-900)] flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-[var(--haven-orchid)]" />
+                {county ? `${county} County` : 'Not specified'}
+              </strong>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-[var(--surface-2)] border border-[var(--border-hairline)]">
+              <span className="text-xs text-[var(--ink-500)] block mb-0.5">Primary Hospital / Facility</span>
+              <strong className="font-display font-bold text-[var(--ink-900)] flex items-center gap-1.5">
+                <Building2 className="w-4 h-4 text-[var(--haven-deep)] shrink-0" />
+                <span className="truncate">{primaryHospitalName || 'None selected (Optional)'}</span>
+              </strong>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4 pt-1">
+            <div>
+              <label className="block text-xs font-display font-bold text-[var(--ink-900)] mb-1">
+                County of Residence (Kenya)
+              </label>
+              <select
+                value={editCounty}
+                onChange={e => handleEditCountyChange(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-hairline)] bg-white text-sm focus:outline-none focus:border-[var(--haven-orchid)] cursor-pointer"
+              >
+                {KENYA_COUNTIES.map(c => (
+                  <option key={c} value={c}>{c} County</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-display font-bold text-[var(--ink-900)] mb-1">
+                Primary Hospital / Health Facility <span className="font-normal text-[var(--ink-500)]">(Optional)</span>
+              </label>
+              <select
+                value={editHospitalId}
+                onChange={e => {
+                  const val = e.target.value;
+                  setEditHospitalId(val);
+                  const found = KENYA_KMHFL_FACILITIES.find(f => f.code === val);
+                  setEditHospitalName(found ? found.name : '');
+                }}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-hairline)] bg-white text-sm focus:outline-none focus:border-[var(--haven-orchid)] cursor-pointer"
+              >
+                <option value="">None / Select later</option>
+                {editAvailableHospitals.map(f => (
+                  <option key={f.code} value={f.code}>
+                    {f.name} ({f.level})
+                  </option>
+                ))}
+              </select>
+              {editAvailableHospitals.length === 0 ? (
+                <p className="text-[11px] text-[var(--ink-500)] mt-1">
+                  No catalogued KMHFL facilities listed for {editCounty} County.
+                </p>
+              ) : (
+                <p className="text-[11px] text-[var(--ink-500)] mt-1">
+                  Hospitals are filtered to {editCounty} County.
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border-hairline)]">
+              <button
+                type="button"
+                onClick={() => setIsEditingResidence(false)}
+                disabled={savingResidence}
+                className="px-4 py-2 rounded-full border border-[var(--border-hairline)] text-xs font-display font-bold text-[var(--ink-700)] hover:bg-[var(--surface-2)] cursor-pointer"
+              >
+                Cancel
+              </button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleSaveResidence}
+                disabled={savingResidence}
+                className="px-5 py-2 text-xs"
+              >
+                {savingResidence ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Language / Lugha Section (Audit §13.7) */}

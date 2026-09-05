@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   ArrowRight, 
   Calendar, 
@@ -11,6 +11,7 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { KENYA_COUNTIES } from '../../types';
+import { KENYA_KMHFL_FACILITIES } from '../../services/clinicianService';
 import { calculateGestationFromLmp, calculateLmpFromEdd, createActivePregnancy, GestationCalculation } from '../../services/pregnancyService';
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
@@ -37,7 +38,29 @@ export default function OnboardingWizard({
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [county, setCounty] = useState('Nairobi');
-  const [subcounty, setSubcounty] = useState('');
+  const [primaryHospitalFacilityId, setPrimaryHospitalFacilityId] = useState('');
+  const [primaryHospitalName, setPrimaryHospitalName] = useState('');
+
+  // Filter KMHFL facilities by the selected county
+  const availableHospitals = useMemo(() => {
+    return KENYA_KMHFL_FACILITIES.filter(
+      f => f.county.trim().toLowerCase() === county.trim().toLowerCase()
+    );
+  }, [county]);
+
+  const handleCountyChange = (newCounty: string) => {
+    setCounty(newCounty);
+    // If county changes, clear hospital selection if it doesn't belong to the new county
+    if (primaryHospitalFacilityId) {
+      const match = KENYA_KMHFL_FACILITIES.find(
+        f => f.code === primaryHospitalFacilityId && f.county.trim().toLowerCase() === newCounty.trim().toLowerCase()
+      );
+      if (!match) {
+        setPrimaryHospitalFacilityId('');
+        setPrimaryHospitalName('');
+      }
+    }
+  };
 
   // Step 2: Pregnancy Setup
   const [calculationMode, setCalculationMode] = useState<'LMP' | 'EDD'>('LMP');
@@ -95,7 +118,8 @@ export default function OnboardingWizard({
         phone: initialPhone,
         dateOfBirth: dateOfBirth || '',
         county,
-        subcounty: subcounty || '',
+        primaryHospitalFacilityId: primaryHospitalFacilityId || null,
+        primaryHospitalName: primaryHospitalName || null,
         updatedAt: serverTimestamp(),
         createdAt: serverTimestamp(),
       }, { merge: true });
@@ -247,7 +271,7 @@ export default function OnboardingWizard({
               </label>
               <select
                 value={county}
-                onChange={e => setCounty(e.target.value)}
+                onChange={e => handleCountyChange(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-[14px] border border-[var(--border-hairline)] bg-white focus:outline-none focus:border-[var(--haven-orchid)] text-[14px] shadow-xs cursor-pointer"
                 required
               >
@@ -259,15 +283,34 @@ export default function OnboardingWizard({
 
             <div>
               <label className="block text-[13px] font-display font-semibold text-[var(--ink-900)] mb-1">
-                Sub-County / Area (Optional)
+                Primary Hospital / Health Facility <span className="font-normal text-[var(--ink-500)]">(Optional)</span>
               </label>
-              <input
-                type="text"
-                value={subcounty}
-                onChange={e => setSubcounty(e.target.value)}
-                placeholder="e.g. Westlands, Langata, Kibra"
-                className="w-full px-4 py-2.5 rounded-[14px] border border-[var(--border-hairline)] bg-white focus:outline-none focus:border-[var(--haven-orchid)] text-[14px] shadow-xs"
-              />
+              <select
+                value={primaryHospitalFacilityId}
+                onChange={e => {
+                  const val = e.target.value;
+                  setPrimaryHospitalFacilityId(val);
+                  const found = KENYA_KMHFL_FACILITIES.find(f => f.code === val);
+                  setPrimaryHospitalName(found ? found.name : '');
+                }}
+                className="w-full px-4 py-2.5 rounded-[14px] border border-[var(--border-hairline)] bg-white focus:outline-none focus:border-[var(--haven-orchid)] text-[14px] shadow-xs cursor-pointer"
+              >
+                <option value="">None / Select later</option>
+                {availableHospitals.map(f => (
+                  <option key={f.code} value={f.code}>
+                    {f.name} ({f.level})
+                  </option>
+                ))}
+              </select>
+              {availableHospitals.length === 0 ? (
+                <p className="text-[12px] text-[var(--ink-500)] mt-1">
+                  No catalogued KMHFL facilities found in {county} County. You can continue without selecting a facility.
+                </p>
+              ) : (
+                <p className="text-[12px] text-[var(--ink-500)] mt-1">
+                  Choose your preferred maternity facility in {county} County or leave blank.
+                </p>
+              )}
             </div>
 
             <Button type="submit" variant="primary" disabled={loading} className="w-full py-3.5 mt-4">

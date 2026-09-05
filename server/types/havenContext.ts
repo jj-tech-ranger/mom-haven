@@ -53,7 +53,12 @@ export interface HavenContext {
   lifecycleStage?: HavenContextFact<string>;
   preferredName?: HavenContextFact<string>;
   language?: HavenContextFact<'en' | 'sw'>;
-  location?: HavenContextFact<{ county?: string; subcounty?: string }>;
+  location?: HavenContextFact<{
+    county?: string;
+    subcounty?: string;
+    primaryHospitalFacilityId?: string;
+    primaryHospitalName?: string;
+  }>;
   interests: HavenContextFact<string[]>;
   dietaryPreferences?: HavenContextFact<string[]>;
   havenResponseStyle?: HavenContextFact<string>;

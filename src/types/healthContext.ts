@@ -128,7 +128,9 @@ export type ChildAgeBracket =
 
 export interface LocationPersonalization {
   county?: string;
-  subcounty?: string;
+  subcounty?: string; // Legacy backwards compatibility
+  primaryHospitalFacilityId?: string;
+  primaryHospitalName?: string;
 }
 
 /**
@@ -173,7 +175,9 @@ export interface HealthContext {
   preferredName?: string;
   ageBracket?: AgeBracket;
   county?: string;
-  subcounty?: string;
+  subcounty?: string; // Legacy backwards compatibility
+  primaryHospitalFacilityId?: string;
+  primaryHospitalName?: string;
   location?: LocationPersonalization;
   language: 'en' | 'sw';
   pregnancy?: PregnancyPersonalizationSignals;

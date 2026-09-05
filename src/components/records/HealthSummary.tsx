@@ -129,8 +129,8 @@ export default function HealthSummary({
               {patientContext.location?.county && (
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
-                  {patientContext.location.county}
-                  {patientContext.location.subcounty ? `, ${patientContext.location.subcounty}` : ''}
+                  {patientContext.location.county} County
+                  {patientContext.location.primaryHospitalName ? ` · ${patientContext.location.primaryHospitalName}` : ''}
                 </span>
               )}
               <span className="flex items-center gap-1">

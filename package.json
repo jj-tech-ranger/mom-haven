@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist build",
     "lint": "tsc --noEmit",
-    "test": "npm run test:clinical && npm run test:context && npm run test:anonymous && npm run test:haven-context && npm run test:today && npm run test:resources && npm run test:summary && npm run test:sharing && npm run test:partner-signal && npm run test:child && npm run test:reminders",
+    "test": "npm run test:clinical && npm run test:context && npm run test:anonymous && npm run test:haven-context && npm run test:today && npm run test:resources && npm run test:summary && npm run test:sharing && npm run test:partner-signal && npm run test:child && npm run test:reminders && npm run test:demo",
     "test:clinical": "tsx src/utils/clinicalCalculations.test.ts",
     "test:context": "tsx src/services/healthContextService.test.ts",
     "test:anonymous": "tsx src/services/anonymousContextService.test.ts",
@@ -21,7 +21,13 @@
     "test:sharing": "tsx src/services/sharingService.test.ts",
     "test:partner-signal": "tsx src/services/partnerContextService.test.ts",
     "test:child": "tsx src/services/childService.test.ts",
-    "test:reminders": "tsx src/services/reminderGenerationService.test.ts"
+    "test:reminders": "tsx src/services/reminderGenerationService.test.ts",
+    "test:demo": "tsx src/services/demoDatasetAndOnboarding.test.ts",
+    "seed:clinicians": "tsx server/seed/seedDemoClinicians.ts",
+    "seed:mothers": "tsx server/seed/seedDemoMothers.ts",
+    "seed:demo": "tsx server/seed/seedDemo.ts",
+    "verify:demo": "tsx server/seed/verifyDemoData.ts",
+    "clean:demo": "tsx server/seed/cleanDemoData.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

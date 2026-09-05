@@ -335,7 +335,8 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
             ageBracket: contextData?.ageBracket,
             location: {
               county: contextData?.location?.county || contextData?.county,
-              subcounty: contextData?.location?.subcounty || contextData?.subcounty,
+              primaryHospitalFacilityId: contextData?.location?.primaryHospitalFacilityId || contextData?.primaryHospitalFacilityId,
+              primaryHospitalName: contextData?.location?.primaryHospitalName || contextData?.primaryHospitalName,
             },
             language: contextData?.language === 'sw' ? 'sw' : 'en',
             interests: contextData?.interests || ['Nutrition', 'ANC Preparation'],

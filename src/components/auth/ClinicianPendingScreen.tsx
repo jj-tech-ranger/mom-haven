@@ -9,7 +9,9 @@ import {
   Stethoscope, 
   Building2, 
   FileCheck, 
-  AlertCircle 
+  AlertCircle,
+  XCircle,
+  AlertTriangle
 } from 'lucide-react';
 import Button from '../Button';
 import { Clinician } from '../../types';
@@ -53,40 +55,77 @@ export default function ClinicianPendingScreen({
     }
   };
 
+  const isRejected = clinicianData?.verificationStatus === 'rejected';
+
   return (
     <div className="min-h-screen bg-[var(--lavender-50)] flex flex-col items-center justify-center p-4 sm:p-6 font-body">
       <div className="w-full max-w-lg bg-white rounded-[28px] border border-[var(--border-hairline)] p-6 sm:p-8 shadow-card-2 text-center space-y-5">
         
         {/* Badge Icon */}
-        <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-800 mx-auto flex items-center justify-center shadow-xs">
-          <Clock className="w-8 h-8 text-amber-700 animate-pulse" />
-        </div>
+        {isRejected ? (
+          <div className="w-16 h-16 rounded-2xl bg-rose-100 text-rose-800 mx-auto flex items-center justify-center shadow-xs">
+            <XCircle className="w-8 h-8 text-rose-700" />
+          </div>
+        ) : (
+          <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-800 mx-auto flex items-center justify-center shadow-xs">
+            <Clock className="w-8 h-8 text-amber-700 animate-pulse" />
+          </div>
+        )}
 
         {/* Header */}
         <div>
-          <span className="text-[11px] font-display font-extrabold uppercase tracking-widest text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
-            MOH Clinical Credential Review
+          <span className={`text-[11px] font-display font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border ${
+            isRejected 
+              ? 'text-rose-700 bg-rose-50 border-rose-200' 
+              : 'text-amber-700 bg-amber-50 border-amber-200'
+          }`}>
+            {isRejected ? 'MOH Credential Review: Rejected' : 'MOH Clinical Credential Review'}
           </span>
           <h2 className="font-display font-extrabold text-[24px] text-[var(--ink-900)] mt-2.5 leading-tight">
-            Medical Verification Pending
+            {isRejected ? 'Verification Not Approved' : 'Medical Verification Pending'}
           </h2>
           <p className="font-body text-xs text-[var(--ink-600)] mt-1.5 max-w-sm mx-auto leading-relaxed">
-            Welcome, <strong>{clinicianName}</strong>. Your medical council credentials (KMPDC / NCK / COC) have been submitted and are under review by MOH Clinical Governance.
+            {isRejected ? (
+              <>
+                Account for <strong>{clinicianName}</strong> could not be verified for clinical access.
+              </>
+            ) : (
+              <>
+                Welcome, <strong>{clinicianName}</strong>. Your medical council credentials (KMPDC / NCK / COC) have been submitted and are under review by MOH Clinical Governance.
+              </>
+            )}
           </p>
         </div>
 
-        {/* Strict Security Notice */}
-        <div className="bg-amber-50/80 border border-amber-200/80 p-4 rounded-[18px] text-left flex items-start gap-3">
-          <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <h4 className="font-display font-bold text-xs text-amber-950">
-              Access Boundary Enforcement
-            </h4>
-            <p className="font-body text-[11px] text-amber-900 leading-relaxed">
-              Under Kenyan Health Data Governance regulations, no maternal or child patient records can be accessed or modified until your license is verified and authorized by an administrator.
-            </p>
+        {/* Strict Security Notice or Rejection Reason Box */}
+        {isRejected ? (
+          <div className="bg-rose-50/90 border border-rose-200 p-4 rounded-[18px] text-left flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-rose-700 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h4 className="font-display font-bold text-xs text-rose-950">
+                Reason for Rejection
+              </h4>
+              <p className="font-body text-xs text-rose-900 leading-relaxed font-medium">
+                {clinicianData?.rejectionReason || 'Verification request was not approved. Cadre or facility documentation requires governance validation.'}
+              </p>
+              <p className="font-body text-[11px] text-rose-800/80 pt-1">
+                Under Kenyan Health Data Governance regulations, clinical record access is blocked. Please contact your facility administrator or submit updated credentials.
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-amber-50/80 border border-amber-200/80 p-4 rounded-[18px] text-left flex items-start gap-3">
+            <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h4 className="font-display font-bold text-xs text-amber-950">
+                Access Boundary Enforcement
+              </h4>
+              <p className="font-body text-[11px] text-amber-900 leading-relaxed">
+                Under Kenyan Health Data Governance regulations, no maternal or child patient records can be accessed or modified until your license is verified and authorized by an administrator.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Submitted Credentials Card */}
         <div className="bg-[var(--lavender-50)] border border-[var(--border-hairline)] rounded-[20px] p-4 text-left space-y-2.5 text-xs">
@@ -113,10 +152,17 @@ export default function ClinicianPendingScreen({
 
           <div className="flex items-center justify-between pt-0.5">
             <span className="font-display font-bold text-[var(--ink-600)]">Review Status</span>
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded-full">
-              <Clock className="w-3 h-3" />
-              Pending Approval
-            </span>
+            {isRejected ? (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-100/70 px-2 py-0.5 rounded-full">
+                <XCircle className="w-3 h-3" />
+                Rejected
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded-full">
+                <Clock className="w-3 h-3" />
+                Pending Approval
+              </span>
+            )}
           </div>
         </div>
 
@@ -133,8 +179,8 @@ export default function ClinicianPendingScreen({
             {checking ? 'Checking Status...' : 'Check Approval Status'}
           </Button>
 
-          {/* Quick Demo Approval for testing */}
-          {onInstantApprove && (
+          {/* Quick Demo Approval for testing - only if pending */}
+          {!isRejected && onInstantApprove && (
             <button
               type="button"
               onClick={handleDemoApproval}

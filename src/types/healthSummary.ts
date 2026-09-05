@@ -24,6 +24,8 @@ export interface PatientReportedContextSummary {
   location?: {
     county?: string;
     subcounty?: string;
+    primaryHospitalFacilityId?: string;
+    primaryHospitalName?: string;
   };
   language: 'en' | 'sw';
   interests: string[];

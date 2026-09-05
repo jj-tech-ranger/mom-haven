@@ -106,7 +106,7 @@ export async function processWeeklyReports(
     const userFacilityMap = new Map<string, string>();
     for (const doc of motherProfilesSnap.docs) {
       const data = doc.data();
-      const fid = data.facilityId || data.primaryFacility || data.preferredFacility;
+      const fid = data.primaryHospitalFacilityId || data.facilityId || data.primaryFacility || data.preferredFacility;
       if (fid) userFacilityMap.set(doc.id, String(fid).trim());
     }
     for (const doc of pregnanciesSnap.docs) {

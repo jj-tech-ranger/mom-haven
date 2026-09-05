@@ -439,7 +439,7 @@ export function deriveTodayContext({
     const primaryChild = children[0];
     if (primaryChild?.dateOfBirth) {
       hasAuthoritativeClinicalData = true;
-      const ageCalc = calculateChildAge(primaryChild.dateOfBirth);
+      const ageCalc = calculateChildAge(primaryChild.dateOfBirth, now);
       const weeks = Math.max(0, Math.floor(ageCalc.totalDays / 7));
       const progressRatio = Math.min(1, Math.max(0.08, (weeks || 0.5) / 6));
       hero = {

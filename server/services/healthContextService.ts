@@ -33,9 +33,13 @@ export interface ServerHealthContext {
   ageBracket?: string;
   county?: string;
   subcounty?: string;
+  primaryHospitalFacilityId?: string;
+  primaryHospitalName?: string;
   location?: {
     county?: string;
     subcounty?: string;
+    primaryHospitalFacilityId?: string;
+    primaryHospitalName?: string;
   };
   language?: 'en' | 'sw';
   pregnancy?: {
@@ -95,9 +99,13 @@ export function mergeServerHealthContext(
     ageBracket: cleanUpdates.ageBracket ?? existing?.ageBracket,
     county: cleanUpdates.county ?? existing?.county ?? cleanUpdates.location?.county ?? existing?.location?.county,
     subcounty: cleanUpdates.subcounty ?? existing?.subcounty ?? cleanUpdates.location?.subcounty ?? existing?.location?.subcounty,
+    primaryHospitalFacilityId: cleanUpdates.primaryHospitalFacilityId ?? existing?.primaryHospitalFacilityId ?? cleanUpdates.location?.primaryHospitalFacilityId ?? existing?.location?.primaryHospitalFacilityId,
+    primaryHospitalName: cleanUpdates.primaryHospitalName ?? existing?.primaryHospitalName ?? cleanUpdates.location?.primaryHospitalName ?? existing?.location?.primaryHospitalName,
     location: {
       county: cleanUpdates.location?.county ?? cleanUpdates.county ?? existing?.location?.county ?? existing?.county,
       subcounty: cleanUpdates.location?.subcounty ?? cleanUpdates.subcounty ?? existing?.location?.subcounty ?? existing?.subcounty,
+      primaryHospitalFacilityId: cleanUpdates.location?.primaryHospitalFacilityId ?? cleanUpdates.primaryHospitalFacilityId ?? existing?.location?.primaryHospitalFacilityId ?? existing?.primaryHospitalFacilityId,
+      primaryHospitalName: cleanUpdates.location?.primaryHospitalName ?? cleanUpdates.primaryHospitalName ?? existing?.location?.primaryHospitalName ?? existing?.primaryHospitalName,
     },
     language: cleanUpdates.language ?? existing?.language ?? 'en',
     pregnancy: (cleanUpdates.pregnancy || existing?.pregnancy)

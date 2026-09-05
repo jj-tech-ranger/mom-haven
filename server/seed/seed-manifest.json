@@ -1,0 +1,161 @@
+{
+  "dataset": "defense-demo-v1",
+  "seedTimestamp": "2026-09-05T08:07:14.980Z",
+  "authAccounts": [
+    {
+      "email": "dr.faith.amani@momhaven-demo.co.ke",
+      "uid": "w8cCU0OC0JcaHc1IqbGLgKI69kg2",
+      "displayName": "Dr. Faith Amani",
+      "role": "CLINICIAN",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "dr.grace.neema@momhaven-demo.co.ke",
+      "uid": "6XcsCIUkuDTLREEAzQdFve85lxv2",
+      "displayName": "Dr. Grace Neema",
+      "role": "CLINICIAN",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "winnie.baraka@momhaven-demo.co.ke",
+      "uid": "k2466OP5yfgP5WeKY6DiarUCral2",
+      "displayName": "Winnie Baraka",
+      "role": "CLINICIAN",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "brian.furaha@momhaven-demo.co.ke",
+      "uid": "YiqHVvn4jfYz4Ey3KEuli3jp0Ft2",
+      "displayName": "Brian Furaha",
+      "role": "CLINICIAN",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "dr.peter.imani@momhaven-demo.co.ke",
+      "uid": "6a8ZJ04zAdW3pEy2y8XqZFo5k363",
+      "displayName": "Dr. Peter Imani",
+      "role": "CLINICIAN",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "joseph.zawadi@momhaven-demo.co.ke",
+      "uid": "ULJtr0lzFXaZxVdX8se4GjUlt0z1",
+      "displayName": "Joseph Zawadi",
+      "role": "CLINICIAN",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "partner.grace@momhaven-demo.co.ke",
+      "uid": "demo-partner-partner-grace",
+      "displayName": "Samuel Neema",
+      "role": "PARTNER",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "partner.brenda@momhaven-demo.co.ke",
+      "uid": "demo-partner-partner-brenda",
+      "displayName": "Brian Imani",
+      "role": "PARTNER",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "partner.christine@momhaven-demo.co.ke",
+      "uid": "demo-partner-partner-christine",
+      "displayName": "Dennis Amani",
+      "role": "PARTNER",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "grace.neema@momhaven-demo.co.ke",
+      "uid": "demo-mother-grace-neema",
+      "displayName": "Grace Neema",
+      "role": "MOTHER",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "mercy.faraja@momhaven-demo.co.ke",
+      "uid": "demo-mother-mercy-faraja",
+      "displayName": "Mercy Faraja",
+      "role": "MOTHER",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "joy.baraka@momhaven-demo.co.ke",
+      "uid": "demo-mother-joy-baraka",
+      "displayName": "Joy Baraka",
+      "role": "MOTHER",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "faith.upendo@momhaven-demo.co.ke",
+      "uid": "demo-mother-faith-upendo",
+      "displayName": "Faith Upendo",
+      "role": "MOTHER",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "brenda.imani@momhaven-demo.co.ke",
+      "uid": "demo-mother-brenda-imani",
+      "displayName": "Brenda Imani",
+      "role": "MOTHER",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "diana.zawadi@momhaven-demo.co.ke",
+      "uid": "demo-mother-diana-zawadi",
+      "displayName": "Diana Zawadi",
+      "role": "MOTHER",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "winnie.rehema@momhaven-demo.co.ke",
+      "uid": "demo-mother-winnie-rehema",
+      "displayName": "Winnie Rehema",
+      "role": "MOTHER",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "sharon.nuru@momhaven-demo.co.ke",
+      "uid": "demo-mother-sharon-nuru",
+      "displayName": "Sharon Nuru",
+      "role": "MOTHER",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "christine.amani@momhaven-demo.co.ke",
+      "uid": "demo-mother-christine-amani",
+      "displayName": "Christine Amani",
+      "role": "MOTHER",
+      "createdOrReconciled": "created"
+    },
+    {
+      "email": "esther.furaha@momhaven-demo.co.ke",
+      "uid": "demo-mother-esther-furaha",
+      "displayName": "Esther Furaha",
+      "role": "MOTHER",
+      "createdOrReconciled": "created"
+    }
+  ],
+  "recordCounts": {
+    "users": 19,
+    "motherProfiles": 10,
+    "healthContexts": 10,
+    "pregnancies": 5,
+    "ancEncounters": 6,
+    "children": 6,
+    "immunizationRecords": 35,
+    "growthMeasurements": 5,
+    "reminders": 11,
+    "dailyHealthLogs": 5,
+    "partnerRelationships": 3,
+    "partnerShares": 3,
+    "pmtctRecords": 1,
+    "antenatalProfiles": 2,
+    "cancerScreenings": 1,
+    "familyPlanning": 2,
+    "hospitalAdmissions": 1,
+    "specialClinicalAttendances": 1,
+    "clinicianPrivateNotes": 1,
+    "otherClinicalRecords": 10
+  }
+}

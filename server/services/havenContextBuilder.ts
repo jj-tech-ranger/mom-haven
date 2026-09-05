@@ -88,11 +88,13 @@ export async function buildHavenContext(
       result.language = fact(language, defaultProvenance, 'healthContexts.language');
     }
 
-    // Location (county / subcounty only, no street or GPS)
+    // Location (county only, optional primary hospital; subcounty preserved only if existing for legacy records)
     const county = personalization?.county || personalization?.location?.county;
     const subcounty = personalization?.subcounty || personalization?.location?.subcounty;
-    if (county || subcounty) {
-      result.location = fact({ county, subcounty }, defaultProvenance, 'healthContexts.location');
+    const primaryHospitalFacilityId = personalization?.primaryHospitalFacilityId || personalization?.location?.primaryHospitalFacilityId;
+    const primaryHospitalName = personalization?.primaryHospitalName || personalization?.location?.primaryHospitalName;
+    if (county || subcounty || primaryHospitalFacilityId) {
+      result.location = fact({ county, subcounty, primaryHospitalFacilityId, primaryHospitalName }, defaultProvenance, 'healthContexts.location');
     }
 
     // Dietary preferences

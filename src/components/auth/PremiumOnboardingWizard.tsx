@@ -4,6 +4,7 @@ import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import Button from '../Button';
 import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
 import { KENYA_COUNTIES } from '../../types';
+import { KENYA_KMHFL_FACILITIES } from '../../services/clinicianService';
 import { createActivePregnancy, getActivePregnancy, calculateGestationFromLmp } from '../../services/pregnancyService';
 import { saveHealthContext } from '../../services/healthContextService';
 import type { AgeBracket, HealthContext, LifecycleStage } from '../../types/healthContext';
@@ -48,7 +49,8 @@ export default function PremiumOnboardingWizard({ userId, initialDisplayName = '
   const [lifecycleStage, setLifecycleStage] = useState<LifecycleStage>('pregnancy');
   const [ageBracket, setAgeBracket] = useState<AgeBracket>('prefer_not_to_say');
   const [county, setCounty] = useState('Nairobi');
-  const [subcounty, setSubcounty] = useState('');
+  const [primaryHospitalFacilityId, setPrimaryHospitalFacilityId] = useState('');
+  const [primaryHospitalName, setPrimaryHospitalName] = useState('');
   const [language, setLanguage] = useState<'en' | 'sw'>(initialLanguage);
   const [lmp, setLmp] = useState('');
   const [edd, setEdd] = useState('');
@@ -57,6 +59,25 @@ export default function PremiumOnboardingWizard({ userId, initialDisplayName = '
   const [supportSystem, setSupportSystem] = useState<HealthContext['supportSystem']>('prefer_not_to_say');
   const [interests, setInterests] = useState<string[]>([]);
   const [havenResponseStyle, setHavenResponseStyle] = useState<HealthContext['havenResponseStyle']>('concise');
+
+  const availableHospitals = useMemo(() => {
+    return KENYA_KMHFL_FACILITIES.filter(
+      f => f.county.trim().toLowerCase() === county.trim().toLowerCase()
+    );
+  }, [county]);
+
+  const handleCountyChange = (newCounty: string) => {
+    setCounty(newCounty);
+    if (primaryHospitalFacilityId) {
+      const match = KENYA_KMHFL_FACILITIES.find(
+        f => f.code === primaryHospitalFacilityId && f.county.trim().toLowerCase() === newCounty.trim().toLowerCase()
+      );
+      if (!match) {
+        setPrimaryHospitalFacilityId('');
+        setPrimaryHospitalName('');
+      }
+    }
+  };
 
   const pregnancyPreview = useMemo(() => {
     if (!lmp) return null;
@@ -98,7 +119,8 @@ export default function PremiumOnboardingWizard({ userId, initialDisplayName = '
         preferredName: displayName.trim() || 'Mama',
         ageBracket,
         county,
-        subcounty: subcounty.trim() || undefined,
+        primaryHospitalFacilityId: primaryHospitalFacilityId || undefined,
+        primaryHospitalName: primaryHospitalName || undefined,
         language,
         pregnancy: lifecycleStage === 'pregnancy' ? {
           pregnancyWeek: pregnancyPreview?.gestationalAgeWeeks,
@@ -124,7 +146,8 @@ export default function PremiumOnboardingWizard({ userId, initialDisplayName = '
       await setDoc(doc(db, 'motherProfiles', userId), {
         userId,
         county,
-        subcounty: subcounty.trim() || '',
+        primaryHospitalFacilityId: primaryHospitalFacilityId || null,
+        primaryHospitalName: primaryHospitalName || null,
         updatedAt: serverTimestamp(),
       }, { merge: true });
       onCompleted();
@@ -252,7 +275,38 @@ export default function PremiumOnboardingWizard({ userId, initialDisplayName = '
             <div><h2 className="font-display font-extrabold text-xl">Make your experience feel right</h2><p className="mt-1 text-sm text-[var(--text-secondary)]">These are preferences, not medical records. You can refine them later.</p></div>
             <div><label className="mb-2 block text-xs font-display font-bold">Language</label><div className="grid grid-cols-2 gap-3">{[['en','English'],['sw','Kiswahili']].map(([id,label]) => <button key={id} type="button" onClick={() => setLanguage(id as 'en'|'sw')} className={`rounded-2xl border p-4 font-display font-bold ${language === id ? 'border-[var(--haven-deep)] bg-[var(--surface-2)]' : 'border-[var(--border)]'}`}>{label}</button>)}</div></div>
             <div><label className="mb-2 block text-xs font-display font-bold">How should Haven respond?</label><div className="space-y-2">{[['concise','Short and simple'],['detailed','Detailed explanations'],['appointment_prep','Help me prepare for appointments'],['record_explanations','Help me understand my records'],['daily_guidance','Give me daily guidance']].map(([id,label]) => <button key={id} type="button" onClick={() => setHavenResponseStyle(id as HealthContext['havenResponseStyle'])} className={`w-full rounded-2xl border p-4 text-left text-sm font-display font-bold ${havenResponseStyle === id ? 'border-[var(--haven-deep)] bg-[var(--surface-2)]' : 'border-[var(--border)]'}`}>{label}</button>)}</div></div>
-            <div><label className="mb-1 block text-xs font-display font-bold">County</label><div className="flex gap-2"><MapPin className="mt-3 h-5 w-5 text-[var(--haven-orchid)]" /><select value={county} onChange={e => setCounty(e.target.value)} className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] px-4 py-3 text-sm">{KENYA_COUNTIES.map(item => <option key={item}>{item}</option>)}</select></div><input value={subcounty} onChange={e => setSubcounty(e.target.value)} placeholder="Sub-county / area (optional)" className="mt-2 w-full rounded-2xl border border-[var(--border)] px-4 py-3 text-sm" /></div>
+            <div>
+              <label className="mb-1 block text-xs font-display font-bold">County of Residence</label>
+              <div className="flex gap-2">
+                <MapPin className="mt-3 h-5 w-5 text-[var(--haven-orchid)]" />
+                <select value={county} onChange={e => handleCountyChange(e.target.value)} className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] px-4 py-3 text-sm">
+                  {KENYA_COUNTIES.map(item => <option key={item} value={item}>{item} County</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-display font-bold">
+                Primary Hospital / Health Facility <span className="text-[var(--text-secondary)] font-normal">(Optional)</span>
+              </label>
+              <select
+                value={primaryHospitalFacilityId}
+                onChange={e => {
+                  const val = e.target.value;
+                  setPrimaryHospitalFacilityId(val);
+                  const match = KENYA_KMHFL_FACILITIES.find(f => f.code === val);
+                  setPrimaryHospitalName(match ? match.name : '');
+                }}
+                className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] px-4 py-3 text-sm"
+              >
+                <option value="">None / Select later</option>
+                {availableHospitals.map(f => (
+                  <option key={f.code} value={f.code}>{f.name} ({f.level})</option>
+                ))}
+              </select>
+              {availableHospitals.length === 0 && (
+                <p className="mt-1 text-xs text-[var(--text-secondary)]">No KMHFL facilities listed for {county} County.</p>
+              )}
+            </div>
             <div className="rounded-2xl bg-[var(--surface-2)] p-4 text-xs text-[var(--text-secondary)]">Your setup creates a versioned personalization context. Pregnancy and child clinical records remain separate and authoritative.</div>
           </section>}
 

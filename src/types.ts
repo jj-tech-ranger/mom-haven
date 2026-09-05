@@ -26,11 +26,16 @@ export interface MotherProfile {
   phone: string;
   dateOfBirth: string;
   county: string;
+  primaryHospitalFacilityId?: string;
+  primaryHospitalName?: string;
+  subcounty?: string; // Optional for backward compatibility with legacy records
+  fullName?: string;
   nationalId?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
   createdAt?: string;
   updatedAt?: string;
+  demoDataset?: string;
 }
 
 export interface BirthPlan {
@@ -299,6 +304,7 @@ export interface Clinician {
   facilityId: string;
   facilityName?: string;
   verificationStatus: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
   createdAt?: string;
 }
 

@@ -23,14 +23,14 @@ import {
 } from '../types';
 import { reconcileMotherClinicalReminders } from './reminderGenerationService';
 
-export function calculateChildAge(dobString: string): {
+export function calculateChildAge(dobString: string, asOfDate: Date = new Date()): {
   totalDays: number;
   months: number;
   days: number;
   ageFormatted: string;
 } {
   const dob = new Date(dobString);
-  const now = new Date();
+  const now = asOfDate;
   
   let years = now.getFullYear() - dob.getFullYear();
   let months = now.getMonth() - dob.getMonth();

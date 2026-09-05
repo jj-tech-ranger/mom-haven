@@ -32,6 +32,8 @@ export interface AnonymousContextDraft {
   havenResponseStyle?: HealthContext['havenResponseStyle'];
   county?: string;
   subcounty?: string;
+  primaryHospitalFacilityId?: string;
+  primaryHospitalName?: string;
   preferredName?: string;
   todaysMood?: GuestMoodEntry;
   moodHistory?: GuestMoodEntry[];
@@ -137,6 +139,12 @@ export function sanitizeAnonymousDraftInput(
   }
   if (typeof clean.subcounty === 'string' && clean.subcounty.trim().length <= 60) {
     result.subcounty = clean.subcounty.trim();
+  }
+  if (typeof clean.primaryHospitalFacilityId === 'string' && clean.primaryHospitalFacilityId.trim().length <= 60) {
+    result.primaryHospitalFacilityId = clean.primaryHospitalFacilityId.trim();
+  }
+  if (typeof clean.primaryHospitalName === 'string' && clean.primaryHospitalName.trim().length <= 120) {
+    result.primaryHospitalName = clean.primaryHospitalName.trim();
   }
 
   // Preferred name
@@ -390,9 +398,13 @@ export async function syncAnonymousContext(
         childAgeBracket: draft.childAgeBracket,
         county: draft.county,
         subcounty: draft.subcounty,
+        primaryHospitalFacilityId: draft.primaryHospitalFacilityId,
+        primaryHospitalName: draft.primaryHospitalName,
         location: {
           county: draft.county,
           subcounty: draft.subcounty,
+          primaryHospitalFacilityId: draft.primaryHospitalFacilityId,
+          primaryHospitalName: draft.primaryHospitalName,
         },
         interests: draft.interests,
         dietaryPreferences: [],
