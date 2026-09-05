@@ -1,0 +1,245 @@
+{
+  "//": "NOTE: Must be deployed with `firebase deploy --only firestore:indexes` before these queries will work outside of local emulation. Deploys alongside Hosting & Cloud Run configured in firebase.json.",
+  "indexes": [
+    {
+      "collectionGroup": "ancEncounters",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "provenance.status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ancEncounters",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "enteredBy", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ancEncounters",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ancEncounters",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "pregnancyId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ancEncounters",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "facilityId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ancEncounters",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "immunizationRecords",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "provenance.status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "immunizationRecords",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "enteredBy", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "immunizationRecords",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "immunizationRecords",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "immunizationRecords",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "facilityId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "immunizationRecords",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "childId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "muacMeasurements",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "provenance.status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "muacMeasurements",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "enteredBy", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "muacMeasurements",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "muacMeasurements",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "childId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "growthMeasurements",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "provenance.status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "growthMeasurements",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "enteredBy", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "growthMeasurements",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "growthMeasurements",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "childId", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "ancEncounters",
+      "fieldPath": "provenance.status",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "collectionGroup": "ancEncounters",
+      "fieldPath": "enteredBy",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "collectionGroup": "ancEncounters",
+      "fieldPath": "createdAt",
+      "indexes": [
+        { "order": "DESCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "collectionGroup": "ancEncounters",
+      "fieldPath": "pregnancyId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "collectionGroup": "immunizationRecords",
+      "fieldPath": "status",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "collectionGroup": "immunizationRecords",
+      "fieldPath": "provenance.status",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "collectionGroup": "immunizationRecords",
+      "fieldPath": "enteredBy",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "collectionGroup": "immunizationRecords",
+      "fieldPath": "createdAt",
+      "indexes": [
+        { "order": "DESCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "collectionGroup": "muacMeasurements",
+      "fieldPath": "provenance.status",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "collectionGroup": "muacMeasurements",
+      "fieldPath": "enteredBy",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "collectionGroup": "muacMeasurements",
+      "fieldPath": "createdAt",
+      "indexes": [
+        { "order": "DESCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "collectionGroup": "growthMeasurements",
+      "fieldPath": "provenance.status",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "collectionGroup": "growthMeasurements",
+      "fieldPath": "enteredBy",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
+      "collectionGroup": "growthMeasurements",
+      "fieldPath": "createdAt",
+      "indexes": [
+        { "order": "DESCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    }
+  ]
+}

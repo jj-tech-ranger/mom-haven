@@ -10,6 +10,7 @@ import { classifyLayerOneRemote } from './server/safetyConfig.js';
 import { adminAuth, adminDb } from './server/clinicianAccess.js';
 import { buildHavenContext, formatHavenContext } from './server/services/havenContextBuilder.js';
 import { processDueReminders, startReminderPushCron } from './server/jobs/reminderPush.js';
+import { startWeeklyReportCron } from './server/jobs/weeklyReportJob.js';
 
 const PORT = Number(process.env.PORT) || 3000;
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mom-haven';
@@ -66,7 +67,9 @@ async function startServer() {
 
   app.get('/api/health', (_req, res) => res.json({ status: 'ok', project: PROJECT_ID, time: new Date().toISOString() }));
   app.use('/api/v1/clinician', clinicianRouter);
+  app.use('/api/clinician', clinicianRouter);
   app.use('/api/v1/admin', adminRouter);
+  app.use('/api/admin', adminRouter);
   app.use('/api/v1/context', contextSyncRouter);
 
   // Hourly / on-demand reminder push dispatch job endpoint
@@ -110,8 +113,9 @@ async function startServer() {
     }
   });
 
-  // Start background cron for hourly reminder checks
+  // Start background cron for hourly reminder checks and weekly facility reporting
   startReminderPushCron();
+  startWeeklyReportCron();
 
   app.post('/api/v1/chat', async (req, res) => {
     try {

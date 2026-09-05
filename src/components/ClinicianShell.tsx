@@ -8,8 +8,10 @@ import {
   ShieldCheck,
   Clock,
   User,
+  Users,
   ArrowRight,
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   RefreshCw,
   Plus,
@@ -22,7 +24,7 @@ import type { MomHavenHealthSummary } from '../types/healthSummary';
 import { auth } from '../lib/firebase';
 import Button from './Button';
 
-type ClinicianTab = 'dashboard' | 'access' | 'workspace' | 'audit';
+type ClinicianTab = 'dashboard' | 'access' | 'workspace' | 'caseload' | 'audit';
 
 interface ClinicianShellProps {
   clinicianId?: string;
@@ -38,10 +40,18 @@ interface ActiveSessionItem {
   expiresAt: string;
 }
 
+interface CaseloadItem {
+  motherId: string;
+  motherName: string;
+  lastEncounterDate: string | null;
+  hasOpenDangerSign: boolean;
+}
+
 const tabs: { id: ClinicianTab; label: string; icon: LucideIcon; description: string }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, description: 'Clinical overview' },
   { id: 'access', label: 'Patient Access', icon: KeyRound, description: 'Authorized patient connections' },
   { id: 'workspace', label: 'Workspace', icon: Stethoscope, description: 'Clinical workspace' },
+  { id: 'caseload', label: 'Caseload', icon: Users, description: 'Patient caseload & triage' },
   { id: 'audit', label: 'Audit', icon: ClipboardList, description: 'Access and activity audit' },
 ];
 
@@ -60,6 +70,8 @@ export default function ClinicianShell({
   const [activeSessionsList, setActiveSessionsList] = useState<ActiveSessionItem[]>([]);
   const [patientSummary, setPatientSummary] = useState<MomHavenHealthSummary | null>(null);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [caseloadList, setCaseloadList] = useState<CaseloadItem[]>([]);
+  const [caseloadLoading, setCaseloadLoading] = useState(false);
 
   const current = tabs.find(t => t.id === activeTab) || tabs[0];
   const Icon = current.icon;
@@ -191,11 +203,34 @@ export default function ClinicianShell({
     }
   }, [getAuthHeader]);
 
+  // Fetch Caseload
+  const fetchCaseload = useCallback(async () => {
+    try {
+      setCaseloadLoading(true);
+      const headers = await getAuthHeader();
+      let res = await fetch('/api/v1/clinician/caseload', { headers });
+      if (!res.ok) {
+        res = await fetch('/api/clinician/caseload', { headers });
+      }
+      if (!res.ok) {
+        throw new Error('Failed to load patient caseload.');
+      }
+      const data = await res.json();
+      setCaseloadList(data.items || data.caseload || []);
+    } catch (err: any) {
+      setStatusMessage({ type: 'error', text: err.message || 'Error fetching patient caseload.' });
+    } finally {
+      setCaseloadLoading(false);
+    }
+  }, [getAuthHeader]);
+
   useEffect(() => {
     if (activeTab === 'audit') {
       void fetchAuditLogs();
+    } else if (activeTab === 'caseload') {
+      void fetchCaseload();
     }
-  }, [activeTab, fetchAuditLogs]);
+  }, [activeTab, fetchAuditLogs, fetchCaseload]);
 
   return (
     <div className="min-h-screen bg-[var(--lavender-50)] text-[var(--ink-900)]">
@@ -532,6 +567,144 @@ export default function ClinicianShell({
                       Go to Patient Access
                     </Button>
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB: CASELOAD */}
+            {activeTab === 'caseload' && (
+              <div className="bg-white p-6 rounded-[24px] border border-[var(--border-hairline)] shadow-card-1 space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--border-hairline)]">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Users className="w-5 h-5 text-[var(--haven-deep)]" />
+                      <h3 className="font-display font-bold text-base text-[var(--ink-900)]">
+                        Clinical Caseload (Last 90 Days)
+                      </h3>
+                    </div>
+                    <p className="text-xs text-[var(--ink-500)] mt-0.5">
+                      Distinct mothers from your authorized clinical sessions, their latest encounter, and active danger sign status.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fetchCaseload()}
+                    disabled={caseloadLoading}
+                    className="flex items-center gap-1.5 text-xs text-[var(--haven-deep)] font-bold hover:underline cursor-pointer disabled:opacity-50 self-start sm:self-auto"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${caseloadLoading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </button>
+                </div>
+
+                {caseloadLoading && (
+                  <div className="p-8 text-center text-xs text-[var(--ink-400)] space-y-2">
+                    <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[var(--haven-deep)]" />
+                    <p>Loading patient caseload...</p>
+                  </div>
+                )}
+
+                {!caseloadLoading && caseloadList.length > 0 && (
+                  <div className="space-y-4">
+                    {/* Summary banner */}
+                    <div className="flex flex-wrap items-center gap-3 text-xs">
+                      <span className="px-3 py-1.5 rounded-full bg-[var(--lavender-50)] text-[var(--haven-deep)] font-semibold border border-purple-100">
+                        Total Patients: <strong>{caseloadList.length}</strong>
+                      </span>
+                      {caseloadList.filter(p => p.hasOpenDangerSign).length > 0 ? (
+                        <span className="px-3 py-1.5 rounded-full bg-red-50 text-red-700 font-semibold border border-red-200 flex items-center gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
+                          <strong>{caseloadList.filter(p => p.hasOpenDangerSign).length}</strong> with open danger signs (last 14d)
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          All patients stable / no open danger signs
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="divide-y divide-[var(--border-hairline)] border border-[var(--border-hairline)] rounded-2xl overflow-hidden text-xs">
+                      {caseloadList.map((patient) => {
+                        const matchingActiveSession = activeSessionsList.find(
+                          (s) => s.motherId === patient.motherId
+                        );
+                        return (
+                          <div
+                            key={patient.motherId}
+                            className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
+                              patient.hasOpenDangerSign
+                                ? 'bg-red-50/40 hover:bg-red-50/70'
+                                : 'bg-white hover:bg-[var(--lavender-50)]/40'
+                            }`}
+                          >
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <strong className="text-sm font-display text-[var(--ink-900)]">
+                                  {patient.motherName}
+                                </strong>
+                                {patient.hasOpenDangerSign ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-100 text-red-800 text-[10px] font-bold tracking-wide uppercase">
+                                    <AlertTriangle className="w-3 h-3 text-red-600" />
+                                    Danger Sign (14d)
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-medium">
+                                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                    Stable
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-[var(--ink-500)] truncate">
+                                Mother ID: <span className="font-mono">{patient.motherId}</span>
+                              </p>
+                              <p className="text-[11px] text-[var(--ink-600)] flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-[var(--ink-400)]" />
+                                Last Clinical Encounter:{' '}
+                                {patient.lastEncounterDate ? (
+                                  <span className="font-semibold text-[var(--ink-800)]">{patient.lastEncounterDate}</span>
+                                ) : (
+                                  <span className="text-[var(--ink-400)] italic">No encounters logged</span>
+                                )}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                              {matchingActiveSession ? (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    setActiveSession(matchingActiveSession);
+                                    await fetchPatientSummary(matchingActiveSession.motherId);
+                                    setActiveTab('workspace');
+                                  }}
+                                  className="py-2 px-3.5 rounded-xl bg-[var(--haven-deep)] text-white text-xs font-display font-bold flex items-center gap-1.5 cursor-pointer shadow-xs hover:bg-[var(--haven-orchid)] transition-colors"
+                                >
+                                  <Stethoscope className="w-3.5 h-3.5" />
+                                  Open Workspace
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveTab('access')}
+                                  className="py-2 px-3.5 rounded-xl border border-[var(--border-hairline)] bg-white text-[var(--haven-deep)] hover:bg-[var(--lavender-50)] text-xs font-display font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+                                >
+                                  <KeyRound className="w-3.5 h-3.5" />
+                                  Connect via PIN
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {!caseloadLoading && caseloadList.length === 0 && (
+                  <p className="text-xs text-[var(--ink-400)] italic p-6 bg-[var(--lavender-50)] rounded-xl text-center">
+                    No patients found in your caseload from the last 90 days. Connect to a patient via Bedside Fast-Share PIN to start managing their records.
+                  </p>
                 )}
               </div>
             )}

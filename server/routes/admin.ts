@@ -3,6 +3,7 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { adminAuth, adminDb, ApiError, logAudit, serialize } from '../clinicianAccess.js';
 import { invalidateSafetyCache } from '../safetyConfig.js';
 import * as otplib from 'otplib';
+import { KEPI_VACCINES, calculateDoseDates, VaccineDose } from '../../src/utils/kepiSchedule.js';
 
 export const adminRouter=Router();
 async function requireAdmin(req:Request){const h=String(req.headers.authorization||'');if(!h.startsWith('Bearer '))throw new ApiError(401,'Sign-in required.');let token;try{token=await adminAuth.verifyIdToken(h.slice(7));}catch{throw new ApiError(401,'Sign-in required.');}const user=await adminDb.doc(`users/${token.uid}`).get();if(!user.exists||user.data()?.role!=='ADMIN')throw new ApiError(403,'Admin access required.');return token;}
@@ -44,7 +45,285 @@ adminRouter.get('/team',async(req,res)=>{try{await requireAdmin(req);const q=awa
 adminRouter.post('/team/invitations',async(req,res)=>{try{const token=await requireAdmin(req);const email=String(req.body?.email||'').trim().toLowerCase();const role=String(req.body?.role||'County Admin');const scope=String(req.body?.scope||'National');if(!email||!email.includes('@'))throw new ApiError(400,'A valid email is required.');const ref=adminDb.collection('adminInvitations').doc();await ref.set({email,role,scope,status:'pending',invitedBy:token.uid,createdAt:FieldValue.serverTimestamp()});await logAudit(token.uid,'ADMIN','ADMIN_INVITATION_CREATED','adminInvitations',ref.id);res.status(201).json({id:ref.id,status:'pending'});}catch(e){sendError(res,e);}});
 adminRouter.patch('/team/:id',async(req,res)=>{try{const token=await requireAdmin(req);const patch:any={updatedAt:FieldValue.serverTimestamp()};if(req.body?.role!==undefined)patch.role=String(req.body.role);if(req.body?.scopes!==undefined)patch.scopes=Array.isArray(req.body.scopes)?req.body.scopes.map(String):[];if(req.body?.status!==undefined)patch.status=String(req.body.status);await adminDb.doc(`users/${req.params.id}`).update(patch);await logAudit(token.uid,'ADMIN','ADMIN_PERMISSIONS_UPDATED','users',req.params.id);res.json({success:true});}catch(e){sendError(res,e);}});
 
-adminRouter.get('/reports',async(req,res)=>{try{await requireAdmin(req);const collections=['users','pregnancies','children','reminders','muacMeasurements','immunizationRecords'];const counts:any={};for(const n of collections){try{counts[n]=(await adminDb.collection(n).limit(5000).get()).size;}catch{counts[n]=0;}}const users=await adminDb.collection('users').limit(5000).get();const byDay:Record<string,number>={};users.docs.forEach(d=>{const v=d.data().createdAt;const date=v instanceof Timestamp?v.toDate().toISOString().slice(0,10):new Date(v||0).toISOString().slice(0,10);if(date!=='1970-01-01')byDay[date]=(byDay[date]||0)+1;});res.json({counts,adoption:Object.entries(byDay).sort(([a],[b])=>a.localeCompare(b)).map(([date,count])=>({date,count})),ancContactCompletion:null,immunizationCoverage:null,muacAlertVolume:counts.muacMeasurements||0,note:'Metrics are computed from current Firestore data. Null coverage rates mean the underlying denominator is not yet represented safely in the operational aggregate model.'});}catch(e){sendError(res,e);}});
+function matchesVaccineRecord(rec: any, vac: VaccineDose): boolean {
+  if (rec.status && rec.status !== 'GIVEN') return false;
+  const name = String(rec.vaccineName || rec.vaccine || rec.name || '').toLowerCase().trim();
+  const code = String(rec.code || rec.vaccineCode || '').toLowerCase().trim();
+  const bracket = String(rec.recommendedAgeBracket || rec.dose || rec.ageBracket || '').toLowerCase().trim();
+
+  const vacCode = vac.code.toLowerCase();
+  const vacName = vac.name.toLowerCase();
+
+  if (code && (code === vacCode || code === vacCode.replace('_', ''))) return true;
+  if (name && (name === vacName || name === vacCode)) return true;
+
+  const codeParts = vacCode.split('_');
+  const codePrefix = codeParts[0];
+  const codeNum = codeParts[1];
+
+  if (vacCode === 'bcg') {
+    return name.includes('bcg') || code.includes('bcg');
+  }
+  if (vacCode === 'ipv') {
+    return name.includes('ipv') || name.includes('inactivated polio');
+  }
+  if (vacCode === 'yellow_fever') {
+    return name.includes('yellow') || name.includes('yf');
+  }
+  if (codePrefix === 'opv') {
+    const isOpv = name.includes('opv') || name.includes('oral polio') || name.includes('polio');
+    if (isOpv) {
+      if (codeNum === '0') {
+        return name.includes('0') || name.includes('birth') || bracket.includes('birth');
+      }
+      if (codeNum) {
+        return name.includes(codeNum) || bracket.includes(codeNum) ||
+          (codeNum === '1' && bracket.includes('6 week')) ||
+          (codeNum === '2' && bracket.includes('10 week')) ||
+          (codeNum === '3' && bracket.includes('14 week'));
+      }
+    }
+  }
+  if (codePrefix === 'penta') {
+    const isPenta = name.includes('penta') || name.includes('dtp') || name.includes('dpt');
+    if (isPenta && codeNum) {
+      return name.includes(codeNum) || bracket.includes(codeNum) ||
+        (codeNum === '1' && bracket.includes('6 week')) ||
+        (codeNum === '2' && bracket.includes('10 week')) ||
+        (codeNum === '3' && bracket.includes('14 week'));
+    }
+  }
+  if (codePrefix === 'pcv10') {
+    const isPcv = name.includes('pcv') || name.includes('pneumo');
+    if (isPcv && codeNum) {
+      return name.includes(codeNum) || bracket.includes(codeNum) ||
+        (codeNum === '1' && bracket.includes('6 week')) ||
+        (codeNum === '2' && bracket.includes('10 week')) ||
+        (codeNum === '3' && bracket.includes('14 week'));
+    }
+  }
+  if (codePrefix === 'rota') {
+    const isRota = name.includes('rota');
+    if (isRota && codeNum) {
+      return name.includes(codeNum) || bracket.includes(codeNum) ||
+        (codeNum === '1' && bracket.includes('6 week')) ||
+        (codeNum === '2' && bracket.includes('10 week'));
+    }
+  }
+  if (codePrefix === 'mr') {
+    const isMr = name.includes('mr') || name.includes('measles');
+    if (isMr && codeNum) {
+      return name.includes(codeNum) || bracket.includes(codeNum) ||
+        (codeNum === '1' && (bracket.includes('9 month') || bracket.includes('39 week'))) ||
+        (codeNum === '2' && (bracket.includes('18 month') || bracket.includes('78 week')));
+    }
+  }
+  if (codePrefix === 'vit') {
+    const isVitA = name.includes('vitamin a') || name.includes('vit a') || name.includes('vita');
+    if (isVitA && codeNum) {
+      return name.includes(codeNum) ||
+        (codeNum === '1' && bracket.includes('6 month')) ||
+        (codeNum === '2' && bracket.includes('12 month'));
+    }
+  }
+
+  return (name && name.includes(vacCode.replace('_', ' '))) || (name && vacName.includes(name));
+}
+
+adminRouter.get('/reports', async (req, res) => {
+  try {
+    await requireAdmin(req);
+
+    const [
+      usersSnap,
+      pregnanciesSnap,
+      childrenSnap,
+      remindersSnap,
+      immunizationRecordsSnap,
+      muacMeasurementsSnap,
+      growthMeasurementsSnap,
+      ancEncountersSnap,
+    ] = await Promise.all([
+      adminDb.collection('users').limit(5000).get(),
+      adminDb.collection('pregnancies').limit(5000).get(),
+      adminDb.collection('children').limit(5000).get(),
+      adminDb.collection('reminders').limit(5000).get(),
+      adminDb.collectionGroup('immunizationRecords').limit(5000).get(),
+      adminDb.collectionGroup('muacMeasurements').limit(5000).get(),
+      adminDb.collectionGroup('growthMeasurements').limit(5000).get(),
+      adminDb.collectionGroup('ancEncounters').limit(5000).get(),
+    ]);
+
+    const counts: Record<string, number> = {
+      users: usersSnap.size,
+      pregnancies: pregnanciesSnap.size,
+      children: childrenSnap.size,
+      reminders: remindersSnap.size,
+      muacMeasurements: muacMeasurementsSnap.size,
+      immunizationRecords: immunizationRecordsSnap.size,
+      growthMeasurements: growthMeasurementsSnap.size,
+      ancEncounters: ancEncountersSnap.size,
+    };
+
+    const byDay: Record<string, number> = {};
+    usersSnap.docs.forEach(d => {
+      const v = d.data().createdAt;
+      const date = v instanceof Timestamp ? v.toDate().toISOString().slice(0, 10) : new Date(v || 0).toISOString().slice(0, 10);
+      if (date !== '1970-01-01') byDay[date] = (byDay[date] || 0) + 1;
+    });
+
+    // 1. ancContactCompletion (Expected = 4 visits per pregnancy under Kenya Focused ANC model)
+    const activePregnancies = pregnanciesSnap.docs.filter(d => {
+      const s = String(d.data()?.status || 'active').toLowerCase().trim();
+      return s === 'active';
+    });
+
+    const ancCountByPregnancy = new Map<string, number>();
+    for (const doc of ancEncountersSnap.docs) {
+      const data = doc.data();
+      const pregId = String(data.pregnancyId || doc.ref.parent.parent?.id || '');
+      if (pregId) {
+        ancCountByPregnancy.set(pregId, (ancCountByPregnancy.get(pregId) || 0) + 1);
+      }
+    }
+
+    let fourPlusCount = 0;
+    let totalCompletion = 0;
+    for (const p of activePregnancies) {
+      const completed = ancCountByPregnancy.get(p.id) || 0;
+      if (completed >= 4) {
+        fourPlusCount++;
+      }
+      const rate = Math.min(100, (completed / 4) * 100);
+      totalCompletion += rate;
+    }
+
+    const nationalAvgRate = activePregnancies.length > 0
+      ? Math.round((totalCompletion / activePregnancies.length) * 10) / 10
+      : 0;
+
+    const ancContactCompletion = {
+      rate: nationalAvgRate,
+      percentage: nationalAvgRate,
+      completedCount: fourPlusCount,
+      fourPlusCount: fourPlusCount,
+      totalActive: activePregnancies.length,
+    };
+
+    // 2. immunizationCoverage (Percentage of children up to date for age per KEPI schedule)
+    const recordsByChild = new Map<string, any[]>();
+    for (const doc of immunizationRecordsSnap.docs) {
+      const data = doc.data();
+      const childId = String(data.childId || doc.ref.parent.parent?.id || '');
+      if (childId) {
+        if (!recordsByChild.has(childId)) {
+          recordsByChild.set(childId, []);
+        }
+        recordsByChild.get(childId)!.push({ id: doc.id, ...data });
+      }
+    }
+
+    const now = new Date();
+    let upToDateCount = 0;
+    const totalChildren = childrenSnap.size;
+
+    for (const childDoc of childrenSnap.docs) {
+      const childData = childDoc.data();
+      const dob = childData.dateOfBirth || childData.dob;
+      if (!dob) continue;
+
+      const childRecords = recordsByChild.get(childDoc.id) || [];
+      const dueVaccines = KEPI_VACCINES.filter(vac => {
+        try {
+          const dates = calculateDoseDates(dob, vac);
+          return new Date(dates.scheduledDate) <= now;
+        } catch {
+          return false;
+        }
+      });
+
+      if (dueVaccines.length === 0) {
+        upToDateCount++;
+        continue;
+      }
+
+      const isUpToDate = dueVaccines.every(vac =>
+        childRecords.some(rec => (rec.status === 'GIVEN' || !rec.status) && matchesVaccineRecord(rec, vac))
+      );
+
+      if (isUpToDate) {
+        upToDateCount++;
+      }
+    }
+
+    const immunizationCoverage = totalChildren > 0
+      ? Math.round((upToDateCount / totalChildren) * 1000) / 10
+      : 0;
+
+    // 3. muacAlertVolume breakdown by band: { SAM, MAM, AtRisk, Normal }
+    const muacAlertVolume = {
+      SAM: 0,
+      MAM: 0,
+      AtRisk: 0,
+      Normal: 0,
+    };
+
+    for (const doc of muacMeasurementsSnap.docs) {
+      const band = String(doc.data()?.band || '').trim();
+      if (band === 'SAM') muacAlertVolume.SAM++;
+      else if (band === 'MAM') muacAlertVolume.MAM++;
+      else if (band === 'AtRisk' || band === 'Yellow' || band === 'Moderate') muacAlertVolume.AtRisk++;
+      else if (band === 'Normal' || band === 'Green') muacAlertVolume.Normal++;
+      else {
+        const cm = Number(doc.data()?.cm ?? doc.data()?.muacCm);
+        if (!isNaN(cm) && cm > 0) {
+          if (cm < 11.5) muacAlertVolume.SAM++;
+          else if (cm < 12.5) muacAlertVolume.MAM++;
+          else if (cm < 13.5) muacAlertVolume.AtRisk++;
+          else muacAlertVolume.Normal++;
+        } else {
+          muacAlertVolume.Normal++;
+        }
+      }
+    }
+
+    const pregnanciesList = pregnanciesSnap.docs.map(d => {
+      const data = d.data();
+      return {
+        id: d.id,
+        motherId: data.motherId || '',
+        status: data.status || 'active',
+        gestationalAgeWeeks: data.gestationalAgeWeeks ?? data.gestationalWeeks ?? null,
+        lmp: data.lmp ?? null,
+        county: data.county || '',
+      };
+    });
+
+    const motherProfilesSnap = await adminDb.collection('motherProfiles').limit(5000).get().catch(() => ({ docs: [] }));
+    const motherCounties: Record<string, string> = {};
+    usersSnap.docs.forEach(d => {
+      const c = d.data()?.county || d.data()?.location?.county;
+      if (c) motherCounties[d.id] = c;
+    });
+    motherProfilesSnap.docs.forEach(d => {
+      const c = d.data()?.county || d.data()?.location?.county;
+      if (c) motherCounties[d.id] = c;
+    });
+
+    res.json({
+      counts,
+      adoption: Object.entries(byDay).sort(([a], [b]) => a.localeCompare(b)).map(([date, count]) => ({ date, count })),
+      ancContactCompletion,
+      immunizationCoverage,
+      muacAlertVolume,
+      pregnancies: pregnanciesList,
+      motherProfiles: Object.entries(motherCounties).map(([id, county]) => ({ id, county })),
+      note: 'Metrics are computed from current Firestore operational collections and subcollections.',
+    });
+  } catch (e) {
+    sendError(res, e);
+  }
+});
 
 adminRouter.get('/settings',async(req,res)=>{try{await requireAdmin(req);const s=await adminDb.doc('adminSettings/platform').get();res.json({item:s.exists?{id:s.id,...clean(s.data())}:{id:'platform',billingTier:'Not configured',billingTierSource:'manual',featureFlags:[]}});}catch(e){sendError(res,e);}});
 adminRouter.patch('/settings',async(req,res)=>{try{const token=await requireAdmin(req);const patch:any={updatedAt:FieldValue.serverTimestamp(),updatedBy:token.uid};if(req.body?.billingTier!==undefined)patch.billingTier=String(req.body.billingTier);if(req.body?.featureFlags!==undefined)patch.featureFlags=Array.isArray(req.body.featureFlags)?req.body.featureFlags:[];await adminDb.doc('adminSettings/platform').set(patch,{merge:true});await logAudit(token.uid,'ADMIN','PLATFORM_SETTINGS_UPDATED','adminSettings','platform');res.json({success:true});}catch(e){sendError(res,e);}});
@@ -127,3 +406,27 @@ adminRouter.post('/mfa/verify', async (req, res) => {
     sendError(res, e);
   }
 });
+
+adminRouter.get('/reports/weekly', async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const facilityId = String(req.query?.facilityId || 'NATIONAL').trim();
+    const snap = await adminDb
+      .collection('weeklySummaries')
+      .where('facilityId', '==', facilityId)
+      .limit(100)
+      .get();
+
+    let items = snap.docs.map((d) => ({ id: d.id, ...clean(d.data()) }));
+    items.sort((a, b) => {
+      const at = new Date(a.periodStart || a.generatedAt || 0).getTime();
+      const bt = new Date(b.periodStart || b.generatedAt || 0).getTime();
+      return bt - at;
+    });
+    items = items.slice(0, 12);
+    res.json({ facilityId, items });
+  } catch (e) {
+    sendError(res, e);
+  }
+});
+

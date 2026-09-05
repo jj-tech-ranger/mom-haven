@@ -1,10 +1,22 @@
 import { Router, Request, Response } from 'express';
+import * as otplib from 'otplib';
 import { adminAuth, adminDb, ApiError, document, logAudit, requireActiveSession, requireClinician, serialize } from '../clinicianAccess.js';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { CLINICAL_RECORD_GROUPS, getPatientRecords } from '../services/patientRecordService.js';
 import { getAuthorizedHealthSummary } from '../services/healthSummaryService.js';
 
 export const clinicianRouter = Router();
+
+export const VERIFIABLE_RECORD_TYPES = [
+  'ancEncounters',
+  'newbornRecords',
+  'postnatalEncounters',
+  'immunizationRecords',
+  'growthMeasurements',
+  'muacMeasurements',
+  'nutritionRecords',
+  'developmentRecords',
+] as const;
 
 async function auth(req: Request) {
   const header = String(req.headers.authorization || '');
@@ -23,7 +35,54 @@ async function motherName(motherId: string) {
 clinicianRouter.get('/me', async (req,res)=>{ try { const token=await auth(req); const c=await requireClinician(token.uid); res.json({uid:token.uid,clinician:serialize(c.clinician)}); } catch(e){sendError(res,e);} });
 clinicianRouter.post('/verification', async (req,res)=>{ try { const token=await auth(req); if (!token.uid) throw new ApiError(401,'Sign-in required.'); const {licenseNumber,cadre,facilityId,facilityName,name,email}=req.body||{}; if(!String(licenseNumber||'').trim()||!String(cadre||'').trim()) throw new ApiError(400,'License number and cadre are required.'); const userUpdate: any = { role:'CLINICIAN' }; if(String(name||'').trim()) userUpdate.displayName = String(name).trim(); if(String(email||'').trim()) userUpdate.email = String(email).trim().toLowerCase(); await adminDb.doc(`users/${token.uid}`).set(userUpdate, {merge:true}); await adminDb.doc(`clinicians/${token.uid}`).set({uid:token.uid,name:String(name||'').trim()||token.name||null,email:String(email||'').trim().toLowerCase()||token.email||null,licenseNumber:String(licenseNumber).trim(),cadre:String(cadre).trim(),facilityId:facilityId||null,facilityName:facilityName||null,verificationStatus:'pending',createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()},{merge:true}); res.json({success:true,status:'pending'}); }catch(e){sendError(res,e);} });
 
-clinicianRouter.get('/dashboard', async(req,res)=>{try{const token=await clinician(req); const sessions=await adminDb.collection('clinicianAccessSessions').where('clinicianId','==',token.uid).limit(100).get(); const active=sessions.docs.filter(d=>d.data().status==='active'&&d.data().expiresAt?.toDate?.()>new Date()).length; const expiring=sessions.docs.filter(d=>d.data().status==='active'&&d.data().expiresAt?.toDate?.()<=new Date(Date.now()+120000)).length; const audits=await adminDb.collection('auditEvents').where('actorId','==',token.uid).orderBy('timestamp','desc').limit(20).get().catch(()=>null); res.json({stats:{activeAccessSessions:active,pendingVerificationItems:0,encountersToday:0,alerts:expiring},activity:(audits?.docs||[]).map(d=>document(d.id,d.data()))});}catch(e){sendError(res,e);}});
+clinicianRouter.get('/dashboard', async (req, res) => {
+  try {
+    const token = await clinician(req);
+    const sessions = await adminDb.collection('clinicianAccessSessions').where('clinicianId', '==', token.uid).limit(100).get();
+    const active = sessions.docs.filter(d => d.data().status === 'active' && d.data().expiresAt?.toDate?.() > new Date()).length;
+    const expiring = sessions.docs.filter(d => d.data().status === 'active' && d.data().expiresAt?.toDate?.() <= new Date(Date.now() + 120000)).length;
+    const audits = await adminDb.collection('auditEvents').where('actorId', '==', token.uid).orderBy('timestamp', 'desc').limit(20).get().catch(() => null);
+
+    const recordSnaps = await Promise.all(
+      VERIFIABLE_RECORD_TYPES.map(coll => adminDb.collectionGroup(coll).limit(1000).get().catch(() => ({ docs: [] })))
+    );
+
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    let pendingVerificationItems = 0;
+    let encountersToday = 0;
+
+    for (const snap of recordSnaps) {
+      for (const doc of snap.docs) {
+        const data = doc.data();
+        const prov = data?.provenance;
+        const enteredBy = prov?.enteredBy || data?.enteredBy;
+        if (enteredBy !== token.uid) continue;
+
+        if (prov?.status === 'REPORTED') {
+          pendingVerificationItems++;
+        }
+
+        const c = data?.createdAt || prov?.enteredAt;
+        const createdMs = c?.toDate ? c.toDate().getTime() : c instanceof Timestamp ? c.toMillis() : new Date(c || 0).getTime();
+        if (createdMs >= oneDayAgo) {
+          encountersToday++;
+        }
+      }
+    }
+
+    res.json({
+      stats: {
+        activeAccessSessions: active,
+        pendingVerificationItems,
+        encountersToday,
+        alerts: expiring
+      },
+      activity: (audits?.docs || []).map(d => document(d.id, d.data()))
+    });
+  } catch (e) {
+    sendError(res, e);
+  }
+});
 clinicianRouter.get('/access-sessions', async(req,res)=>{try{const token=await clinician(req); const s=await adminDb.collection('clinicianAccessSessions').where('clinicianId','==',token.uid).limit(100).get(); res.json({items:await Promise.all(s.docs.map(async d=>document(d.id,{...d.data(),motherName:await motherName(String(d.data().motherId))})))});}catch(e){sendError(res,e);}});
 
 clinicianRouter.post('/enter-code', async(req,res)=>{try{const token=await clinician(req); const code=String(req.body?.shareCode||'').replace(/\D/g,'').slice(0,6); if(code.length!==6) throw new ApiError(400,'Enter the 6-digit clinic share code.'); const snap=await adminDb.collection('clinicianAccessSessions').where('shareCode','==',code).where('status','==','active').limit(5).get(); if(snap.empty) throw new ApiError(404,'That code is invalid or has already been used.'); const d=snap.docs.find(x=>!x.data().clinicianId); if(!d) throw new ApiError(409,'That code has already been used.'); const s=d.data(); const expires=s.expiresAt?.toDate?.()||new Date(s.expiresAt); if(expires<=new Date()){await d.ref.update({status:'expired'}); throw new ApiError(410,'That code has expired. Ask the mother to generate a new one.');} res.json({sessionId:d.id,motherId:s.motherId,motherName:await motherName(String(s.motherId)),expiresAt:expires.toISOString(),scope:'Temporary clinical access to the records explicitly covered by this session.'});}catch(e){sendError(res,e);}});
@@ -35,7 +94,7 @@ clinicianRouter.get('/patients/:motherId/health-summary', async(req,res)=>{try{c
 clinicianRouter.get('/patients/:motherId/records/:type', async(req,res)=>{try{const token=await clinician(req); const motherId=req.params.motherId; await requireActiveSession(token.uid,motherId); if(!(CLINICAL_RECORD_GROUPS as readonly string[]).includes(req.params.type)) throw new ApiError(400,'Unsupported clinical record type.'); const q=await adminDb.collectionGroup(req.params.type).where('motherId','==',motherId).limit(200).get(); await logAudit(token.uid,'CLINICIAN','VIEWED',req.params.type,motherId,null,motherId); res.json({items:q.docs.map(d=>document(d.id,d.data()))});}catch(e){sendError(res,e);}});
 
 clinicianRouter.get('/patients/:motherId/verification',async(req,res)=>{try{const token=await clinician(req);const mid=req.params.motherId;await requireActiveSession(token.uid,mid);const records=await getPatientRecords(mid);const pending:any[]=[];for(const [type,items] of Object.entries(records)){if(!Array.isArray(items))continue;(items as any[]).forEach(x=>{if(x.provenance?.status==='REPORTED')pending.push({type,id:x.id,...x});});}await logAudit(token.uid,'CLINICIAN','VIEWED','verificationQueue',mid,null,mid);res.json({items:pending});}catch(e){sendError(res,e);}});
-clinicianRouter.post('/verify',async(req,res)=>{try{const token=await clinician(req);const {motherId,recordPath,recordId}=req.body||{};if(!motherId||!recordPath||!recordId)throw new ApiError(400,'motherId, recordPath and recordId are required.');await requireActiveSession(token.uid,motherId);if(recordPath.includes('..')||!/^(pregnancies|children)\/[^/]+\/(ancEncounters|newbornRecords|postnatalEncounters|immunizationRecords|growthMeasurements|muacMeasurements|nutritionRecords|developmentRecords)$/.test(recordPath))throw new ApiError(400,'Unsupported clinical record path.');const ref=adminDb.doc(`${recordPath}/${recordId}`);const d=await ref.get();if(!d.exists)throw new ApiError(404,'Record not found.');if(String(d.data()?.motherId||'')!==motherId)throw new ApiError(403,'Record is outside the authorized patient session.');await ref.update({'provenance.status':'VERIFIED','provenance.verifiedBy':token.uid,'provenance.verifiedAt':FieldValue.serverTimestamp()});await logAudit(token.uid,'CLINICIAN','VERIFIED',recordPath,recordId,null,motherId);res.json({success:true});}catch(e){sendError(res,e);}});
+clinicianRouter.post('/verify',async(req,res)=>{try{const token=await clinician(req);const {motherId,recordPath,recordId}=req.body||{};if(!motherId||!recordPath||!recordId)throw new ApiError(400,'motherId, recordPath and recordId are required.');await requireActiveSession(token.uid,motherId);const recordTypePattern=VERIFIABLE_RECORD_TYPES.join('|');const recordPathRegex=new RegExp(`^(pregnancies|children)\\/[^/]+\\/(${recordTypePattern})$`);if(recordPath.includes('..')||!recordPathRegex.test(recordPath))throw new ApiError(400,'Unsupported clinical record path.');const ref=adminDb.doc(`${recordPath}/${recordId}`);const d=await ref.get();if(!d.exists)throw new ApiError(404,'Record not found.');if(String(d.data()?.motherId||'')!==motherId)throw new ApiError(403,'Record is outside the authorized patient session.');await ref.update({'provenance.status':'VERIFIED','provenance.verifiedBy':token.uid,'provenance.verifiedAt':FieldValue.serverTimestamp()});await logAudit(token.uid,'CLINICIAN','VERIFIED',recordPath,recordId,null,motherId);res.json({success:true});}catch(e){sendError(res,e);}});
 
 async function handleAncEncounter(token: any, body: any, res: any) {
   const { motherId, pregnancyId, date, visitNumber, gestationalWeeks, gestationalAgeWeeks, systolicBp, diastolicBp, bloodPressure, weightKg, weight, fundalHeight, fundalHeightCm, fetalHeartRate, fhr, hbLevel, hb, iptpGiven, iptp, ifasGiven, ifas, ironFolicGiven, clinicalNotes, notes, summary } = body || {};
@@ -1012,3 +1071,235 @@ clinicianRouter.post('/encounters', async (req, res) => {
 clinicianRouter.get('/patients/:motherId/notes',async(req,res)=>{try{const token=await clinician(req);const mid=req.params.motherId;await requireActiveSession(token.uid,mid);const q=await adminDb.collection('clinicianPrivateNotes').where('motherId','==',mid).where('clinicianId','==',token.uid).limit(100).get();await logAudit(token.uid,'CLINICIAN','VIEWED','clinicianPrivateNotes',mid,null,mid);res.json({items:q.docs.map(d=>document(d.id,d.data()))});}catch(e){sendError(res,e);}});
 clinicianRouter.post('/patients/:motherId/notes',async(req,res)=>{try{const token=await clinician(req);const mid=req.params.motherId;await requireActiveSession(token.uid,mid);const text=String(req.body?.text||'').trim();if(!text)throw new ApiError(400,'Note cannot be empty.');const ref=await adminDb.collection('clinicianPrivateNotes').add({motherId:mid,clinicianId:token.uid,text,createdAt:FieldValue.serverTimestamp()});await logAudit(token.uid,'CLINICIAN','PRIVATE_NOTE_CREATED','clinicianPrivateNotes',ref.id,null,mid);res.json({id:ref.id});}catch(e){sendError(res,e);}});
 clinicianRouter.get('/audit',async(req,res)=>{try{const token=await clinician(req);const q=await adminDb.collection('auditEvents').where('actorId','==',token.uid).limit(200).get();res.json({items:q.docs.map(d=>document(d.id,d.data())).sort((a:any,b:any)=>String(b.timestamp||'').localeCompare(String(a.timestamp||'')))});}catch(e){sendError(res,e);}});
+
+clinicianRouter.get(['/mfa/setup', '/clinician/mfa/setup'], async (req, res) => {
+  try {
+    const token = await clinician(req);
+    const docRef = adminDb.doc(`clinicianMfaSecrets/${token.uid}`);
+    const snap = await docRef.get();
+    let secret = snap.exists ? snap.data()?.secret : null;
+    if (!secret) {
+      secret = otplib.generateSecret();
+      await docRef.set({
+        uid: token.uid,
+        email: token.email || null,
+        secret,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+    const clinicianEmail = token.email || 'clinician@health.go.ke';
+    const uri = `otpauth://totp/MomHaven%20MOH%20Clinician:${encodeURIComponent(clinicianEmail)}?secret=${secret}&issuer=MomHaven%20MOH`;
+    res.json({
+      success: true,
+      enrolled: true,
+      secret,
+      uri,
+      clinicianEmail,
+    });
+  } catch (e) {
+    sendError(res, e);
+  }
+});
+
+clinicianRouter.post(['/mfa/verify', '/clinician/mfa/verify'], async (req, res) => {
+  try {
+    const token = await clinician(req);
+    const code = String(req.body?.code || '').trim();
+    if (!code || !/^\d{6}$/.test(code)) {
+      throw new ApiError(400, 'Security code must be a 6-digit numeric token.');
+    }
+    const docRef = adminDb.doc(`clinicianMfaSecrets/${token.uid}`);
+    const snap = await docRef.get();
+    let secret = snap.exists ? snap.data()?.secret : null;
+    if (!secret) {
+      secret = otplib.generateSecret();
+      await docRef.set({
+        uid: token.uid,
+        email: token.email || null,
+        secret,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+
+    const verification = otplib.verifySync({ token: code, secret });
+    if (!verification || !verification.valid) {
+      throw new ApiError(401, 'Invalid security token. Please check the code on your authenticator app.');
+    }
+
+    await docRef.set({
+      lastVerifiedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    await logAudit(token.uid, 'CLINICIAN', 'CLINICIAN_MFA_VERIFIED', 'clinicianMfaSecrets', token.uid);
+
+    res.json({
+      success: true,
+      verified: true,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (e) {
+    sendError(res, e);
+  }
+});
+
+clinicianRouter.get(['/caseload', '/clinician/caseload'], async (req, res) => {
+  try {
+    const token = await clinician(req);
+    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
+    const fourteenDaysAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
+
+    const sessionsSnap = await adminDb
+      .collection('clinicianAccessSessions')
+      .where('clinicianId', '==', token.uid)
+      .limit(300)
+      .get();
+
+    const validSessions = sessionsSnap.docs.filter((doc) => {
+      const data = doc.data();
+      const exp = data.expiresAt?.toDate?.()?.getTime() || (data.expiresAt ? new Date(data.expiresAt).getTime() : 0);
+      const crt = data.createdAt?.toDate?.()?.getTime() || (data.createdAt ? new Date(data.createdAt).getTime() : 0);
+      const upd = data.updatedAt?.toDate?.()?.getTime() || (data.updatedAt ? new Date(data.updatedAt).getTime() : 0);
+      const maxTime = Math.max(exp, crt, upd);
+      return maxTime === 0 || maxTime >= ninetyDaysAgo;
+    });
+
+    const motherIds = Array.from(
+      new Set(validSessions.map((d) => String(d.data().motherId || '').trim()).filter(Boolean))
+    );
+
+    if (motherIds.length === 0) {
+      return res.json({ items: [], caseload: [] });
+    }
+
+    // Build child and pregnancy lookups for these mothers
+    const childToMother = new Map<string, string>();
+    const pregToMother = new Map<string, string>();
+
+    await Promise.all(
+      motherIds.map(async (mid) => {
+        const [cSnap, pSnap] = await Promise.all([
+          adminDb.collection('children').where('motherId', '==', mid).get().catch(() => ({ docs: [] } as any)),
+          adminDb.collection('pregnancies').where('motherId', '==', mid).get().catch(() => ({ docs: [] } as any)),
+        ]);
+        cSnap.docs?.forEach((d: any) => childToMother.set(d.id, mid));
+        pSnap.docs?.forEach((d: any) => pregToMother.set(d.id, mid));
+      })
+    );
+
+    // CollectionGroup queries for encounters by this clinician
+    const [ancCG, growthCG] = await Promise.all([
+      adminDb.collectionGroup('ancEncounters').limit(1000).get().catch(() => ({ docs: [] } as any)),
+      adminDb.collectionGroup('growthMeasurements').limit(1000).get().catch(() => ({ docs: [] } as any)),
+    ]);
+
+    const motherLatestEncounterTime = new Map<string, number>();
+
+    const recordEncounter = (doc: any, isGrowth: boolean) => {
+      const d = doc.data();
+      const prov = d?.provenance;
+      const enteredBy = prov?.enteredBy || d?.enteredBy;
+      if (enteredBy !== token.uid) return;
+
+      let mid = d?.motherId;
+      if (!mid) {
+        if (isGrowth) {
+          const childId = d?.childId || doc.ref.parent?.parent?.id;
+          if (childId && childToMother.has(childId)) mid = childToMother.get(childId);
+        } else {
+          const pregId = d?.pregnancyId || doc.ref.parent?.parent?.id;
+          if (pregId && pregToMother.has(pregId)) mid = pregToMother.get(pregId);
+        }
+      }
+
+      if (!mid || !motherIds.includes(mid)) return;
+
+      const dateVal = d?.date || d?.encounterDate || d?.createdAt || prov?.enteredAt;
+      let time = 0;
+      if (dateVal?.toDate && typeof dateVal.toDate === 'function') {
+        time = dateVal.toDate().getTime();
+      } else if (dateVal) {
+        const parsed = new Date(dateVal).getTime();
+        if (!isNaN(parsed)) time = parsed;
+      }
+
+      if (time > 0) {
+        const currentMax = motherLatestEncounterTime.get(mid) || 0;
+        if (time > currentMax) {
+          motherLatestEncounterTime.set(mid, time);
+        }
+      }
+    };
+
+    ancCG.docs?.forEach((d: any) => recordEncounter(d, false));
+    growthCG.docs?.forEach((d: any) => recordEncounter(d, true));
+
+    // Check danger signs in the last 14 days per mother
+    const motherDangerSigns = new Map<string, boolean>();
+    await Promise.all(
+      motherIds.map(async (mid) => {
+        try {
+          const logSnap = await adminDb
+            .collection('dailyHealthLogs')
+            .where('userId', '==', mid)
+            .limit(50)
+            .get();
+
+          let hasDanger = false;
+          for (const doc of logSnap.docs) {
+            const d = doc.data();
+            const tVal = d.timestamp || d.createdAt || d.firestoreCreatedAt;
+            let t = 0;
+            if (tVal?.toDate) t = tVal.toDate().getTime();
+            else if (tVal) t = new Date(tVal).getTime();
+
+            if (t >= fourteenDaysAgo) {
+              if (
+                d.values?.hasDangerSigns === true ||
+                d.hasDangerSigns === true ||
+                (Array.isArray(d.values?.dangerSigns) && d.values.dangerSigns.length > 0) ||
+                (Array.isArray(d.dangerSigns) && d.dangerSigns.length > 0)
+              ) {
+                hasDanger = true;
+                break;
+              }
+            }
+          }
+          motherDangerSigns.set(mid, hasDanger);
+        } catch {
+          motherDangerSigns.set(mid, false);
+        }
+      })
+    );
+
+    const caseload = await Promise.all(
+      motherIds.map(async (mid) => {
+        const name = await motherName(mid);
+        const lastTime = motherLatestEncounterTime.get(mid);
+        const lastEncounterDate = lastTime ? new Date(lastTime).toISOString().split('T')[0] : null;
+        const hasOpenDangerSign = Boolean(motherDangerSigns.get(mid));
+
+        return {
+          motherId: mid,
+          motherName: name,
+          lastEncounterDate,
+          hasOpenDangerSign,
+        };
+      })
+    );
+
+    caseload.sort((a, b) => {
+      if (a.hasOpenDangerSign && !b.hasOpenDangerSign) return -1;
+      if (!a.hasOpenDangerSign && b.hasOpenDangerSign) return 1;
+      const at = a.lastEncounterDate ? new Date(a.lastEncounterDate).getTime() : 0;
+      const bt = b.lastEncounterDate ? new Date(b.lastEncounterDate).getTime() : 0;
+      return bt - at;
+    });
+
+    res.json({ items: caseload, caseload });
+  } catch (e) {
+    sendError(res, e);
+  }
+});
