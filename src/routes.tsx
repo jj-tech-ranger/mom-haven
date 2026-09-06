@@ -72,28 +72,37 @@ export default function RouteEntry() {
   useEffect(() => {
     let cancelled = false;
     let unsubscribe = () => {};
+    let firstAuthState = true;
 
-    const initializeAuth = async () => {
-      // MomHaven intentionally treats a browser refresh as a new session.
-      // Firebase normally restores its persisted auth session automatically,
-      // so clear it before subscribing to auth state on a reload.
-      if (wasBrowserRefresh() && auth.currentUser) {
-        try {
-          await logoutUser();
-        } catch (error) {
-          console.warn('Could not clear the previous auth session after refresh', error);
+    const initializeAuth = () => {
+      // Firebase restores its persisted auth session asynchronously. Waiting for
+      // the first auth-state callback before deciding whether to sign out is
+      // important: checking auth.currentUser immediately on page load can return
+      // null even though Firebase is about to restore a previous session.
+      unsubscribe = onAuthStateChanged(auth, async user => {
+        if (cancelled) return;
+
+        if (firstAuthState && wasBrowserRefresh() && user) {
+          firstAuthState = false;
+          try {
+            // A browser refresh starts a new MomHaven session. Explicitly sign
+            // out the restored Firebase user so the persisted auth state is also
+            // cleared, not just the in-memory user.
+            await logoutUser();
+          } catch (error) {
+            console.warn('Could not clear the previous auth session after refresh', error);
+          }
+          if (!cancelled) setAuthReady(true);
+          return;
         }
-      }
 
-      if (cancelled) return;
-
-      unsubscribe = onAuthStateChanged(auth, user => {
+        firstAuthState = false;
         setAuthReady(true);
         if (user && authMode) navigateTo('/home', true);
       });
     };
 
-    void initializeAuth();
+    initializeAuth();
     return () => {
       cancelled = true;
       unsubscribe();
