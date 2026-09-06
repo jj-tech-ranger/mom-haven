@@ -82,3 +82,12 @@ export function serialize(value: any): any {
   }
   return value;
 }
+
+/**
+ * Normalize a Firestore document into the API shape used by clinician routes
+ * and services: the document id is exposed as `id` and Firestore timestamps
+ * are converted to JSON-safe ISO strings.
+ */
+export function document(id: string, data: any): Record<string, any> {
+  return { id, ...serialize(data) };
+}
