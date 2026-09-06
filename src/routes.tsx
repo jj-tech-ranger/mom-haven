@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './lib/firebase';
+import { auth, logoutUser } from './lib/firebase';
 import App from './App';
 import RouteAuthPage, { type AuthRouteMode } from './components/RouteAuthPage';
 
@@ -12,6 +12,7 @@ export function normalizePath(pathname: string): AppRoute {
     '/': '/',
     '/home': '/home',
     '/login': '/login',
+    '/auth': '/login',
     '/signin': '/login',
     '/signup': '/signup',
     '/register': '/signup',
@@ -48,6 +49,15 @@ function authModeFor(route: AppRoute): AuthRouteMode | null {
   return null;
 }
 
+function wasBrowserRefresh() {
+  try {
+    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    return navigation?.type === 'reload';
+  } catch {
+    return false;
+  }
+}
+
 export default function RouteEntry() {
   const [route, setRoute] = useState<AppRoute>(() => normalizePath(window.location.pathname));
   const [authReady, setAuthReady] = useState(false);
@@ -60,11 +70,34 @@ export default function RouteEntry() {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, user => {
-      setAuthReady(true);
-      if (user && authMode) navigateTo('/home', true);
-    });
-    return () => unsubscribe();
+    let cancelled = false;
+    let unsubscribe = () => {};
+
+    const initializeAuth = async () => {
+      // MomHaven intentionally treats a browser refresh as a new session.
+      // Firebase normally restores its persisted auth session automatically,
+      // so clear it before subscribing to auth state on a reload.
+      if (wasBrowserRefresh() && auth.currentUser) {
+        try {
+          await logoutUser();
+        } catch (error) {
+          console.warn('Could not clear the previous auth session after refresh', error);
+        }
+      }
+
+      if (cancelled) return;
+
+      unsubscribe = onAuthStateChanged(auth, user => {
+        setAuthReady(true);
+        if (user && authMode) navigateTo('/home', true);
+      });
+    };
+
+    void initializeAuth();
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [authMode]);
 
   if (!authReady && authMode) {
