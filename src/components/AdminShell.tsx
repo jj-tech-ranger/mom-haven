@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { auth } from '../lib/firebase';
-import { LayoutDashboard, Building2, UserCheck, BookOpenCheck, ShieldCheck, AlertTriangle, FileClock, FileText, Users, BarChart3, Settings, ShieldAlert, ArrowRight, PhoneCall, ChevronRight, ChevronLeft } from 'lucide-react';
+import { auth, logoutUser } from '../lib/firebase';
+import { LayoutDashboard, Building2, UserCheck, BookOpenCheck, ShieldCheck, AlertTriangle, FileClock, FileText, Users, BarChart3, Settings, ShieldAlert, ArrowRight, PhoneCall, ChevronRight, ChevronLeft, LogOut } from 'lucide-react';
 import { CredentialingQueue } from './admin/CredentialingQueue';
 import { FacilitiesDirectory } from './admin/FacilitiesDirectory';
 import { ClinicalDecisionRegister } from './admin/ClinicalDecisionRegister';
@@ -26,6 +26,10 @@ export default function AdminShell(_props?: AdminShellProps) {
     return adminName.slice(0, 2).toUpperCase();
   }, [adminName]);
 
+  const handleSignOut = async () => {
+    await logoutUser();
+  };
+
   const navItems: { id: AdminTab; label: string; icon: React.ComponentType<{ className?: string }>; badge?: string }[] = [
     { id: 'dashboard', label: 'Operations Overview', icon: LayoutDashboard },
     { id: 'clinicians', label: 'Clinician Queue', icon: UserCheck, badge: '2 Review' },
@@ -50,7 +54,16 @@ export default function AdminShell(_props?: AdminShellProps) {
             {navItems.map(item => { const Icon = item.icon; const isActive = activeTab === item.id; return <button key={item.id} type="button" onClick={() => setActiveTab(item.id)} className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${isActive ? 'bg-teal-800 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}><div className="flex items-center gap-2.5 truncate"><Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-400'}`} /><span className="truncate">{item.label}</span></div>{item.badge && <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${isActive ? 'bg-teal-700 text-teal-100' : 'bg-gray-100 text-gray-600'}`}>{item.badge}</span>}</button>; })}
           </nav>
         </div>
-        <div className="p-3 border-t border-gray-100 bg-gray-50/70"><div className="flex items-center gap-2.5"><div className="w-8 h-8 rounded-full bg-teal-900 text-white flex items-center justify-center font-bold text-xs shadow-xs">{adminInitials}</div><div className="overflow-hidden flex-1"><p className="font-bold text-xs text-gray-900 truncate">{adminName}</p><p className="text-[10px] text-gray-500 truncate">MOH Super Administrator</p></div></div></div>
+        <div className="p-3 border-t border-gray-100 bg-gray-50/70 space-y-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-teal-900 text-white flex items-center justify-center font-bold text-xs shadow-xs">{adminInitials}</div>
+            <div className="overflow-hidden flex-1"><p className="font-bold text-xs text-gray-900 truncate">{adminName}</p><p className="text-[10px] text-gray-500 truncate">MOH Super Administrator</p></div>
+          </div>
+          <button type="button" onClick={() => void handleSignOut()} className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900 text-xs font-bold transition-colors cursor-pointer" aria-label="Sign out of MomHaven">
+            <LogOut className="w-4 h-4" />
+            Sign out
+          </button>
+        </div>
       </aside>
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between sticky top-0 z-10 shadow-2xs"><div className="flex items-center gap-3">{activeTab !== 'dashboard' && <button type="button" onClick={() => setActiveTab('dashboard')} className="p-1.5 -ml-1 rounded-lg text-teal-800 hover:bg-gray-100 flex items-center gap-1 text-xs font-bold transition-colors cursor-pointer" aria-label="Back to Operations Overview"><ChevronLeft className="w-4 h-4" /><span>Overview</span></button>}<h2 className="font-bold text-base text-gray-900 capitalize">{navItems.find(n => n.id === activeTab)?.label || activeTab}</h2><span className="px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold flex items-center gap-1"><ShieldAlert className="w-3 h-3 text-amber-600" /> Least-Privilege Enforced</span></div><div className="text-xs text-gray-500">DPA 2019 Mode: <span className="font-semibold text-emerald-700">Encrypted & De-identified</span></div></header>
