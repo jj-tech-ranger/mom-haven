@@ -91,27 +91,40 @@ export interface Pregnancy {
 export interface AncEncounter {
   id: string;
   pregnancyId: string;
-  visitNumber: number;
-  date: string;
+  motherId?: string;
+  contactNumber?: number; // 1-8 per MOH216 schedule
+  visitNumber?: number;
+  visitDate?: string;
+  date?: string;
   facilityId?: string;
   facilityName?: string;
+  gestationWeeks?: number;
   gestationalAgeWeeks?: number;
   weight?: number;
+  weightKg?: number;
   systolicBp?: number;
   diastolicBp?: number;
   bloodPressure?: string;
-  fundalHeight?: number;
-  fetalHeartRate?: number;
+  bp?: string;
+  hb?: number;
   hbLevel?: number;
+  muacCm?: number;
+  fundalHeightCm?: number;
+  fundalHeight?: number;
+  presentation?: string;
+  fetalHeartRate?: number;
+  nextVisitDate?: string | null;
+  nextAppointmentDate?: string;
   urineAlbumin?: string;
   urineGlucose?: string;
   iptpGiven?: boolean;
   ironFolicGiven?: boolean;
   tdBoosterGiven?: boolean;
   mosquitoNetGiven?: boolean;
-  nextAppointmentDate?: string;
+  recordedBy?: string;
+  recordedAt?: string;
   notes?: string;
-  provenance: Provenance;
+  provenance?: Provenance;
 }
 
 export const KENYA_COUNTIES = [
@@ -217,32 +230,66 @@ export interface PostnatalEncounter {
   provenance: Provenance;
 }
 
+export type MOH216Antigen =
+  | 'BCG'
+  | 'OPV0'
+  | 'OPV1'
+  | 'OPV2'
+  | 'OPV3'
+  | 'IPV'
+  | 'DPT-HepB-Hib 1'
+  | 'DPT-HepB-Hib 2'
+  | 'DPT-HepB-Hib 3'
+  | 'PCV 1'
+  | 'PCV 2'
+  | 'PCV 3'
+  | 'Rota 1'
+  | 'Rota 2'
+  | 'MR-6mo'
+  | 'MR-9mo'
+  | 'MR-18mo'
+  | 'YellowFever';
+
 export interface ImmunizationRecord {
   id: string;
   childId: string;
-  vaccine: string;
-  dose: string;
+  motherId?: string;
+  antigen?: MOH216Antigen | string;
+  vaccine?: string;
+  dose?: string;
   dateGiven?: string;
-  minimumEligibleDate: string;
+  givenDate?: string | null;
+  minimumEligibleDate?: string;
   scheduledDate: string;
-  recommendedActionDate: string;
+  recommendedActionDate?: string;
+  status?: 'scheduled' | 'given' | 'missed' | 'GIVEN' | 'MISSED' | 'SCHEDULED';
   batchNumber?: string;
   facilityId?: string;
-  provenance: Provenance;
+  facilityName?: string;
+  recordedBy?: string;
+  recordedAt?: string;
+  notes?: string;
+  provenance?: Provenance;
 }
 
 export interface GrowthMeasurement {
   id: string;
   childId: string;
-  date: string;
+  motherId?: string;
+  measurementDate?: string;
+  date?: string;
+  ageInMonths?: number;
   ageMonths?: number;
   weightKg: number;
+  lengthHeightCm?: number;
   heightCm?: number;
   muacCm?: number;
   headCircumferenceCm?: number;
   feedingStatus?: string;
+  recordedBy?: string;
+  recordedAt?: string;
   notes?: string;
-  provenance: Provenance;
+  provenance?: Provenance;
   createdAt?: string;
 }
 
@@ -328,17 +375,28 @@ export interface ClinicianPrivateNote {
   createdAt: string;
 }
 
+export type CareTeamMessageCategory =
+  | 'general'
+  | 'lab_result'
+  | 'appointment'
+  | 'reassurance'
+  | 'feedback'
+  | 'lab-result'
+  | 'appointment-guidance';
+
 export interface CareTeamMessage {
   id: string;
   motherId: string;
   clinicianId: string;
   childId?: string | null;
   sentByRole: 'CLINICIAN' | 'MOTHER';
+  body?: string;
   text: string;
-  category: 'general' | 'lab_result' | 'appointment' | 'reassurance';
+  category: CareTeamMessageCategory;
   relatedRecordId?: string | null;
   readByMother: boolean;
   readAt?: string | null;
+  sentAt?: string;
   createdAt: string;
 }
 
@@ -369,6 +427,7 @@ export interface Reminder {
   deepLink?: string;
   childId?: string;
   pregnancyId?: string;
+  careTeamMessageId?: string;
 }
 
 export interface PregnancySummary {
@@ -385,6 +444,7 @@ export interface PregnancySummary {
   daysRemaining: number;
   weeksRemaining: number;
   status: 'active' | 'completed' | 'none';
+  nextVisitDate?: string | null;
   babyMilestone?: {
     size: string;
     emoji: string;

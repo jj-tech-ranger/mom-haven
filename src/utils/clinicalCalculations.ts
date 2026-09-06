@@ -190,3 +190,171 @@ export function computeGestationalHeroMetrics(
     babySize: getBabySizeForWeek(weeks),
   };
 }
+
+// ---------------------------------------------------------------------------
+// MOH 216 Childhood Immunization Engine (KEPI Schedule)
+// ---------------------------------------------------------------------------
+
+export type MOH216AntigenName =
+  | 'BCG'
+  | 'OPV0'
+  | 'OPV1'
+  | 'OPV2'
+  | 'OPV3'
+  | 'IPV'
+  | 'DPT-HepB-Hib 1'
+  | 'DPT-HepB-Hib 2'
+  | 'DPT-HepB-Hib 3'
+  | 'PCV 1'
+  | 'PCV 2'
+  | 'PCV 3'
+  | 'Rota 1'
+  | 'Rota 2'
+  | 'MR-6mo'
+  | 'MR-9mo'
+  | 'MR-18mo'
+  | 'YellowFever';
+
+export interface MOH216ScheduleDoseDefinition {
+  antigen: MOH216AntigenName;
+  targetAgeWeeks: number;
+  label: string;
+  route: string;
+  notes?: string;
+}
+
+export const MOH216_STANDARD_DOSES: MOH216ScheduleDoseDefinition[] = [
+  // Birth
+  { antigen: 'BCG', targetAgeWeeks: 0, label: 'At birth', route: 'Intradermal' },
+  { antigen: 'OPV0', targetAgeWeeks: 0, label: 'At birth (within 2 weeks)', route: 'Oral' },
+  // 6 Weeks
+  { antigen: 'OPV1', targetAgeWeeks: 6, label: '6 Weeks', route: 'Oral' },
+  { antigen: 'DPT-HepB-Hib 1', targetAgeWeeks: 6, label: '6 Weeks (Penta 1)', route: 'Intramuscular' },
+  { antigen: 'PCV 1', targetAgeWeeks: 6, label: '6 Weeks', route: 'Intramuscular' },
+  { antigen: 'Rota 1', targetAgeWeeks: 6, label: '6 Weeks', route: 'Oral' },
+  // 10 Weeks
+  { antigen: 'OPV2', targetAgeWeeks: 10, label: '10 Weeks', route: 'Oral' },
+  { antigen: 'DPT-HepB-Hib 2', targetAgeWeeks: 10, label: '10 Weeks (Penta 2)', route: 'Intramuscular' },
+  { antigen: 'PCV 2', targetAgeWeeks: 10, label: '10 Weeks', route: 'Intramuscular' },
+  { antigen: 'Rota 2', targetAgeWeeks: 10, label: '10 Weeks', route: 'Oral' },
+  // 14 Weeks
+  { antigen: 'OPV3', targetAgeWeeks: 14, label: '14 Weeks', route: 'Oral' },
+  { antigen: 'IPV', targetAgeWeeks: 14, label: '14 Weeks', route: 'Intramuscular' },
+  { antigen: 'DPT-HepB-Hib 3', targetAgeWeeks: 14, label: '14 Weeks (Penta 3)', route: 'Intramuscular' },
+  { antigen: 'PCV 3', targetAgeWeeks: 14, label: '14 Weeks', route: 'Intramuscular' },
+  // 6 Months (special/risk)
+  { antigen: 'MR-6mo', targetAgeWeeks: 26, label: '6 Months', route: 'Subcutaneous', notes: 'High-risk / outbreak dose' },
+  // 9 Months
+  { antigen: 'MR-9mo', targetAgeWeeks: 39, label: '9 Months', route: 'Subcutaneous' },
+  { antigen: 'YellowFever', targetAgeWeeks: 39, label: '9 Months', route: 'Subcutaneous' },
+  // 18 Months
+  { antigen: 'MR-18mo', targetAgeWeeks: 78, label: '18 Months', route: 'Subcutaneous' },
+];
+
+export interface ScheduledMOH216Vaccine {
+  antigen: MOH216AntigenName;
+  targetAgeWeeks: number;
+  scheduledDate: string;
+  status: 'given' | 'due' | 'overdue' | 'scheduled';
+  givenDate?: string | null;
+  batchNumber?: string;
+  daysDifference: number; // Positive = future, Negative = past
+}
+
+/**
+ * Derives dynamic immunization status without storing stale values in database.
+ */
+export function deriveImmunizationStatus(
+  scheduledDate: string,
+  givenDate?: string | null,
+  asOf: Date = new Date()
+): 'given' | 'due' | 'overdue' | 'scheduled' {
+  if (givenDate && givenDate.trim().length > 0) {
+    return 'given';
+  }
+
+  const sched = new Date(scheduledDate);
+  const now = new Date(asOf);
+  if (isNaN(sched.getTime())) return 'scheduled';
+
+  // Normalize to date-only boundary (UTC)
+  const schedTime = new Date(sched.toISOString().split('T')[0]).getTime();
+  const nowTime = new Date(now.toISOString().split('T')[0]).getTime();
+  const diffDays = Math.round((schedTime - nowTime) / DAY_MS);
+
+  if (diffDays < 0) {
+    return 'overdue';
+  }
+  if (diffDays <= 14) {
+    return 'due';
+  }
+  return 'scheduled';
+}
+
+/**
+ * Pure function: Given a child's dateOfBirth, computes the MOH 216 schedule
+ * and derives real-time due/overdue/given status.
+ */
+export function computeMOH216Schedule(
+  dateOfBirth: string,
+  administeredRecords: { antigen?: string; vaccine?: string; givenDate?: string | null; dateGiven?: string | null; batchNumber?: string; status?: string }[] = [],
+  asOf: Date = new Date()
+): ScheduledMOH216Vaccine[] {
+  const dob = new Date(dateOfBirth);
+  if (isNaN(dob.getTime())) {
+    throw new Error('Invalid child date of birth');
+  }
+
+  // Create lookup of administered records
+  const administeredMap = new Map<string, { givenDate: string; batchNumber?: string }>();
+  for (const rec of administeredRecords) {
+    const key = (rec.antigen || rec.vaccine || '').trim().toLowerCase();
+    if (!key) continue;
+    const given = rec.givenDate || rec.dateGiven;
+    const isMarkedGiven = rec.status === 'given' || rec.status === 'GIVEN';
+    if (given || isMarkedGiven) {
+      administeredMap.set(key, {
+        givenDate: given || toDateOnly(asOf),
+        batchNumber: rec.batchNumber,
+      });
+    }
+  }
+
+  return MOH216_STANDARD_DOSES.map((dose) => {
+    const schedDate = new Date(dob.getTime() + dose.targetAgeWeeks * 7 * DAY_MS);
+    const scheduledDateStr = toDateOnly(schedDate);
+    
+    // Normalize matching key
+    const normalKey = dose.antigen.trim().toLowerCase();
+    const adminRecord = administeredMap.get(normalKey) 
+      || administeredMap.get(normalKey.replace(/\s+/g, ''))
+      || administeredMap.get(normalKey.replace('-', ''));
+
+    const status = deriveImmunizationStatus(scheduledDateStr, adminRecord?.givenDate, asOf);
+
+    const schedTime = new Date(scheduledDateStr).getTime();
+    const asOfTime = new Date(toDateOnly(asOf)).getTime();
+    const daysDifference = Math.round((schedTime - asOfTime) / DAY_MS);
+
+    return {
+      antigen: dose.antigen,
+      targetAgeWeeks: dose.targetAgeWeeks,
+      scheduledDate: scheduledDateStr,
+      status,
+      givenDate: adminRecord?.givenDate || null,
+      batchNumber: adminRecord?.batchNumber,
+      daysDifference,
+    };
+  });
+}
+
+// Re-export WHO Growth Standard utilities from dedicated engine
+export {
+  calculateZScore,
+  interpretZScore,
+  calculateValueForZScore,
+  generateGrowthCurveBands,
+  type ZScoreInterpretation,
+  type GrowthCurveBandPoint,
+} from './whoGrowthStandards';
+

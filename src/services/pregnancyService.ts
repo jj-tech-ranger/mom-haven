@@ -89,6 +89,7 @@ export async function syncPregnancySummary(
         daysRemaining: metrics?.daysRemaining || 0,
         weeksRemaining: metrics?.weeksRemaining || 0,
         status: 'active',
+        nextVisitDate: pregnancy.nextVisitDate || null,
         babyMilestone: metrics?.babySize,
         updatedAt: new Date().toISOString(),
       };

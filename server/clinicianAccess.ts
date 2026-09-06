@@ -54,6 +54,15 @@ export async function requireActiveSession(clinicianId: string, motherId: string
   return { sessionId: sessionDoc.id, ...session };
 }
 
+export async function isClinicianUser(uid: string): Promise<boolean> {
+  try {
+    const user = await adminDb.doc(`users/${uid}`).get();
+    return user.exists && user.data()?.role === 'CLINICIAN';
+  } catch {
+    return false;
+  }
+}
+
 export async function logAudit(actorId: string, actorRole: string, action: string, objectType: string, objectId: string, facilityId: string | null = null, motherId: string | null = null) {
   await adminDb.collection('auditEvents').add({ actorId, actorRole, action, objectType, objectId, facilityId, motherId, timestamp: FieldValue.serverTimestamp() });
 }

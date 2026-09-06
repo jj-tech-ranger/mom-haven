@@ -47,7 +47,19 @@ const CATEGORY_CONFIG: Record<
     text: 'text-purple-800',
     icon: FileCheck2,
   },
+  'lab-result': {
+    label: 'Lab & Diagnostic Result',
+    bg: 'bg-purple-50 border-purple-200',
+    text: 'text-purple-800',
+    icon: FileCheck2,
+  },
   appointment: {
+    label: 'Appointment & Follow-up',
+    bg: 'bg-amber-50 border-amber-200',
+    text: 'text-amber-800',
+    icon: Calendar,
+  },
+  'appointment-guidance': {
     label: 'Appointment & Follow-up',
     bg: 'bg-amber-50 border-amber-200',
     text: 'text-amber-800',
@@ -58,6 +70,12 @@ const CATEGORY_CONFIG: Record<
     bg: 'bg-emerald-50 border-emerald-200',
     text: 'text-emerald-800',
     icon: Heart,
+  },
+  feedback: {
+    label: 'Clinical Feedback',
+    bg: 'bg-teal-50 border-teal-200',
+    text: 'text-teal-800',
+    icon: Stethoscope,
   },
 };
 

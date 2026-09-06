@@ -29,24 +29,34 @@ export default function NewEncounterModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ANC Form Fields - Neutral defaults
+  // ANC Form Fields - Neutral defaults (MOH216)
   const [visitNumber, setVisitNumber] = useState(1);
+  const [visitDate, setVisitDate] = useState(new Date().toISOString().split('T')[0]);
   const [gestationalWeeks, setGestationalWeeks] = useState<string>('');
   const [systolicBp, setSystolicBp] = useState('');
   const [diastolicBp, setDiastolicBp] = useState('');
   const [weightKg, setWeightKg] = useState('');
+  const [ancMuacCm, setAncMuacCm] = useState('');
   const [fundalHeight, setFundalHeight] = useState('');
+  const [presentation, setPresentation] = useState('Cephalic');
   const [fetalHeartRate, setFetalHeartRate] = useState('');
   const [hbLevel, setHbLevel] = useState('');
+  const [nextVisitDate, setNextVisitDate] = useState('');
   const [iptpGiven, setIptpGiven] = useState(false);
   const [ifasGiven, setIfasGiven] = useState(false);
   const [clinicalNotes, setClinicalNotes] = useState('');
 
-  // Vaccine Form Fields - Neutral defaults
+  // Vaccine Form Fields - Neutral defaults (MOH216 Antigens)
+  const [antigen, setAntigen] = useState('BCG');
   const [vaccineName, setVaccineName] = useState('BCG + OPV Birth Dose (At Birth)');
+  const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().split('T')[0]);
+  const [givenDate, setGivenDate] = useState(new Date().toISOString().split('T')[0]);
+  const [vaccineStatus, setVaccineStatus] = useState<'given' | 'scheduled' | 'missed'>('given');
   const [batchNumber, setBatchNumber] = useState('');
 
-  // Growth Form Fields - Neutral defaults
+  // Growth Form Fields - Neutral defaults (MOH216)
+  const [growthDate, setGrowthDate] = useState(new Date().toISOString().split('T')[0]);
+  const [growthAgeMonths, setGrowthAgeMonths] = useState('');
   const [childWeight, setChildWeight] = useState('');
   const [childHeight, setChildHeight] = useState('');
   const [muacCm, setMuacCm] = useState('');
@@ -104,14 +114,23 @@ export default function NewEncounterModal({
         payload = {
           motherId,
           pregnancyId,
+          contactNumber: Number(visitNumber) || 1,
           visitNumber: Number(visitNumber) || 1,
+          visitDate: visitDate || new Date().toISOString().split('T')[0],
+          gestationWeeks: gestationalWeeks.trim() ? Number(gestationalWeeks) : undefined,
           gestationalWeeks: gestationalWeeks.trim() ? Number(gestationalWeeks) : undefined,
           systolicBp: systolicBp.trim() || undefined,
           diastolicBp: diastolicBp.trim() || undefined,
+          bp: systolicBp.trim() && diastolicBp.trim() ? `${systolicBp.trim()}/${diastolicBp.trim()}` : undefined,
           weightKg: weightKg.trim() ? Number(weightKg) : undefined,
+          fundalHeightCm: fundalHeight.trim() ? Number(fundalHeight) : undefined,
           fundalHeight: fundalHeight.trim() ? Number(fundalHeight) : undefined,
+          presentation: presentation || 'Cephalic',
           fetalHeartRate: fetalHeartRate.trim() ? Number(fetalHeartRate) : undefined,
+          hb: hbLevel.trim() ? Number(hbLevel) : undefined,
           hbLevel: hbLevel.trim() ? Number(hbLevel) : undefined,
+          muacCm: ancMuacCm.trim() ? Number(ancMuacCm) : undefined,
+          nextVisitDate: nextVisitDate.trim() || null,
           iptpGiven,
           ifasGiven,
           clinicalNotes: clinicalNotes.trim(),
@@ -134,7 +153,11 @@ export default function NewEncounterModal({
         payload = {
           motherId,
           childId,
-          vaccineName,
+          antigen,
+          vaccineName: antigen || vaccineName,
+          scheduledDate: scheduledDate || new Date().toISOString().split('T')[0],
+          givenDate: vaccineStatus === 'missed' ? null : (givenDate || new Date().toISOString().split('T')[0]),
+          status: vaccineStatus,
           batchNumber: batchNumber.trim(),
           facilityName,
           notes: clinicalNotes.trim(),
@@ -147,8 +170,11 @@ export default function NewEncounterModal({
         payload = {
           motherId,
           childId,
+          measurementDate: growthDate || new Date().toISOString().split('T')[0],
+          ageInMonths: growthAgeMonths.trim() ? Number(growthAgeMonths) : undefined,
           childWeight: Number(childWeight),
           weightKg: Number(childWeight),
+          lengthHeightCm: childHeight.trim() ? Number(childHeight) : undefined,
           childHeight: childHeight.trim() ? Number(childHeight) : undefined,
           muacCm: muacCm.trim() ? Number(muacCm) : undefined,
           notes: clinicalNotes.trim(),
@@ -278,7 +304,7 @@ export default function NewEncounterModal({
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">ANC Visit #</label>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">ANC Contact #</label>
                   <select
                     value={visitNumber}
                     onChange={(e) => setVisitNumber(Number(e.target.value))}
@@ -290,6 +316,15 @@ export default function NewEncounterModal({
                   </select>
                 </div>
                 <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Visit Date</label>
+                  <input
+                    type="date"
+                    value={visitDate}
+                    onChange={(e) => setVisitDate(e.target.value)}
+                    className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
+                  />
+                </div>
+                <div>
                   <label className="block text-[11px] font-semibold text-gray-600 mb-1">Gestation (Weeks)</label>
                   <input
                     type="number"
@@ -299,16 +334,6 @@ export default function NewEncounterModal({
                     className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
                     min={4}
                     max={42}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Weight (kg)</label>
-                  <input
-                    type="text"
-                    value={weightKg}
-                    onChange={(e) => setWeightKg(e.target.value)}
-                    placeholder="e.g. 64.0"
-                    className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
                   />
                 </div>
               </div>
@@ -335,6 +360,29 @@ export default function NewEncounterModal({
                   </div>
                 </div>
                 <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Weight (kg)</label>
+                  <input
+                    type="text"
+                    value={weightKg}
+                    onChange={(e) => setWeightKg(e.target.value)}
+                    placeholder="e.g. 64.0"
+                    className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">MUAC (cm)</label>
+                  <input
+                    type="text"
+                    value={ancMuacCm}
+                    onChange={(e) => setAncMuacCm(e.target.value)}
+                    placeholder="e.g. 24.5"
+                    className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
                   <label className="block text-[11px] font-semibold text-gray-600 mb-1">Fundal Ht (cm)</label>
                   <input
                     type="text"
@@ -343,6 +391,19 @@ export default function NewEncounterModal({
                     placeholder="e.g. 24"
                     className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
                   />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Presentation</label>
+                  <select
+                    value={presentation}
+                    onChange={(e) => setPresentation(e.target.value)}
+                    className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
+                  >
+                    <option value="Cephalic">Cephalic</option>
+                    <option value="Breech">Breech</option>
+                    <option value="Shoulder / Transverse">Shoulder / Transverse</option>
+                    <option value="Not assessed">Not assessed</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 mb-1">FHR (bpm)</label>
@@ -356,7 +417,7 @@ export default function NewEncounterModal({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 mb-1">Hb Level (g/dL)</label>
                   <input
@@ -364,6 +425,15 @@ export default function NewEncounterModal({
                     value={hbLevel}
                     onChange={(e) => setHbLevel(e.target.value)}
                     placeholder="e.g. 12.0"
+                    className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Next Visit Date</label>
+                  <input
+                    type="date"
+                    value={nextVisitDate}
+                    onChange={(e) => setNextVisitDate(e.target.value)}
                     className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
                   />
                 </div>
@@ -375,7 +445,7 @@ export default function NewEncounterModal({
                       onChange={(e) => setIfasGiven(e.target.checked)}
                       className="w-4 h-4 accent-[var(--haven-deep)]"
                     />
-                    <span>IFAS Given</span>
+                    <span>IFAS</span>
                   </label>
                   <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
                     <input
@@ -384,7 +454,7 @@ export default function NewEncounterModal({
                       onChange={(e) => setIptpGiven(e.target.checked)}
                       className="w-4 h-4 accent-[var(--haven-deep)]"
                     />
-                    <span>IPTp-SP Given</span>
+                    <span>IPTp-SP</span>
                   </label>
                 </div>
               </div>
@@ -404,20 +474,71 @@ export default function NewEncounterModal({
 
           {encounterType === 'immunization' && (
             <div className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-semibold text-gray-600 mb-1">Vaccine Dose</label>
-                <select
-                  value={vaccineName}
-                  onChange={(e) => setVaccineName(e.target.value)}
-                  className="w-full p-2.5 border border-gray-200 rounded-[12px] bg-white text-xs font-bold"
-                >
-                  <option>BCG + OPV Birth Dose (At Birth)</option>
-                  <option>Penta 1 + OPV 1 + Rota 1 + PCV 10 (6 Weeks)</option>
-                  <option>Penta 2 + OPV 2 + Rota 2 + PCV 10 (10 Weeks)</option>
-                  <option>Penta 3 + OPV 3 + IPV + PCV 10 (14 Weeks)</option>
-                  <option>Measles-Rubella 1 + Yellow Fever (9 Months)</option>
-                  <option>Measles-Rubella 2 (18 Months)</option>
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Antigen (MOH216)</label>
+                  <select
+                    value={antigen}
+                    onChange={(e) => {
+                      setAntigen(e.target.value);
+                      setVaccineName(e.target.value);
+                    }}
+                    className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
+                  >
+                    <option value="BCG">BCG (At Birth)</option>
+                    <option value="OPV0">OPV0 (At Birth)</option>
+                    <option value="OPV1">OPV1 (6 Weeks)</option>
+                    <option value="OPV2">OPV2 (10 Weeks)</option>
+                    <option value="OPV3">OPV3 (14 Weeks)</option>
+                    <option value="IPV">IPV (14 Weeks)</option>
+                    <option value="DPT-HepB-Hib 1">DPT-HepB-Hib 1 (Penta 1, 6w)</option>
+                    <option value="DPT-HepB-Hib 2">DPT-HepB-Hib 2 (Penta 2, 10w)</option>
+                    <option value="DPT-HepB-Hib 3">DPT-HepB-Hib 3 (Penta 3, 14w)</option>
+                    <option value="PCV 1">PCV 1 (6 Weeks)</option>
+                    <option value="PCV 2">PCV 2 (10 Weeks)</option>
+                    <option value="PCV 3">PCV 3 (14 Weeks)</option>
+                    <option value="Rota 1">Rota 1 (6 Weeks)</option>
+                    <option value="Rota 2">Rota 2 (10 Weeks)</option>
+                    <option value="MR-6mo">MR-6mo (6 Months)</option>
+                    <option value="MR-9mo">MR-9mo (9 Months)</option>
+                    <option value="MR-18mo">MR-18mo (18 Months)</option>
+                    <option value="YellowFever">Yellow Fever (9 Months)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Status</label>
+                  <select
+                    value={vaccineStatus}
+                    onChange={(e) => setVaccineStatus(e.target.value as any)}
+                    className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
+                  >
+                    <option value="given">Given (Administered)</option>
+                    <option value="scheduled">Scheduled (Upcoming)</option>
+                    <option value="missed">Missed (Defaulter)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Scheduled Date</label>
+                  <input
+                    type="date"
+                    value={scheduledDate}
+                    onChange={(e) => setScheduledDate(e.target.value)}
+                    className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Given Date</label>
+                  <input
+                    type="date"
+                    value={givenDate}
+                    disabled={vaccineStatus === 'missed'}
+                    onChange={(e) => setGivenDate(e.target.value)}
+                    className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold disabled:bg-gray-100"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -446,9 +567,33 @@ export default function NewEncounterModal({
 
           {encounterType === 'growth' && (
             <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Measurement Date</label>
+                  <input
+                    type="date"
+                    value={growthDate}
+                    onChange={(e) => setGrowthDate(e.target.value)}
+                    className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Age (Months)</label>
+                  <input
+                    type="number"
+                    value={growthAgeMonths}
+                    onChange={(e) => setGrowthAgeMonths(e.target.value)}
+                    placeholder="e.g. 6"
+                    min={0}
+                    max={60}
+                    className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Weight (kg)</label>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Weight (kg) *</label>
                   <input
                     type="text"
                     value={childWeight}
@@ -458,7 +603,7 @@ export default function NewEncounterModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Length/Height (cm)</label>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Length / Height (cm)</label>
                   <input
                     type="text"
                     value={childHeight}

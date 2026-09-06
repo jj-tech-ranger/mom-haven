@@ -6,6 +6,9 @@ import { GoogleGenAI } from '@google/genai';
 import { clinicianRouter } from './server/routes/clinician.js';
 import { adminRouter } from './server/routes/admin.js';
 import { contextSyncRouter } from './server/routes/contextSync.js';
+import { reportsRouter } from './server/routes/reports.js';
+import { recomputeAllMaternalReminders } from './server/services/reminderRecomputeService.js';
+import cron from 'node-cron';
 import { classifyLayerOneRemote } from './server/safetyConfig.js';
 import { adminAuth, adminDb } from './server/clinicianAccess.js';
 import { buildHavenContext, formatHavenContext } from './server/services/havenContextBuilder.js';
@@ -72,6 +75,41 @@ async function startServer() {
   app.use('/api/v1/admin', adminRouter);
   app.use('/api/admin', adminRouter);
   app.use('/api/v1/context', contextSyncRouter);
+  app.use('/api/v1/reports', reportsRouter);
+  app.use('/api/reports', reportsRouter);
+
+  // Scheduled / on-demand recomputation of overdue immunization and ANC reminders
+  app.post(['/api/v1/cron/recompute-reminders', '/api/v1/reminders/recompute'], async (req, res) => {
+    try {
+      const internalSecret = process.env.INTERNAL_JOB_SECRET;
+      const authHeader = req.headers.authorization;
+      let authorized = false;
+
+      if (internalSecret && req.headers['x-internal-secret'] === internalSecret) {
+        authorized = true;
+      } else if (authHeader?.startsWith('Bearer ')) {
+        try {
+          await adminAuth.verifyIdToken(authHeader.slice(7));
+          authorized = true;
+        } catch {
+          // invalid token
+        }
+      } else if (!internalSecret) {
+        authorized = true;
+      }
+
+      if (!authorized) {
+        return res.status(403).json({ error: 'Unauthorized to trigger reminder recomputation.' });
+      }
+
+      const targetMotherId = req.body?.motherId || req.body?.userId;
+      const result = await recomputeAllMaternalReminders(targetMotherId);
+      return res.json({ success: true, result });
+    } catch (err: any) {
+      console.error('[server] Recompute reminders error:', err);
+      return res.status(500).json({ error: err?.message || 'Failed to recompute reminders' });
+    }
+  });
 
   // Hourly / on-demand reminder push dispatch job endpoint
   app.post('/api/v1/reminders/process-due', async (req, res) => {

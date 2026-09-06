@@ -541,17 +541,54 @@ export function deriveTodayContext({
   // NEVER fabricate fake appointment records!
   const priorities: TodayPriorityCard[] = [];
 
-  // Real Reminders from reminderService
-  const uncompletedReminders = reminders.filter(r => !r.completed);
-  for (const rem of uncompletedReminders.slice(0, 2)) {
+  // Real Reminders from reminderService (Prioritizing Overdue and Care Team Guidance)
+  const todayStr = new Date().toISOString().split('T')[0];
+  const uncompletedReminders = [...reminders]
+    .filter((r) => !r.completed)
+    .sort((a, b) => {
+      const aOverdue = (a.title && a.title.toUpperCase().includes('OVERDUE')) || (a.dueDate && a.dueDate < todayStr);
+      const bOverdue = (b.title && b.title.toUpperCase().includes('OVERDUE')) || (b.dueDate && b.dueDate < todayStr);
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+      if (a.careTeamMessageId && !b.careTeamMessageId) return -1;
+      if (!a.careTeamMessageId && b.careTeamMessageId) return 1;
+      return (a.dueDate || '').localeCompare(b.dueDate || '');
+    });
+
+  for (const rem of uncompletedReminders.slice(0, 3)) {
+    const isOverdue = (rem.title && rem.title.toUpperCase().includes('OVERDUE')) || (rem.dueDate && rem.dueDate < todayStr);
+    const isCareTeam = Boolean(rem.careTeamMessageId || rem.type === 'care_team_message');
+
+    let badge = 'Reminder';
+    let accentColor: 'purple' | 'emerald' | 'blue' | 'rose' | 'teal' = 'blue';
+    let iconType: 'calendar' | 'baby' | 'syringe' | 'alert' | 'shield' = 'calendar';
+
+    if (isOverdue) {
+      badge = 'Overdue';
+      accentColor = 'rose';
+      iconType = 'alert';
+    } else if (isCareTeam) {
+      badge = 'Care Team';
+      accentColor = 'teal';
+      iconType = 'shield';
+    } else if (rem.category === 'anc') {
+      badge = 'ANC Visit';
+      accentColor = 'purple';
+      iconType = 'calendar';
+    } else if (rem.category === 'immunization') {
+      badge = 'Immunization';
+      accentColor = 'emerald';
+      iconType = 'syringe';
+    }
+
     priorities.push({
       id: `reminder-${rem.id}`,
       title: rem.title,
       description: rem.dueDate ? `Scheduled for: ${formatShortDate(rem.dueDate)}` : (rem.description || 'Upcoming routine reminder'),
-      badge: 'Reminder',
+      badge,
       category: 'reminder',
-      iconType: rem.category === 'anc' ? 'calendar' : rem.category === 'pnc' ? 'baby' : rem.category === 'immunization' ? 'syringe' : 'calendar',
-      accentColor: rem.category === 'anc' ? 'purple' : rem.category === 'pnc' ? 'emerald' : 'blue',
+      iconType,
+      accentColor,
       isAuthoritative: true,
       actionTab: 'records',
       reminderRef: rem,

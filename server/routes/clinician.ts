@@ -98,7 +98,7 @@ clinicianRouter.get('/patients/:motherId/verification',async(req,res)=>{try{cons
 clinicianRouter.post('/verify',async(req,res)=>{try{const token=await clinician(req);const {motherId,recordPath,recordId}=req.body||{};if(!motherId||!recordPath||!recordId)throw new ApiError(400,'motherId, recordPath and recordId are required.');await requireActiveSession(token.uid,motherId);const recordTypePattern=VERIFIABLE_RECORD_TYPES.join('|');const recordPathRegex=new RegExp(`^(pregnancies|children)\\/[^/]+\\/(${recordTypePattern})$`);if(recordPath.includes('..')||!recordPathRegex.test(recordPath))throw new ApiError(400,'Unsupported clinical record path.');const ref=adminDb.doc(`${recordPath}/${recordId}`);const d=await ref.get();if(!d.exists)throw new ApiError(404,'Record not found.');if(String(d.data()?.motherId||'')!==motherId)throw new ApiError(403,'Record is outside the authorized patient session.');await ref.update({'provenance.status':'VERIFIED','provenance.verifiedBy':token.uid,'provenance.verifiedAt':FieldValue.serverTimestamp()});await logAudit(token.uid,'CLINICIAN','VERIFIED',recordPath,recordId,null,motherId);res.json({success:true});}catch(e){sendError(res,e);}});
 
 async function handleAncEncounter(token: any, body: any, res: any) {
-  const { motherId, pregnancyId, date, visitNumber, gestationalWeeks, gestationalAgeWeeks, systolicBp, diastolicBp, bloodPressure, weightKg, weight, fundalHeight, fundalHeightCm, fetalHeartRate, fhr, hbLevel, hb, iptpGiven, iptp, ifasGiven, ifas, ironFolicGiven, clinicalNotes, notes, summary } = body || {};
+  const { motherId, pregnancyId, date, visitDate, contactNumber, visitNumber, gestationalWeeks, gestationalAgeWeeks, gestationWeeks, systolicBp, diastolicBp, bloodPressure, bp, weightKg, weight, fundalHeight, fundalHeightCm, presentation, fetalHeartRate, fhr, hbLevel, hb, muacCm, nextVisitDate, nextAppointmentDate, iptpGiven, iptp, ifasGiven, ifas, ironFolicGiven, clinicalNotes, notes, summary } = body || {};
   if (!motherId) throw new ApiError(400, 'motherId is required.');
   await requireActiveSession(token.uid, motherId);
   let targetPregId = pregnancyId;
@@ -114,33 +114,52 @@ async function handleAncEncounter(token: any, body: any, res: any) {
   const pregnancy = await adminDb.doc(`pregnancies/${targetPregId}`).get();
   if (!pregnancy.exists || String(pregnancy.data()?.motherId || '') !== motherId) throw new ApiError(403, 'Pregnancy is outside the authorized patient session.');
   const now = FieldValue.serverTimestamp();
-  const encounterDate = date || new Date().toISOString().split('T')[0];
-  const bp = bloodPressure || (systolicBp && diastolicBp ? `${systolicBp}/${diastolicBp}` : undefined);
+  const recordedAtIso = new Date().toISOString();
+  const encounterDate = visitDate || date || recordedAtIso.split('T')[0];
+  const calculatedBp = bp || bloodPressure || (systolicBp && diastolicBp ? `${systolicBp}/${diastolicBp}` : undefined);
   const cleanSummary = String(clinicalNotes || summary || notes || '').trim();
+  const weeksVal = gestationWeeks != null && gestationWeeks !== '' ? Number(gestationWeeks) : (gestationalWeeks != null && gestationalWeeks !== '' ? Number(gestationalWeeks) : (gestationalAgeWeeks != null && gestationalAgeWeeks !== '' ? Number(gestationalAgeWeeks) : undefined));
+  const contactNum = contactNumber != null && contactNumber !== '' ? Number(contactNumber) : (Number(visitNumber) || 1);
+  const hbVal = hb != null && hb !== '' ? Number(hb) : (hbLevel != null && hbLevel !== '' ? Number(hbLevel) : undefined);
+  const muacVal = muacCm != null && muacCm !== '' ? Number(muacCm) : undefined;
+  const fundalVal = fundalHeightCm != null && fundalHeightCm !== '' ? Number(fundalHeightCm) : (fundalHeight != null && fundalHeight !== '' ? Number(fundalHeight) : undefined);
+  const fhrVal = fetalHeartRate != null && fetalHeartRate !== '' ? Number(fetalHeartRate) : (fhr != null && fhr !== '' ? Number(fhr) : undefined);
+  const nextVisitVal = nextVisitDate ? String(nextVisitDate).trim() : (nextAppointmentDate ? String(nextAppointmentDate).trim() : null);
+
   const encDoc: Record<string, any> = {
     motherId,
     pregnancyId: targetPregId,
+    contactNumber: contactNum,
+    visitNumber: contactNum,
+    visitDate: encounterDate,
     date: encounterDate,
-    visitNumber: Number(visitNumber) || 1,
-    gestationalAgeWeeks: gestationalWeeks != null && gestationalWeeks !== '' ? Number(gestationalWeeks) : (gestationalAgeWeeks != null && gestationalAgeWeeks !== '' ? Number(gestationalAgeWeeks) : undefined),
-    gestationalWeeks: gestationalWeeks != null && gestationalWeeks !== '' ? Number(gestationalWeeks) : undefined,
+    gestationWeeks: weeksVal,
+    gestationalAgeWeeks: weeksVal,
+    gestationalWeeks: weeksVal,
     systolicBp: systolicBp != null && systolicBp !== '' ? Number(systolicBp) : undefined,
     diastolicBp: diastolicBp != null && diastolicBp !== '' ? Number(diastolicBp) : undefined,
-    bloodPressure: bp,
+    bloodPressure: calculatedBp,
+    bp: calculatedBp,
     weight: weightKg != null && weightKg !== '' ? Number(weightKg) : (weight != null && weight !== '' ? Number(weight) : undefined),
     weightKg: weightKg != null && weightKg !== '' ? Number(weightKg) : (weight != null && weight !== '' ? Number(weight) : undefined),
-    fundalHeight: fundalHeight != null && fundalHeight !== '' ? Number(fundalHeight) : (fundalHeightCm != null && fundalHeightCm !== '' ? Number(fundalHeightCm) : undefined),
-    fundalHeightCm: fundalHeightCm != null && fundalHeightCm !== '' ? Number(fundalHeightCm) : (fundalHeight != null && fundalHeight !== '' ? Number(fundalHeight) : undefined),
-    fetalHeartRate: fetalHeartRate != null && fetalHeartRate !== '' ? Number(fetalHeartRate) : (fhr != null && fhr !== '' ? Number(fhr) : undefined),
-    fhr: fhr != null && fhr !== '' ? Number(fhr) : (fetalHeartRate != null && fetalHeartRate !== '' ? Number(fetalHeartRate) : undefined),
-    hbLevel: hbLevel != null && hbLevel !== '' ? Number(hbLevel) : (hb != null && hb !== '' ? Number(hb) : undefined),
-    hb: hb != null && hb !== '' ? Number(hb) : (hbLevel != null && hbLevel !== '' ? Number(hbLevel) : undefined),
+    fundalHeight: fundalVal,
+    fundalHeightCm: fundalVal,
+    presentation: presentation ? String(presentation).trim() : undefined,
+    fetalHeartRate: fhrVal,
+    fhr: fhrVal,
+    hbLevel: hbVal,
+    hb: hbVal,
+    muacCm: muacVal,
+    nextVisitDate: nextVisitVal,
+    nextAppointmentDate: nextVisitVal,
+    recordedBy: token.uid,
+    recordedAt: recordedAtIso,
     iptpGiven: Boolean(iptpGiven || iptp),
     iptp: Boolean(iptpGiven || iptp),
     ifasGiven: Boolean(ifasGiven || ifas || ironFolicGiven),
     ifas: Boolean(ifasGiven || ifas || ironFolicGiven),
     ironFolicGiven: Boolean(ifasGiven || ifas || ironFolicGiven),
-    summary: cleanSummary || `ANC Contact #${Number(visitNumber) || 1}`,
+    summary: cleanSummary || `ANC Contact #${contactNum}`,
     notes: cleanSummary,
     clinicalNotes: cleanSummary,
     provenance: {
@@ -154,9 +173,90 @@ async function handleAncEncounter(token: any, body: any, res: any) {
   };
   Object.keys(encDoc).forEach(k => encDoc[k] === undefined && delete encDoc[k]);
   const ref = adminDb.collection(`pregnancies/${targetPregId}/ancEncounters`).doc();
+  encDoc.id = ref.id;
   await ref.set(encDoc);
+  // Also store in top-level ancEncounters collection
+  await adminDb.collection('ancEncounters').doc(ref.id).set(encDoc);
   await logAudit(token.uid, 'CLINICIAN', 'CREATED', 'ancEncounters', ref.id, null, motherId);
-  return res.json({ id: ref.id, type: 'anc' });
+
+  // Cross-module synchronization (Fix Prompt 4):
+  // When nextVisitDate is recorded, update pregnancy, partner's pregnancySummaries, and mother's reminders in one logical operation
+  if (nextVisitVal) {
+    // 1. Update pregnancy document
+    await adminDb.doc(`pregnancies/${targetPregId}`).set({
+      nextVisitDate: nextVisitVal,
+      updatedAt: now,
+    }, { merge: true });
+
+    // 2. Update partner's pregnancySummaries (and mirror partnerShares)
+    await Promise.allSettled([
+      adminDb.doc(`pregnancySummaries/${motherId}`).set({
+        nextVisitDate: nextVisitVal,
+        updatedAt: now,
+      }, { merge: true }),
+      adminDb.doc(`partnerShares/${motherId}`).set({
+        nextVisitDate: nextVisitVal,
+        updatedAt: now,
+      }, { merge: true }),
+    ]);
+
+    // 3. Reconcile mother's clinical appointment reminder
+    const sourceKey = `anc_next_visit_${targetPregId}`;
+    const existingRemSnap = await adminDb.collection('reminders')
+      .where('userId', '==', motherId)
+      .where('sourceEventId', '==', sourceKey)
+      .limit(1)
+      .get();
+
+    const ancReminderData = {
+      userId: motherId,
+      pregnancyId: targetPregId,
+      title: `Upcoming: Scheduled ANC Contact #${contactNum + 1}`,
+      description: `Follow-up ANC appointment confirmed by clinician for ${nextVisitVal}.`,
+      dueDate: nextVisitVal,
+      category: 'clinical',
+      type: 'anc_visit',
+      sourceEventId: sourceKey,
+      completed: false,
+      verified: true,
+      pushEligible: true,
+      updatedAt: now,
+    };
+
+    if (existingRemSnap.empty) {
+      await adminDb.collection('reminders').add({
+        ...ancReminderData,
+        createdAt: now,
+      });
+    } else {
+      await existingRemSnap.docs[0].ref.update(ancReminderData);
+    }
+  }
+
+  // Clear any past pending reminder for the visit that was just completed
+  try {
+    const priorReminders = await adminDb.collection('reminders')
+      .where('userId', '==', motherId)
+      .where('type', '==', 'anc_visit')
+      .where('completed', '==', false)
+      .get();
+
+    for (const pDoc of priorReminders.docs) {
+      const d = pDoc.data();
+      if (d.sourceEventId !== `anc_next_visit_${targetPregId}` && (d.dueDate <= encounterDate || d.title.includes(`#${contactNum}`))) {
+        await pDoc.ref.update({
+          completed: true,
+          completedAt: now,
+          clearedReason: 'visit_completed',
+          updatedAt: now,
+        });
+      }
+    }
+  } catch (clearErr) {
+    console.warn('[handleAncEncounter] Non-critical error clearing prior ANC reminders:', clearErr);
+  }
+
+  return res.json({ id: ref.id, type: 'anc', encounter: encDoc });
 }
 
 async function handlePncEncounter(token: any, body: any, res: any) {
@@ -216,7 +316,7 @@ async function handlePncEncounter(token: any, body: any, res: any) {
 }
 
 async function handleImmunizationEncounter(token: any, body: any, res: any) {
-  const { motherId, childId, vaccineName, vaccine, recommendedAgeBracket, dose, ageBracket, dateAdministered, date, batchNumber, batch, facilityName, facilityId, notes, clinicalNotes } = body || {};
+  const { motherId, childId, antigen, vaccineName, vaccine, recommendedAgeBracket, dose, ageBracket, dateAdministered, date, scheduledDate, givenDate, status, batchNumber, batch, facilityName, facilityId, notes, clinicalNotes } = body || {};
   if (!motherId) throw new ApiError(400, 'motherId is required.');
   await requireActiveSession(token.uid, motherId);
   let targetChildId = childId;
@@ -227,25 +327,34 @@ async function handleImmunizationEncounter(token: any, body: any, res: any) {
   if (!targetChildId) throw new ApiError(400, 'childId is required for immunization records.');
   const child = await adminDb.doc(`children/${targetChildId}`).get();
   if (!child.exists || String(child.data()?.motherId || '') !== motherId) throw new ApiError(403, 'Child is outside the authorized patient session.');
-  const vacName = String(vaccineName || vaccine || '').trim();
-  if (!vacName) throw new ApiError(400, 'vaccineName is required.');
+  const vacName = String(antigen || vaccineName || vaccine || '').trim();
+  if (!vacName) throw new ApiError(400, 'antigen or vaccineName is required.');
   const now = FieldValue.serverTimestamp();
-  const encounterDate = dateAdministered || date || new Date().toISOString().split('T')[0];
+  const recordedAtIso = new Date().toISOString();
+  const schedDate = scheduledDate || dateAdministered || date || recordedAtIso.split('T')[0];
+  const gDate = givenDate !== undefined ? givenDate : (status === 'missed' ? null : (dateAdministered || date || recordedAtIso.split('T')[0]));
+  const finalStatus = status ? String(status).toLowerCase() : (gDate ? 'given' : 'scheduled');
+
   const vacDoc: Record<string, any> = {
     motherId,
     childId: targetChildId,
+    antigen: vacName,
     vaccineName: vacName,
     vaccine: vacName,
+    scheduledDate: schedDate,
+    givenDate: gDate,
+    status: finalStatus,
     recommendedAgeBracket: recommendedAgeBracket || dose || ageBracket || '',
     dose: recommendedAgeBracket || dose || ageBracket || '',
-    dateAdministered: encounterDate,
-    dateGiven: encounterDate,
+    dateAdministered: gDate || schedDate,
+    dateGiven: gDate || schedDate,
     batchNumber: String(batchNumber || batch || '').trim(),
     batch: String(batchNumber || batch || '').trim(),
     facilityName: facilityName || undefined,
     facilityId: facilityId || undefined,
     administeredBy: token.uid,
-    status: 'GIVEN',
+    recordedBy: token.uid,
+    recordedAt: recordedAtIso,
     notes: String(notes || clinicalNotes || '').trim(),
     provenance: {
       status: 'VERIFIED',
@@ -258,13 +367,52 @@ async function handleImmunizationEncounter(token: any, body: any, res: any) {
   };
   Object.keys(vacDoc).forEach(k => vacDoc[k] === undefined && delete vacDoc[k]);
   const ref = adminDb.collection(`children/${targetChildId}/immunizationRecords`).doc();
+  vacDoc.id = ref.id;
   await ref.set(vacDoc);
+  // Also store in top-level immunizationRecords collection
+  await adminDb.collection('immunizationRecords').doc(ref.id).set(vacDoc);
+  // Also sync to childVaccineRecords for legacy views
+  await adminDb.collection(`children/${targetChildId}/childVaccineRecords`).doc(ref.id).set({
+    ...vacDoc,
+    status: finalStatus.toUpperCase(),
+  });
+
+  // Event-driven reminder clearing (Fix Prompt 3 / Fix Prompt 4):
+  // When an immunization is recorded as given, clear/complete matching reminder
+  if (finalStatus === 'given') {
+    try {
+      const remSnap = await adminDb.collection('reminders')
+        .where('userId', '==', motherId)
+        .where('childId', '==', targetChildId)
+        .where('completed', '==', false)
+        .get();
+
+      for (const d of remSnap.docs) {
+        const rData = d.data();
+        const matchesSource = rData.sourceEventId === `kepi_${targetChildId}_${vacName}` ||
+                              rData.sourceEventId === `child_vaccine_${targetChildId}_${vacName}`;
+        const matchesTitle = String(rData.title || '').toLowerCase().includes(vacName.toLowerCase());
+
+        if (matchesSource || matchesTitle) {
+          await d.ref.update({
+            completed: true,
+            completedAt: now,
+            clearedReason: 'dose_administered',
+            updatedAt: now,
+          });
+        }
+      }
+    } catch (clearErr) {
+      console.warn('[handleImmunizationEncounter] Error clearing reminder:', clearErr);
+    }
+  }
+
   await logAudit(token.uid, 'CLINICIAN', 'CREATED', 'immunizationRecords', ref.id, null, motherId);
-  return res.json({ id: ref.id, type: 'immunization' });
+  return res.json({ id: ref.id, type: 'immunization', record: vacDoc });
 }
 
 async function handleGrowthEncounter(token: any, body: any, res: any) {
-  const { motherId, childId, date, ageMonths, weightKg, childWeight, weight, heightCm, childHeight, height, muacCm, notes, clinicalNotes } = body || {};
+  const { motherId, childId, measurementDate, date, ageInMonths, ageMonths, weightKg, childWeight, weight, lengthHeightCm, heightCm, childHeight, height, muacCm, notes, clinicalNotes } = body || {};
   if (!motherId) throw new ApiError(400, 'motherId is required.');
   await requireActiveSession(token.uid, motherId);
   let targetChildId = childId;
@@ -277,20 +425,28 @@ async function handleGrowthEncounter(token: any, body: any, res: any) {
   if (!child.exists || String(child.data()?.motherId || '') !== motherId) throw new ApiError(403, 'Child is outside the authorized patient session.');
   const w = Number(weightKg ?? childWeight ?? weight);
   if (isNaN(w) || w <= 0) throw new ApiError(400, 'Valid weightKg is required.');
-  const h = heightCm != null && heightCm !== '' ? Number(heightCm) : (childHeight != null && childHeight !== '' ? Number(childHeight) : (height != null && height !== '' ? Number(height) : undefined));
+  const h = lengthHeightCm != null && lengthHeightCm !== '' ? Number(lengthHeightCm) : (heightCm != null && heightCm !== '' ? Number(heightCm) : (childHeight != null && childHeight !== '' ? Number(childHeight) : (height != null && height !== '' ? Number(height) : undefined)));
   const m = muacCm != null && muacCm !== '' ? Number(muacCm) : undefined;
+  const ageVal = ageInMonths != null && ageInMonths !== '' ? Number(ageInMonths) : (ageMonths != null && ageMonths !== '' ? Number(ageMonths) : undefined);
   const now = FieldValue.serverTimestamp();
-  const encounterDate = date || new Date().toISOString().split('T')[0];
+  const recordedAtIso = new Date().toISOString();
+  const encounterDate = measurementDate || date || recordedAtIso.split('T')[0];
+
   const growthDoc: Record<string, any> = {
     motherId,
     childId: targetChildId,
+    measurementDate: encounterDate,
     date: encounterDate,
-    ageMonths: ageMonths != null && ageMonths !== '' ? Number(ageMonths) : undefined,
+    ageInMonths: ageVal,
+    ageMonths: ageVal,
     weightKg: w,
     weight: w,
+    lengthHeightCm: h,
     heightCm: h,
     lengthCm: h,
     muacCm: m,
+    recordedBy: token.uid,
+    recordedAt: recordedAtIso,
     notes: String(notes || clinicalNotes || '').trim(),
     provenance: {
       status: 'VERIFIED',
@@ -303,7 +459,10 @@ async function handleGrowthEncounter(token: any, body: any, res: any) {
   };
   Object.keys(growthDoc).forEach(k => growthDoc[k] === undefined && delete growthDoc[k]);
   const ref = adminDb.collection(`children/${targetChildId}/growthMeasurements`).doc();
+  growthDoc.id = ref.id;
   await ref.set(growthDoc);
+  // Also store in top-level growthMeasurements collection
+  await adminDb.collection('growthMeasurements').doc(ref.id).set(growthDoc);
   if (m != null && !isNaN(m)) {
     let band = 'Normal';
     if (m < 11.5) band = 'SAM';
@@ -327,7 +486,7 @@ async function handleGrowthEncounter(token: any, body: any, res: any) {
     });
   }
   await logAudit(token.uid, 'CLINICIAN', 'CREATED', 'growthMeasurements', ref.id, null, motherId);
-  return res.json({ id: ref.id, type: 'growth' });
+  return res.json({ id: ref.id, type: 'growth', record: growthDoc });
 }
 
 async function handleCongenitalExam(token: any, body: any, res: any) {
@@ -1363,6 +1522,124 @@ clinicianRouter.post(['/facility-roster/recompute', '/clinician/facility-roster/
       facilityName: clinicianData.clinician.facilityName || `Facility ${facilityId}`,
       items: enriched,
     });
+  } catch (e) {
+    sendError(res, e);
+  }
+});
+
+// Patient Care Team Messages (Server-side write for clinicians, session-guarded)
+clinicianRouter.post(['/patients/:motherId/messages', '/messages'], async (req, res) => {
+  try {
+    const token = await clinician(req);
+    const motherId = req.params.motherId || req.body?.motherId;
+    if (!motherId) throw new ApiError(400, 'motherId is required.');
+    await requireActiveSession(token.uid, motherId);
+    const rawBody = req.body?.body || req.body?.text;
+    const bodyText = String(rawBody || '').trim();
+    if (!bodyText) throw new ApiError(400, 'Message body is required.');
+    const category = req.body?.category || 'feedback';
+    const nowIso = new Date().toISOString();
+    const messageDoc = {
+      motherId,
+      clinicianId: token.uid,
+      body: bodyText,
+      text: bodyText,
+      sentAt: nowIso,
+      createdAt: nowIso,
+      readAt: null,
+      readByMother: false,
+      sentByRole: 'CLINICIAN',
+      category,
+      childId: req.body?.childId || null,
+      relatedRecordId: req.body?.relatedRecordId || null,
+    };
+    const ref = await adminDb.collection('careTeamMessages').add(messageDoc);
+    await logAudit(token.uid, 'CLINICIAN', 'SENT_MESSAGE', 'careTeamMessages', ref.id, null, motherId);
+
+    // Message-to-reminder link (Fix Prompt 4):
+    // If flagged as requiring maternal action or follow-up, create a prompt reminder referencing message ID (no text duplication)
+    if (req.body?.requiresFollowUp || req.body?.urgent || req.body?.actionRequired || category === 'lab_result' || category === 'appointment') {
+      try {
+        await adminDb.collection('reminders').add({
+          userId: motherId,
+          title: 'New Clinical Guidance from Care Team',
+          description: 'Your healthcare team has sent updated guidance regarding your clinical records. Please review in your care team messages.',
+          category: 'action',
+          type: 'care_team_message',
+          careTeamMessageId: ref.id,
+          sourceEventId: `care_team_msg_${ref.id}`,
+          dueDate: req.body?.followUpDate || nowIso.split('T')[0],
+          completed: false,
+          verified: true,
+          pushEligible: true,
+          actionTab: 'records',
+          createdAt: nowIso,
+        });
+      } catch (remErr) {
+        console.warn('[careTeamMessages] Failed to create linked reminder:', remErr);
+      }
+    }
+
+    res.json({ id: ref.id, success: true, message: { id: ref.id, ...messageDoc } });
+  } catch (e) {
+    sendError(res, e);
+  }
+});
+
+clinicianRouter.get('/patients/:motherId/messages', async (req, res) => {
+  try {
+    const token = await clinician(req);
+    const motherId = req.params.motherId;
+    if (!motherId) throw new ApiError(400, 'motherId is required.');
+    await requireActiveSession(token.uid, motherId);
+    const snap = await adminDb.collection('careTeamMessages').where('motherId', '==', motherId).get();
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    items.sort((a: any, b: any) => String(b.sentAt || b.createdAt || '').localeCompare(String(a.sentAt || a.createdAt || '')));
+    await logAudit(token.uid, 'CLINICIAN', 'VIEWED', 'careTeamMessages', motherId, null, motherId);
+    res.json({ items });
+  } catch (e) {
+    sendError(res, e);
+  }
+});
+
+// Patient Structured Encounters (session-guarded)
+clinicianRouter.get('/patients/:motherId/encounters', async (req, res) => {
+  try {
+    const token = await clinician(req);
+    const motherId = req.params.motherId;
+    if (!motherId) throw new ApiError(400, 'motherId is required.');
+    await requireActiveSession(token.uid, motherId);
+    const [ancSnap, immSnap, growthSnap] = await Promise.all([
+      adminDb.collection('ancEncounters').where('motherId', '==', motherId).get(),
+      adminDb.collection('immunizationRecords').where('motherId', '==', motherId).get(),
+      adminDb.collection('growthMeasurements').where('motherId', '==', motherId).get(),
+    ]);
+    const anc = ancSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const immunizations = immSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const growth = growthSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    await logAudit(token.uid, 'CLINICIAN', 'VIEWED', 'encounters', motherId, null, motherId);
+    res.json({ anc, immunizations, growth });
+  } catch (e) {
+    sendError(res, e);
+  }
+});
+
+clinicianRouter.get('/patients/:motherId/encounters/:type', async (req, res) => {
+  try {
+    const token = await clinician(req);
+    const motherId = req.params.motherId;
+    const type = String(req.params.type).toLowerCase();
+    if (!motherId) throw new ApiError(400, 'motherId is required.');
+    await requireActiveSession(token.uid, motherId);
+    let colName = '';
+    if (type === 'anc') colName = 'ancEncounters';
+    else if (type === 'immunization' || type === 'immunizations') colName = 'immunizationRecords';
+    else if (type === 'growth') colName = 'growthMeasurements';
+    else throw new ApiError(400, `Unsupported encounter query type: ${type}`);
+    const snap = await adminDb.collection(colName).where('motherId', '==', motherId).get();
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    await logAudit(token.uid, 'CLINICIAN', 'VIEWED', colName, motherId, null, motherId);
+    res.json({ items });
   } catch (e) {
     sendError(res, e);
   }

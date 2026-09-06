@@ -17,8 +17,13 @@ import {
   Utensils,
   Languages,
   Clock,
+  Download,
+  Loader2,
+  BarChart2,
 } from 'lucide-react';
 import type { MomHavenHealthSummary } from '../../types/healthSummary';
+import { auth } from '../../lib/firebase';
+import WhoGrowthChart from '../growth/WhoGrowthChart';
 import ProvenanceBadge from '../common/ProvenanceBadge';
 import Button from '../Button';
 
@@ -47,6 +52,38 @@ export default function HealthSummary({
     reproductiveScreening,
     pmtct,
   } = summary;
+
+  const [downloadingCertId, setDownloadingCertId] = React.useState<string | null>(null);
+  const [activeChartChildId, setActiveChartChildId] = React.useState<string | null>(null);
+
+  const handleDownloadCertificate = async (childId: string, childName: string) => {
+    try {
+      setDownloadingCertId(childId);
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch(`/api/v1/reports/immunization-certificate/${childId}`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Failed to download certificate.');
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `MOH216_Immunization_Certificate_${(childName || 'Child').replace(/\s+/g, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      alert(err.message || 'Error downloading certificate.');
+    } finally {
+      setDownloadingCertId(null);
+    }
+  };
 
   return (
     <div id="momhaven-health-summary-container" className="space-y-5">
@@ -449,58 +486,101 @@ export default function HealthSummary({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   {/* Immunizations */}
-                  <div className="bg-white p-3 rounded-lg border border-[var(--border-hairline)]">
-                    <div className="flex items-center gap-1.5 text-[var(--haven-deep)] font-bold mb-1">
-                      <Syringe className="w-3.5 h-3.5" />
-                      KEPI Immunizations
-                    </div>
-                    <p className="text-[var(--ink-600)]">
-                      {child.immunizations.totalAdministered} vaccines documented ({child.immunizations.verifiedCount} verified)
-                    </p>
-                    {child.immunizations.recentRecords.length > 0 && (
-                      <div className="mt-1.5 space-y-1">
-                        {child.immunizations.recentRecords.slice(0, 3).map(rec => (
-                          <div key={rec.id} className="text-[11px] flex items-center justify-between text-[var(--ink-500)]">
-                            <span>{rec.vaccineName} ({rec.dateGiven})</span>
-                            <span className={rec.provenance.status === 'VERIFIED' ? 'text-emerald-600 font-semibold' : 'text-amber-600'}>
-                              {rec.provenance.status === 'VERIFIED' ? 'Verified' : 'Reported'}
-                            </span>
-                          </div>
-                        ))}
+                  <div className="bg-white p-3 rounded-lg border border-[var(--border-hairline)] flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-[var(--haven-deep)] font-bold mb-1">
+                        <Syringe className="w-3.5 h-3.5" />
+                        KEPI Immunizations
                       </div>
-                    )}
+                      <p className="text-[var(--ink-600)]">
+                        {child.immunizations.totalAdministered} vaccines documented ({child.immunizations.verifiedCount} verified)
+                      </p>
+                      {child.immunizations.recentRecords.length > 0 && (
+                        <div className="mt-1.5 space-y-1">
+                          {child.immunizations.recentRecords.slice(0, 3).map(rec => (
+                            <div key={rec.id} className="text-[11px] flex items-center justify-between text-[var(--ink-500)]">
+                              <span>{rec.vaccineName} ({rec.dateGiven})</span>
+                              <span className={rec.provenance.status === 'VERIFIED' ? 'text-emerald-600 font-semibold' : 'text-amber-600'}>
+                                {rec.provenance.status === 'VERIFIED' ? 'Verified' : 'Reported'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={downloadingCertId === child.id}
+                      onClick={() => handleDownloadCertificate(child.id, child.name)}
+                      className="mt-3 w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-semibold cursor-pointer transition-colors disabled:opacity-50"
+                    >
+                      {downloadingCertId === child.id ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Generating MOH 216 PDF...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Download Certificate (MOH 216 PDF)</span>
+                        </>
+                      )}
+                    </button>
                   </div>
 
                   {/* Growth & Nutrition */}
-                  <div className="bg-white p-3 rounded-lg border border-[var(--border-hairline)]">
-                    <div className="flex items-center gap-1.5 text-[var(--haven-deep)] font-bold mb-1">
-                      <TrendingUp className="w-3.5 h-3.5" />
-                      Growth & Nutrition
-                    </div>
-                    {child.growth.latestWeightKg || child.growth.latestMuacMm ? (
-                      <div className="text-[var(--ink-600)] space-y-0.5">
-                        {child.growth.latestWeightKg && <div>Weight: <strong>{child.growth.latestWeightKg} kg</strong></div>}
-                        {child.growth.latestHeightCm && <div>Height: <strong>{child.growth.latestHeightCm} cm</strong></div>}
-                        {child.growth.latestMuacMm && (
-                          <div className="flex items-center gap-1.5">
-                            <span>MUAC: <strong>{child.growth.latestMuacMm} mm</strong></span>
-                            {child.growth.muacClassification && (
-                              <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
-                                child.growth.muacClassification === 'NORMAL'
-                                  ? 'bg-emerald-100 text-emerald-800'
-                                  : 'bg-red-100 text-red-800'
-                              }`}>
-                                {child.growth.muacClassification}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                  <div className="bg-white p-3 rounded-lg border border-[var(--border-hairline)] flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-[var(--haven-deep)] font-bold mb-1">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                        Growth & Nutrition
                       </div>
-                    ) : (
-                      <p className="text-[var(--ink-400)] italic">No growth measurements recorded yet.</p>
+                      {child.growth.latestWeightKg || child.growth.latestMuacMm ? (
+                        <div className="text-[var(--ink-600)] space-y-0.5">
+                          {child.growth.latestWeightKg && <div>Weight: <strong>{child.growth.latestWeightKg} kg</strong></div>}
+                          {child.growth.latestHeightCm && <div>Height: <strong>{child.growth.latestHeightCm} cm</strong></div>}
+                          {child.growth.latestMuacMm && (
+                            <div className="flex items-center gap-1.5">
+                              <span>MUAC: <strong>{child.growth.latestMuacMm} mm</strong></span>
+                              {child.growth.muacClassification && (
+                                <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                                  child.growth.muacClassification === 'NORMAL'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {child.growth.muacClassification}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-[var(--ink-400)] italic">No growth measurements recorded yet.</p>
+                      )}
+                    </div>
+                    {child.growth.measurements && child.growth.measurements.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveChartChildId(activeChartChildId === child.id ? null : child.id)}
+                        className="mt-3 w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-[var(--lavender-100)] hover:bg-[var(--lavender-200)] text-[var(--haven-deep)] border border-purple-200 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                      >
+                        <BarChart2 className="w-3.5 h-3.5" />
+                        <span>{activeChartChildId === child.id ? 'Hide WHO Curve' : 'View WHO Growth Curve'}</span>
+                      </button>
                     )}
                   </div>
                 </div>
+
+                {/* Interactive WHO Growth Chart */}
+                {activeChartChildId === child.id && child.growth.measurements && child.growth.measurements.length > 0 && (
+                  <div className="mt-3 p-3 bg-white rounded-xl border border-[var(--border-hairline)] shadow-xs">
+                    <WhoGrowthChart
+                      measurements={child.growth.measurements}
+                      sex={(child.sex?.toLowerCase() === 'male' ? 'male' : 'female')}
+                      childName={child.name}
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>

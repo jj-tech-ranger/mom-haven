@@ -122,6 +122,7 @@ export interface ChildHealthSummary {
     latestMuacMm?: number;
     latestMeasurementDate?: string;
     muacClassification?: 'NORMAL' | 'MAM' | 'SAM';
+    measurements?: any[];
     provenance?: { status: 'VERIFIED' | 'REPORTED'; verifiedBy?: string | null };
   };
 }

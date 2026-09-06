@@ -10,14 +10,14 @@ import {
   orderBy,
   onSnapshot,
 } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { CareTeamMessage } from '../types';
+import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
+import { CareTeamMessage, CareTeamMessageCategory } from '../types';
 
 export interface SendClinicianMessageParams {
   motherId: string;
   clinicianId: string;
   text: string;
-  category?: 'general' | 'lab_result' | 'appointment' | 'reassurance';
+  category?: CareTeamMessageCategory;
   childId?: string | null;
   relatedRecordId?: string | null;
 }
@@ -26,7 +26,7 @@ export interface SendMotherMessageParams {
   motherId: string;
   clinicianId?: string;
   text: string;
-  category?: 'general' | 'lab_result' | 'appointment' | 'reassurance';
+  category?: CareTeamMessageCategory;
   childId?: string | null;
   relatedRecordId?: string | null;
 }
@@ -71,6 +71,34 @@ export async function sendMessageAsClinician(params: SendClinicianMessageParams)
   }
 
   try {
+    const user = auth.currentUser;
+    if (user) {
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/v1/clinician/patients/${params.motherId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          motherId: params.motherId,
+          body: trimmed,
+          text: trimmed,
+          category: params.category || 'general',
+          childId: params.childId || null,
+          relatedRecordId: params.relatedRecordId || null,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        return data.id || data.message?.id || 'sent';
+      }
+      const errJson = await res.json().catch(() => ({}));
+      throw new Error(errJson.error || errJson.message || `Server responded with status ${res.status}`);
+    }
+
+    // Fallback direct write if offline or dev test mode
     const colRef = collection(db, 'careTeamMessages');
     const docData: Omit<CareTeamMessage, 'id'> = {
       motherId: params.motherId,
@@ -78,10 +106,12 @@ export async function sendMessageAsClinician(params: SendClinicianMessageParams)
       childId: params.childId || null,
       sentByRole: 'CLINICIAN',
       text: trimmed,
+      body: trimmed,
       category: params.category || 'general',
       relatedRecordId: params.relatedRecordId || null,
       readByMother: false,
       readAt: null,
+      sentAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
     };
 

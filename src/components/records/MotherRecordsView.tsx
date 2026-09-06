@@ -133,6 +133,7 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
                 latestHeightCm: latestGrowth?.heightCm,
                 latestMuacMm: latestGrowth?.muacCm ? latestGrowth.muacCm * 10 : undefined,
                 latestMeasurementDate: latestGrowth?.date,
+                measurements: growth,
                 provenance: latestGrowth
                   ? {
                       status: (latestGrowth.provenance?.status === 'VERIFIED' ? 'VERIFIED' : 'REPORTED') as 'VERIFIED' | 'REPORTED',

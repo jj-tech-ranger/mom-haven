@@ -1,10 +1,10 @@
 // src/services/reminderGenerationService.ts
-import { collection, getDocs, query, where, addDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Reminder, Pregnancy, Child, FamilyPlanningRecord } from '../types';
 import { KEPI_VACCINES, calculateDoseDates } from '../utils/kepiSchedule';
 import { VITAMIN_A_SCHEDULE, DEWORMING_SCHEDULE, MNP_SCHEDULE } from '../utils/supplementSchedule';
-import { calculateLmpFromEdd } from '../utils/clinicalCalculations';
+import { calculateLmpFromEdd, computeMOH216Schedule } from '../utils/clinicalCalculations';
 
 export interface DesiredReminder {
   userId: string;
@@ -41,8 +41,26 @@ function addDaysToDate(dateStr: string, days: number): string {
  */
 export function computeAncVisitReminders(
   userId: string,
-  pregnancy: { id: string; lmp?: string; edd?: string }
+  pregnancy: { id: string; lmp?: string; edd?: string; nextVisitDate?: string | null }
 ): DesiredReminder[] {
+  const reminders: DesiredReminder[] = [];
+
+  // Prioritize authoritative clinician scheduled return date if present
+  if (pregnancy.nextVisitDate) {
+    reminders.push({
+      userId,
+      title: 'Upcoming: Scheduled ANC Contact',
+      description: `Authoritative clinical follow-up appointment confirmed by clinician for ${pregnancy.nextVisitDate}.`,
+      dueDate: pregnancy.nextVisitDate,
+      category: 'anc' as const,
+      completed: false,
+      sharedWithPartner: true,
+      sourceEventId: `anc-${pregnancy.id}-next-visit`,
+      deepLink: 'records' as const,
+      pregnancyId: pregnancy.id,
+    });
+  }
+
   let lmp = pregnancy.lmp;
   if (!lmp && pregnancy.edd) {
     try {
@@ -51,7 +69,7 @@ export function computeAncVisitReminders(
       lmp = undefined;
     }
   }
-  if (!lmp) return [];
+  if (!lmp) return reminders;
 
   const visits = [
     {
@@ -123,7 +141,8 @@ export function computeAncVisitReminders(
  */
 export function computeChildImmunizationReminders(
   userId: string,
-  child: { id: string; dateOfBirth: string; name?: string }
+  child: { id: string; dateOfBirth: string; name?: string },
+  administeredRecords: any[] = []
 ): DesiredReminder[] {
   if (!child.dateOfBirth) return [];
   const dob = child.dateOfBirth;
@@ -131,18 +150,19 @@ export function computeChildImmunizationReminders(
 
   const reminders: DesiredReminder[] = [];
 
-  // 1. KEPI Vaccines
-  for (const vaccine of KEPI_VACCINES) {
-    const dates = calculateDoseDates(dob, vaccine);
+  // 1. KEPI Vaccines (Derived via dynamic pure computeMOH216Schedule)
+  const schedule = computeMOH216Schedule(dob, administeredRecords);
+  for (const dose of schedule) {
+    if (dose.status === 'given') continue; // Don't generate reminders for doses already given
     reminders.push({
       userId,
-      title: `${childName}: ${vaccine.name}`,
-      description: `Kenya MOH KEPI vaccine for ${vaccine.diseaseTarget} (${vaccine.ageBracketLabel}). Route: ${vaccine.routeOfAdministration || 'Standard'}.`,
-      dueDate: dates.scheduledDate,
+      title: `${childName}: ${dose.antigen}`,
+      description: `Kenya MOH KEPI vaccine for ${dose.antigen} (Target age: ${dose.targetAgeWeeks} weeks). Status: ${dose.status}.`,
+      dueDate: dose.scheduledDate,
       category: 'immunization' as const,
       completed: false,
       sharedWithPartner: true,
-      sourceEventId: `kepi-${child.id}-${vaccine.code}`,
+      sourceEventId: `kepi-${child.id}-${dose.antigen.replace(/\s+/g, '_')}`,
       deepLink: 'records' as const,
       childId: child.id,
     });
@@ -353,6 +373,7 @@ export async function reconcileMotherClinicalReminders(
     children?: Child[];
     newOutcome?: { deliveryDate: string; pregnancyId: string; childId?: string };
     familyPlanningRecords?: FamilyPlanningRecord[];
+    immunizationRecords?: any[];
   } = {}
 ): Promise<{ createdCount: number; createdIds: string[] }> {
   if (!userId) return { createdCount: 0, createdIds: [] };
@@ -364,6 +385,29 @@ export async function reconcileMotherClinicalReminders(
     const snap = await getDocs(q);
     const existingReminders = snap.docs.map((d) => ({ ...d.data(), id: d.id } as Reminder));
 
+    // Clear completed reminders if corresponding immunization records have been administered
+    if (options.immunizationRecords && options.immunizationRecords.length > 0) {
+      for (const rem of existingReminders) {
+        if (!rem.completed && rem.childId && rem.category === 'immunization') {
+          const isGiven = options.immunizationRecords.some((r) => {
+            const a = (r.antigen || r.vaccineName || r.vaccine || '').trim().toLowerCase();
+            return a && (rem.title.toLowerCase().includes(a) || (rem.sourceEventId && rem.sourceEventId.toLowerCase().includes(a)));
+          });
+          if (isGiven) {
+            try {
+              await updateDoc(doc(db, 'reminders', rem.id), {
+                completed: true,
+                completedAt: new Date().toISOString(),
+                clearedReason: 'dose_administered',
+              });
+            } catch {
+              // non-critical
+            }
+          }
+        }
+      }
+    }
+
     const desired: DesiredReminder[] = [];
 
     // 2. ANC Reminders if active pregnancy is present
@@ -374,7 +418,7 @@ export async function reconcileMotherClinicalReminders(
     // 3. KEPI & Growth Reminders for all children
     if (options.children && options.children.length > 0) {
       for (const child of options.children) {
-        desired.push(...computeChildImmunizationReminders(userId, child));
+        desired.push(...computeChildImmunizationReminders(userId, child, options.immunizationRecords || []));
       }
     }
 

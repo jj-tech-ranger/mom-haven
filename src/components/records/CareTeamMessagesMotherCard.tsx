@@ -48,7 +48,21 @@ const CATEGORY_STYLE: Record<
     text: 'text-purple-800',
     icon: FileCheck2,
   },
+  'lab-result': {
+    labelEn: 'Lab Results',
+    labelSw: 'Matokeo ya Vipimo',
+    bg: 'bg-purple-50 border-purple-200',
+    text: 'text-purple-800',
+    icon: FileCheck2,
+  },
   appointment: {
+    labelEn: 'Appointment Notice',
+    labelSw: 'Taarifa ya Kliniki',
+    bg: 'bg-amber-50 border-amber-200',
+    text: 'text-amber-800',
+    icon: Calendar,
+  },
+  'appointment-guidance': {
     labelEn: 'Appointment Notice',
     labelSw: 'Taarifa ya Kliniki',
     bg: 'bg-amber-50 border-amber-200',
@@ -61,6 +75,13 @@ const CATEGORY_STYLE: Record<
     bg: 'bg-emerald-50 border-emerald-200',
     text: 'text-emerald-800',
     icon: Heart,
+  },
+  feedback: {
+    labelEn: 'Clinical Feedback',
+    labelSw: 'Maoni ya Kliniki',
+    bg: 'bg-teal-50 border-teal-200',
+    text: 'text-teal-800',
+    icon: Stethoscope,
   },
 };
 

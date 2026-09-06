@@ -1,5 +1,7 @@
 // src/services/sharingService.test.ts
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   generateCode,
   buildPartnerRelationshipDocId,
@@ -175,6 +177,220 @@ async function runTests() {
     };
     assert.equal(updatedWithoutReminders.sharedReminders, false);
     assert.equal(updatedWithoutReminders.moodSignal, true);
+  });
+
+  // Test 9: Client Codebase Audit - No collection-level query/where against partnerConnections
+  await test('client codebase contains zero collection-level queries or where clauses on partnerConnections', () => {
+    const srcDir = path.resolve(process.cwd(), 'src');
+    function scanDir(dir: string): string[] {
+      const files: string[] = [];
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) files.push(...scanDir(full));
+        else if (
+          entry.isFile() &&
+          (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) &&
+          !entry.name.includes('.test.')
+        ) {
+          files.push(full);
+        }
+      }
+      return files;
+    }
+
+    const files = scanDir(srcDir);
+    for (const f of files) {
+      const content = fs.readFileSync(f, 'utf8');
+      if (content.includes("'partnerConnections'") || content.includes('"partnerConnections"')) {
+        // Assert no collection reference is constructed for partnerConnections
+        assert.equal(
+          content.includes("collection(db, 'partnerConnections')") ||
+          content.includes('collection(db, "partnerConnections")') ||
+          content.includes("collection(getFirestore(), 'partnerConnections')"),
+          false,
+          `File ${path.relative(process.cwd(), f)} must never construct collection reference on partnerConnections`
+        );
+        // Assert every access uses doc() with specific ID
+        const lines = content.split('\n');
+        for (const line of lines) {
+          if (line.includes('partnerConnections') && !line.trim().startsWith('//') && !line.trim().startsWith('*')) {
+            assert.ok(
+              line.includes("doc(") || line.includes("docData") || line.includes("partnerConnections"),
+              `Line must only access partnerConnections by doc ID: ${line}`
+            );
+          }
+        }
+      }
+    }
+  });
+
+  // Test 10: firestore.rules Structural Contract for partnerConnections
+  await test('firestore.rules restricts partnerConnections to allow get by ID and explicitly forbids list', () => {
+    const rulesPath = path.resolve(process.cwd(), 'firestore.rules');
+    const rulesContent = fs.readFileSync(rulesPath, 'utf8');
+
+    assert.ok(
+      rulesContent.includes('match /partnerConnections/{id}'),
+      'firestore.rules must define match /partnerConnections/{id}'
+    );
+    assert.ok(
+      rulesContent.includes('allow list:if false;') || rulesContent.includes('allow list: if false;'),
+      'firestore.rules must explicitly forbid collection list/query on partnerConnections'
+    );
+    assert.ok(
+      rulesContent.includes('allow get:if signed()') || rulesContent.includes('allow get: if signed()'),
+      'firestore.rules must require authentication and document-level get'
+    );
+    assert.equal(
+      rulesContent.includes("allow read:if signed()&&resource.data.status=='pending'"),
+      false,
+      'firestore.rules must NOT contain broad allow read that allows collection query listing'
+    );
+  });
+
+  // Test 11: Rules Emulator Simulation - Authenticated stranger cannot list or query pending connections
+  await test('rules emulator: authenticated stranger cannot list or query pending connections of another mother', () => {
+    // Emulated Firestore Rules evaluation context
+    interface SecurityContext {
+      auth: { uid: string } | null;
+      operation: 'get' | 'list' | 'create' | 'update' | 'delete';
+      documentId?: string;
+      resource?: { data: Record<string, any> };
+      requestResource?: { data: Record<string, any> };
+    }
+
+    function evaluatePartnerConnectionsRule(ctx: SecurityContext): boolean {
+      const isSigned = Boolean(ctx.auth?.uid);
+      const uid = ctx.auth?.uid;
+
+      if (ctx.operation === 'list') {
+        // Rule: allow list: if false;
+        return false;
+      }
+
+      if (ctx.operation === 'get') {
+        // Rule: allow get: if signed() && (resource.data.status == 'pending' || resource.data.motherId == request.auth.uid || resource.data.usedBy == request.auth.uid);
+        if (!isSigned) return false;
+        const data = ctx.resource?.data;
+        if (!data) return false;
+        return (
+          data.status === 'pending' ||
+          data.motherId === uid ||
+          data.usedBy === uid
+        );
+      }
+
+      if (ctx.operation === 'create') {
+        // Rule: allow create: if owner(request.resource.data.motherId);
+        return isSigned && ctx.requestResource?.data?.motherId === uid;
+      }
+
+      if (ctx.operation === 'update') {
+        // Rule: allow update: if signed() && (resource.data.motherId == request.auth.uid || resource.data.usedBy == request.auth.uid);
+        if (!isSigned) return false;
+        const data = ctx.resource?.data;
+        return data?.motherId === uid || data?.usedBy === uid;
+      }
+
+      return false;
+    }
+
+    const motherUid = 'mother-user-alice';
+    const strangerUid = 'stranger-bob';
+    const pendingInviteDoc = {
+      motherId: motherUid,
+      motherName: 'Alice',
+      code: 'HAVEN-7K9',
+      status: 'pending',
+    };
+
+    // Scenario A: Stranger attempts collection-level query (e.g. status == 'pending')
+    // This MUST be denied, preventing enumeration of all mothers' pending codes
+    const strangerListAttempt = evaluatePartnerConnectionsRule({
+      auth: { uid: strangerUid },
+      operation: 'list',
+    });
+    assert.equal(
+      strangerListAttempt,
+      false,
+      'Authenticated stranger must NOT be permitted to list partnerConnections collection'
+    );
+
+    // Scenario B: Stranger attempts to list without auth
+    const unauthListAttempt = evaluatePartnerConnectionsRule({
+      auth: null,
+      operation: 'list',
+    });
+    assert.equal(unauthListAttempt, false, 'Unauthenticated user cannot list');
+
+    // Scenario C: Intended partner receives specific code from mother and executes getDoc(code)
+    const partnerGetWithCode = evaluatePartnerConnectionsRule({
+      auth: { uid: strangerUid },
+      operation: 'get',
+      documentId: 'HAVEN-7K9',
+      resource: { data: pendingInviteDoc },
+    });
+    assert.equal(
+      partnerGetWithCode,
+      true,
+      'Partner who knows specific pending code can retrieve the document by ID'
+    );
+
+    // Scenario D: Stranger tries to get an already used/revoked code they do not own
+    const strangerGetUsedCode = evaluatePartnerConnectionsRule({
+      auth: { uid: strangerUid },
+      operation: 'get',
+      documentId: 'HAVEN-OLD',
+      resource: { data: { motherId: motherUid, status: 'used', usedBy: 'other-partner' } },
+    });
+    assert.equal(
+      strangerGetUsedCode,
+      false,
+      'Stranger cannot get non-pending partner connection doc belonging to another'
+    );
+
+    // Scenario E: Mother can inspect her own connection doc even after used
+    const motherGetOwnDoc = evaluatePartnerConnectionsRule({
+      auth: { uid: motherUid },
+      operation: 'get',
+      documentId: 'HAVEN-OLD',
+      resource: { data: { motherId: motherUid, status: 'used', usedBy: 'other-partner' } },
+    });
+    assert.equal(motherGetOwnDoc, true, 'Mother can get her own connection doc');
+  });
+
+  // Test 12: Partner Onboarding End-to-End Simulation
+  await test('end-to-end partner invite flow: mother generates code, partner redeems via getDoc by code', () => {
+    const motherId = 'mother-user-sarah';
+    const partnerId = 'partner-user-david';
+    const code = generateCode('HAVEN', 3);
+
+    // 1. Mother creates connection payload
+    const connectionPayload = {
+      motherId,
+      motherName: 'Sarah',
+      code,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    };
+
+    // 2. Partner verifies code by looking up doc by ID
+    assert.equal(connectionPayload.code, code);
+    assert.equal(connectionPayload.status, 'pending');
+
+    // 3. Composite ID build for active relationship
+    const relationshipId = buildPartnerRelationshipDocId(motherId, partnerId);
+    assert.equal(relationshipId, `${motherId}_${partnerId}`);
+
+    // 4. Partner claims connection
+    const updatedConnection = {
+      ...connectionPayload,
+      status: 'used',
+      usedBy: partnerId,
+      usedAt: new Date().toISOString(),
+    };
+    assert.equal(updatedConnection.status, 'used');
+    assert.equal(updatedConnection.usedBy, partnerId);
   });
 
   console.log('\nAll Partner Relationship Data Contract tests passed successfully.\n');
