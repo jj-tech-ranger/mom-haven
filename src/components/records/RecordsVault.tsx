@@ -17,7 +17,7 @@ import {
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db, auth } from '../../lib/firebase';
 import { DocumentRecord, ReportExportRecord } from '../../types';
-import ProvenanceBadge from '../common/ProvenanceBadge';
+import ProvenanceBadge, { ReferralBadge } from '../common/ProvenanceBadge';
 import Button from '../Button';
 
 interface RecordsVaultProps {
@@ -250,7 +250,12 @@ export default function RecordsVault({
                   </div>
                 </div>
 
-                <ProvenanceBadge provenance={record.provenance} />
+                <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                  {((record as any).hasOpenReferral || (record as any).referralStatus === 'open' || (record as any).referralStatus === 'acknowledged') && (
+                    <ReferralBadge label="Referred — awaiting follow-up" status="open" />
+                  )}
+                  <ProvenanceBadge provenance={record.provenance} />
+                </div>
               </div>
 
               {record.notes && (

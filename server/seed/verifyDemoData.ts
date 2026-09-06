@@ -141,10 +141,11 @@ export async function verifyDemoData(): Promise<VerificationResult> {
     }
 
     if (motherDef.key === 'mercy-faraja') {
-      // 3rd trimester pregnancy + detailed clinical history
+      // 3rd trimester pregnancy + detailed clinical history + Maternal Td schedule
       const preg = await getFirestoreDocument(`pregnancies/preg-${uid}`);
       assert(preg?.status === 'active', 'Mercy Faraja has active pregnancy');
       assert(preg?.gestationalAgeWeeks >= 28, `Mercy Faraja is 3rd trimester (${preg?.gestationalAgeWeeks} weeks)`);
+      assert(Array.isArray(preg?.tdDoses) && preg?.tdDoses?.length === 2, 'Mercy Faraja has 2 documented maternal Td doses');
 
       const pmtct = await getFirestoreDocument(`pmtctRecords/pmtct-${uid}`);
       assert(pmtct?.maternalHivStatus === 'reactive', 'Mercy Faraja PMTCT record reflects reactive status');
@@ -184,13 +185,20 @@ export async function verifyDemoData(): Promise<VerificationResult> {
     }
 
     if (motherDef.key === 'brenda-imani') {
-      // newborn/postpartum + recent PNC + upcoming review
+      // newborn/postpartum + recent structured PNC + upcoming review
       const preg = await getFirestoreDocument(`pregnancies/preg-${uid}-completed`);
       assert(preg?.status === 'completed', 'Brenda Imani has completed pregnancy');
       const child = await getFirestoreDocument(`children/child-${uid}-1`);
       assert(child !== null, 'Brenda Imani has newborn record');
       const pnc = await getFirestoreDocument(`children/child-${uid}-1/postnatalEncounters/pnc-child-${uid}-1-48h`);
       assert(pnc !== null, 'Brenda Imani has 48h postnatal encounter completed');
+      assert(pnc?.bloodPressure === '115/72', 'Brenda Imani PNC encounter includes maternal blood pressure');
+      assert(pnc?.uterineInvolution === 'Well Involuted', 'Brenda Imani PNC encounter records normal uterine involution');
+      assert(pnc?.cordCondition === 'clean_dry', 'Brenda Imani PNC encounter records clean and dry cord stump');
+      assert(pnc?.hivRetestDone === true, 'Brenda Imani PNC encounter includes HIV retest check');
+      assert(pnc?.familyPlanningCounselled === true, 'Brenda Imani PNC encounter records family planning counseling');
+      assert(pnc?.mentalHealthScreenDone === true, 'Brenda Imani PNC encounter records maternal mental health screen');
+
       const eye = await getFirestoreDocument(`eyeCareAssessments/child-${uid}-1`);
       assert(eye?.teoGivenAtBirth === true, 'Brenda Imani newborn has birth eye-care assessment with TEO');
       const rem = await getFirestoreDocument(`reminders/rem-${uid}-pnc2`);
@@ -198,7 +206,7 @@ export async function verifyDemoData(): Promise<VerificationResult> {
     }
 
     if (motherDef.key === 'diana-zawadi') {
-      // pregnant + toddler/multiple dependents
+      // pregnant + toddler/multiple dependents + family planning reminder
       const preg = await getFirestoreDocument(`pregnancies/preg-${uid}`);
       assert(preg?.status === 'active', 'Diana Zawadi has active pregnancy');
       const child1 = await getFirestoreDocument(`children/child-${uid}-1`);
@@ -206,10 +214,12 @@ export async function verifyDemoData(): Promise<VerificationResult> {
       assert(child1 !== null && child2 !== null, 'Diana Zawadi has 2 dependent children');
       const fp = await getFirestoreDocument(`familyPlanning/fp-${uid}`);
       assert(fp?.methodChosen === 'Copper T IUCD', 'Diana Zawadi has previous IUCD family planning record');
+      const fpRem = await getFirestoreDocument(`reminders/rem-${uid}-fp`);
+      assert(fpRem !== null && fpRem?.title?.includes('Family Planning'), 'Diana Zawadi has family planning follow-up reminder');
     }
 
     if (motherDef.key === 'winnie-rehema') {
-      // pregnant + infant + overlapping ANC/immunization
+      // pregnant + infant + overlapping ANC/immunization + active referral
       const preg = await getFirestoreDocument(`pregnancies/preg-${uid}`);
       assert(preg?.status === 'active', 'Winnie Rehema has active pregnancy');
       const infant = await getFirestoreDocument(`children/child-${uid}-1`);
@@ -218,6 +228,10 @@ export async function verifyDemoData(): Promise<VerificationResult> {
       assert(aefi?.severity === 'mild', 'Winnie Rehema infant has mild AEFI report');
       const note = await getFirestoreDocument(`clinicianPrivateNotes/note-${uid}-1`);
       assert(note !== null, 'Winnie Rehema has clinician private note');
+      const ref = await getFirestoreDocument(`referrals/ref-${uid}-1`);
+      assert(ref !== null && ref?.status === 'open', 'Winnie Rehema has active open clinical referral');
+      assert(ref?.urgency === 'urgent', 'Winnie Rehema clinical referral has urgent priority');
+      assert(ref?.targetFacility?.includes('Kenyatta National Hospital'), 'Winnie Rehema referral targets specialized pediatric facility');
     }
 
     if (motherDef.key === 'sharon-nuru') {

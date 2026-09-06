@@ -78,26 +78,57 @@ export default function ReminderDetailModal({
           </div>
 
           {/* What to carry */}
-          <div className="bg-white p-4 rounded-[18px] border border-[var(--border-hairline)] shadow-xs space-y-2.5">
-            <h4 className="font-display font-bold text-[14px] text-[var(--ink-900)] flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-[var(--haven-orchid)]" />
-              <span>What to Carry to Clinic</span>
-            </h4>
-            <ul className="space-y-1.5 text-[13px] text-[var(--ink-700)] font-body">
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Mother &amp; Child Health Handbook (MOH 216)</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Previous ultrasound scans or laboratory results</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Daily IFAS / Calcium supplements for refills</span>
-              </li>
-            </ul>
-          </div>
+          {(() => {
+            const titleLower = String(reminder.title || '').toLowerCase();
+            const descLower = String(reminder.description || '').toLowerCase();
+            const isPnc = reminder.category === 'pnc' || titleLower.includes('pnc') || titleLower.includes('postnatal');
+            const isTdOrVax = reminder.category === 'immunization' || titleLower.includes('td') || titleLower.includes('tetanus') || titleLower.includes('vaccin') || titleLower.includes('penta') || titleLower.includes('polio');
+            const isFp = titleLower.includes('family planning') || descLower.includes('contraceptive') || titleLower.includes('fp ');
+
+            let items = [
+              'Mother & Child Health Handbook (MOH 216)',
+              'Previous ultrasound scans or laboratory results',
+              'Daily IFAS / Calcium supplements for refills',
+            ];
+
+            if (isPnc) {
+              items = [
+                'Mother & Child Health Handbook (MOH 216)',
+                'Hospital discharge summary or delivery records',
+                "Baby's clean change of clothing and receiving blanket",
+                'Any questions about breastfeeding, lochia recovery, or cord healing',
+              ];
+            } else if (isTdOrVax) {
+              items = [
+                'Mother & Child Health Handbook (MOH 216) with immunization records',
+                'Any previous vaccination cards or certificates',
+                'Comfortable clothing for easy upper-arm or thigh injection',
+              ];
+            } else if (isFp) {
+              items = [
+                'Mother & Child Health Handbook (MOH 216)',
+                'Previous contraceptive history or clinic card',
+                'Questions regarding return of fertility, method choices, or side effects',
+              ];
+            }
+
+            return (
+              <div className="bg-white p-4 rounded-[18px] border border-[var(--border-hairline)] shadow-xs space-y-2.5">
+                <h4 className="font-display font-bold text-[14px] text-[var(--ink-900)] flex items-center gap-1.5">
+                  <FileText className="w-4 h-4 text-[var(--haven-orchid)]" />
+                  <span>What to Carry to Clinic</span>
+                </h4>
+                <ul className="space-y-1.5 text-[13px] text-[var(--ink-700)] font-body">
+                  {items.map((item, idx) => (
+                    <li key={idx} className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
 
           {/* Share with Partner Toggle */}
           <div className="bg-[var(--lavender-50)] p-3.5 rounded-[18px] border border-[var(--border-hairline)] flex items-center justify-between">

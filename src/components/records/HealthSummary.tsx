@@ -513,6 +513,278 @@ export default function HealthSummary({
         </section>
       )}
 
+      {/* Section 2.6: Maternal Td (Tetanus-Diphtheria) Protection (MOH pp.10–11) */}
+      {maternalTdSchedule && (
+        <section className="bg-white border border-[var(--border-hairline)] rounded-[22px] p-5 shadow-card-1 space-y-4">
+          <div className="flex items-center justify-between gap-2 pb-3 border-b border-[var(--border-hairline)] flex-wrap">
+            <div className="flex items-center gap-2">
+              <Syringe className="w-4 h-4 text-[var(--haven-deep)]" />
+              <h2 className="font-display font-bold text-base text-[var(--ink-900)]">
+                {t('modules.td.title', 'Maternal Tetanus & Diphtheria (Td) Protection')}
+              </h2>
+            </div>
+            <span className="text-[10px] font-mono font-bold text-purple-700 bg-[var(--lavender-50)] border border-purple-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
+              {t('modules.td.handbookCode', 'MOH 216 · ANTE-NATAL PROFILE')}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3 bg-[var(--lavender-50)]/70 rounded-xl border border-purple-100 space-y-1">
+              <span className="text-[10px] font-semibold text-[var(--ink-500)] uppercase tracking-wider block">
+                {t('modules.td.status', 'Current Protection Status')}
+              </span>
+              <p className="text-sm font-bold text-[var(--haven-deep)]">
+                {maternalTdSchedule.protectionStatus || 'Under Review'}
+              </p>
+              <p className="text-[11px] text-[var(--ink-600)]">
+                {maternalTdSchedule.completedDoses?.length === 5
+                  ? t('modules.td.lifelongProtected', 'Full Lifelong Immunity Achieved (5 Doses)')
+                  : `${maternalTdSchedule.completedDoses?.length || 0} of 5 lifetime doses recorded`}
+              </p>
+            </div>
+
+            <div className="p-3 bg-[var(--lavender-50)]/70 rounded-xl border border-purple-100 space-y-1">
+              <span className="text-[10px] font-semibold text-[var(--ink-500)] uppercase tracking-wider block">
+                {t('modules.td.nextDue', 'Next Due Dose')}
+              </span>
+              <p className="text-sm font-bold text-[var(--ink-900)]">
+                {maternalTdSchedule.nextDoseNumber
+                  ? `TD Dose ${maternalTdSchedule.nextDoseNumber}`
+                  : 'All 5 Doses Completed'}
+              </p>
+              {maternalTdSchedule.nextDoseScheduledDate && (
+                <p className="text-[11px] text-[var(--haven-orchid)] font-medium">
+                  Due: {new Date(maternalTdSchedule.nextDoseScheduledDate).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                </p>
+              )}
+            </div>
+
+            <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-200 space-y-1">
+              <span className="text-[10px] font-semibold text-emerald-800 uppercase tracking-wider block">
+                Handbook Guidance
+              </span>
+              <p className="text-[11px] text-emerald-900 leading-relaxed">
+                {maternalTdSchedule.restartedDueTo10YearGap
+                  ? 'Restarted from TD-1 due to a 10+ year gap between TD-1 and TD-2 per MOH guidelines.'
+                  : t('modules.td.restartWarning', 'No restart needed — every documented dose counts toward lifelong immunity')}
+              </p>
+            </div>
+          </div>
+
+          {/* Doses breakdown */}
+          {maternalTdSchedule.completedDoses && maternalTdSchedule.completedDoses.length > 0 && (
+            <div className="space-y-2 pt-1">
+              <span className="text-[11px] font-display font-bold text-[var(--ink-700)] block">
+                {t('modules.td.dosesReceived', 'Doses Received')}
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {maternalTdSchedule.completedDoses.map((dose: any, idx: number) => (
+                  <div key={idx} className="p-2.5 bg-white rounded-lg border border-gray-200 shadow-2xs flex items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <div>
+                        <strong className="font-bold text-gray-900">TD {dose.doseNumber || idx + 1}</strong>
+                        {dose.dateGiven && (
+                          <span className="text-[11px] text-gray-500 block">
+                            {new Date(dose.dateGiven).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {dose.facilityName && (
+                      <span className="text-[10px] text-gray-500 truncate max-w-[100px]">
+                        {dose.facilityName}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Section 2.7: Postnatal Care (PNC) Encounters (MOH 216 p. 20) */}
+      {postnatalSummary && postnatalSummary.encounters && postnatalSummary.encounters.length > 0 && (
+        <section className="bg-white border border-[var(--border-hairline)] rounded-[22px] p-5 shadow-card-1 space-y-4">
+          <div className="flex items-center justify-between gap-2 pb-3 border-b border-[var(--border-hairline)] flex-wrap">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-[var(--haven-deep)]" />
+              <h2 className="font-display font-bold text-base text-[var(--ink-900)]">
+                {t('modules.pnc.title', 'Postnatal Care Register')}
+              </h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono font-bold text-purple-700 bg-[var(--lavender-50)] border border-purple-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                {t('modules.pnc.handbookCode', 'MOH 216 · PART 3')}
+              </span>
+              <span className="text-xs text-[var(--ink-500)]">
+                {postnatalSummary.totalEncounters} {postnatalSummary.totalEncounters === 1 ? 'contact' : 'contacts'}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {postnatalSummary.encounters.map((enc: any) => {
+              const timingLabel =
+                enc.visit === '48h' || enc.timing === '48h'
+                  ? t('modules.pnc.contacts.h48', 'Contact 1: Within 48 Hours')
+                  : enc.visit === '1-2w' || enc.timing === '1-2w'
+                  ? t('modules.pnc.contacts.w1_2', 'Contact 2: 1–2 Weeks')
+                  : enc.visit === '4-6w' || enc.timing === '4-6w'
+                  ? t('modules.pnc.contacts.w4_6', 'Contact 3: 4–6 Weeks')
+                  : enc.visit === '4-6mo' || enc.timing === '4-6mo'
+                  ? t('modules.pnc.contacts.m4_6', 'Contact 4: 4–6 Months')
+                  : enc.visit || enc.timing || 'PNC Contact';
+
+              const isLochiaFoul = enc.lochiaSmell === 'foul' || enc.lochiaFoul;
+              const isInvolutionTender = enc.uterineInvolution === 'Tender' || enc.involutionTender;
+              const hasMentalHealthConcerns = enc.mentalHealthScreenResult === 'concerns_noted' || enc.mentalHealthScreenResult === 'referred';
+
+              return (
+                <div key={enc.id} className="p-4 rounded-xl bg-[var(--lavender-50)]/50 border border-purple-100 space-y-3">
+                  <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-purple-100">
+                    <div>
+                      <strong className="text-sm font-display font-bold text-[var(--ink-900)]">
+                        {timingLabel}
+                      </strong>
+                      <span className="text-xs text-[var(--ink-500)] ml-2">
+                        ({enc.date || enc.visitDate || 'Recent'})
+                      </span>
+                    </div>
+                    {enc.provenance?.status && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        enc.provenance.status === 'VERIFIED'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {enc.provenance.status === 'VERIFIED' ? 'Verified by Clinician' : 'Self Reported'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Part A: Mother's Examination */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-display font-bold text-gray-500 uppercase tracking-wider block">
+                      {t('modules.pnc.motherSection', "Part A: Mother's Examination")}
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      {(enc.bloodPressure || (enc.systolicBp && enc.diastolicBp)) && (
+                        <div className="p-2 bg-white rounded-lg border border-gray-100">
+                          <span className="text-[10px] text-gray-500 block">{t('modules.pnc.fields.bloodPressure', 'Blood Pressure')}</span>
+                          <strong className="text-gray-900">{enc.bloodPressure || `${enc.systolicBp}/${enc.diastolicBp}`} mmHg</strong>
+                        </div>
+                      )}
+                      {enc.temperature && (
+                        <div className="p-2 bg-white rounded-lg border border-gray-100">
+                          <span className="text-[10px] text-gray-500 block">{t('modules.pnc.fields.temperature', 'Temperature')}</span>
+                          <strong className="text-gray-900">{enc.temperature} °C</strong>
+                        </div>
+                      )}
+                      {enc.uterineInvolution && (
+                        <div className={`p-2 rounded-lg border ${isInvolutionTender ? 'bg-red-50 text-red-950 border-red-200' : 'bg-white text-gray-900 border-gray-100'}`}>
+                          <span className="text-[10px] text-gray-500 block">{t('modules.pnc.fields.uterineInvolution', 'Womb Healing')}</span>
+                          <strong className="font-bold">{enc.uterineInvolution}</strong>
+                        </div>
+                      )}
+                      {(enc.lochiaAmount || enc.lochiaColour || enc.lochiaSmell) && (
+                        <div className={`p-2 rounded-lg border ${isLochiaFoul ? 'bg-red-50 text-red-950 border-red-200' : 'bg-white text-gray-900 border-gray-100'}`}>
+                          <span className="text-[10px] text-gray-500 block">{t('modules.pnc.fields.lochia', 'Lochia')}</span>
+                          <strong className="font-bold">
+                            {[enc.lochiaAmount, enc.lochiaColour, enc.lochiaSmell].filter(Boolean).join(' · ')}
+                          </strong>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Mental Health & Family Planning */}
+                    {(enc.mentalHealthScreenResult || enc.fpMethod || enc.fpMethodChoice) && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                        {enc.mentalHealthScreenResult && (
+                          <div className={`p-2 rounded-lg border ${hasMentalHealthConcerns ? 'bg-amber-50 text-amber-950 border-amber-200' : 'bg-white text-gray-900 border-gray-100'}`}>
+                            <span className="text-[10px] text-gray-500 block">{t('modules.pnc.fields.mentalHealth', 'Maternal Mental Health')}</span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              {hasMentalHealthConcerns ? (
+                                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                              ) : (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              )}
+                              <strong>
+                                {enc.mentalHealthScreenResult === 'no_concerns'
+                                  ? 'No Concerns Noted'
+                                  : enc.mentalHealthScreenResult === 'referred'
+                                  ? 'Specialized Support Recommended (Referred)'
+                                  : 'Concerns Noted (Support Needed)'}
+                              </strong>
+                            </div>
+                          </div>
+                        )}
+                        {(enc.fpMethod || enc.fpMethodChoice) && (
+                          <div className="p-2 bg-white rounded-lg border border-gray-100">
+                            <span className="text-[10px] text-gray-500 block">{t('modules.pnc.fields.familyPlanning', 'Family Planning Choice')}</span>
+                            <strong className="text-gray-900">{enc.fpMethod || enc.fpMethodChoice}</strong>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Part B: Baby's Examination */}
+                  {(enc.babyWeight || enc.babyWeightKg || enc.babyTemp || enc.infantFeedingMethod || enc.cordCondition) && (
+                    <div className="space-y-1.5 pt-2 border-t border-purple-100">
+                      <span className="text-[10px] font-display font-bold text-gray-500 uppercase tracking-wider block">
+                        {t('modules.pnc.babySection', "Part B: Baby's Examination")}
+                      </span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                        {(enc.babyWeight || enc.babyWeightKg) && (
+                          <div className="p-2 bg-white rounded-lg border border-gray-100">
+                            <span className="text-[10px] text-gray-500 block">{t('modules.pnc.fields.babyWeight', 'Baby Weight')}</span>
+                            <strong className="text-gray-900">{enc.babyWeight || enc.babyWeightKg} kg</strong>
+                          </div>
+                        )}
+                        {enc.babyTemp && (
+                          <div className="p-2 bg-white rounded-lg border border-gray-100">
+                            <span className="text-[10px] text-gray-500 block">{t('modules.pnc.fields.babyTemp', 'Baby Temp')}</span>
+                            <strong className="text-gray-900">{enc.babyTemp} °C</strong>
+                          </div>
+                        )}
+                        {enc.cordCondition && (
+                          <div className="p-2 bg-white rounded-lg border border-gray-100">
+                            <span className="text-[10px] text-gray-500 block">{t('modules.pnc.fields.cordCondition', 'Umbilical Cord')}</span>
+                            <strong className="text-gray-900">{enc.cordCondition}</strong>
+                          </div>
+                        )}
+                        {enc.infantFeedingMethod && (
+                          <div className="p-2 bg-white rounded-lg border border-gray-100">
+                            <span className="text-[10px] text-gray-500 block">{t('modules.pnc.fields.feedingMethod', 'Feeding')}</span>
+                            <strong className="text-gray-900">{enc.infantFeedingMethod}</strong>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Narrative Findings */}
+                  {(enc.motherFindings || enc.babyFindings || enc.clinicalNotes) && (
+                    <div className="text-xs text-[var(--ink-600)] space-y-1 pt-1 bg-white/60 p-2.5 rounded-lg border border-purple-50">
+                      {enc.motherFindings && (
+                        <p><strong>Mother Observations:</strong> {enc.motherFindings}</p>
+                      )}
+                      {enc.babyFindings && (
+                        <p><strong>Baby Observations:</strong> {enc.babyFindings}</p>
+                      )}
+                      {enc.clinicalNotes && !enc.motherFindings && (
+                        <p><strong>Clinical Notes:</strong> {enc.clinicalNotes}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Section 3: Children & Pediatric Health (Layer 3) */}
       {children.length > 0 && (
         <section className="bg-white border border-[var(--border-hairline)] rounded-[22px] p-5 shadow-card-1 space-y-4">

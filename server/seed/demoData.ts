@@ -317,6 +317,7 @@ export interface DemoMotherPayload {
   clinicianPrivateNotes?: any[];
   partnerRelationship?: any;
   partnerShare?: any;
+  referrals?: any[];
 }
 
 export const DEMO_MOTHERS: DemoMotherDef[] = [
@@ -534,6 +535,10 @@ export const DEMO_MOTHERS: DemoMotherDef[] = [
               contactPhone: '+254721444555',
             },
           },
+          tdDoses: [
+            { doseNumber: 1, dateGiven: weeksAgo(21), facilityName: 'Coast General Teaching & Referral Hospital', batchNumber: 'TD-KE-2024-08' },
+            { doseNumber: 2, dateGiven: weeksAgo(13), facilityName: 'Coast General Teaching & Referral Hospital', batchNumber: 'TD-KE-2024-11' },
+          ],
           demoDataset: DEMO_DATASET_ID,
         },
         ancEncounters: [
@@ -1072,6 +1077,28 @@ export const DEMO_MOTHERS: DemoMotherDef[] = [
                 childId,
                 visit: '48h',
                 date: daysAgo(2),
+                bloodPressure: '115/72',
+                systolicBp: 115,
+                diastolicBp: 72,
+                temperature: 36.6,
+                pulse: 76,
+                respiratoryRate: 18,
+                uterineInvolution: 'Well Involuted',
+                lochiaAmount: 'normal',
+                lochiaColour: 'rubra',
+                lochiaSmell: 'normal',
+                haemoglobin: 12.2,
+                hivRetestDone: true,
+                hivRetestResult: 'non-reactive',
+                familyPlanningCounselled: true,
+                fpMethod: 'Exclusive Breastfeeding (LAM)',
+                mentalHealthScreenDone: true,
+                mentalHealthScreenResult: 'no_concerns',
+                babyWeight: 3.35,
+                babyWeightKg: 3.35,
+                babyTemp: 36.7,
+                cordCondition: 'clean_dry',
+                infantFeedingMethod: 'Exclusive Breastfeeding (EBF)',
                 motherFindings: 'BP 115/72, pulse 76, fundus well contracted at umbilicus, normal lochia rubra, no perineal tear, lactation initiated.',
                 babyFindings: 'Weight 3.35kg, warm, active suckling, cord stump clean and dry, no neonatal jaundice, pass meconium and urine.',
                 createdAt: daysAgo(2),
@@ -1275,6 +1302,16 @@ export const DEMO_MOTHERS: DemoMotherDef[] = [
             pregnancyId: pregId,
             demoDataset: DEMO_DATASET_ID,
           },
+          {
+            id: `rem-${motherUid}-fp`,
+            userId: motherUid,
+            title: 'Family Planning Consultation & Review (Handbook p.22)',
+            description: 'Routine follow-up review for contraceptive choice, side effect counseling, and contraceptive refill.',
+            dueDate: weeksFromNow(3),
+            category: 'custom',
+            completed: false,
+            demoDataset: DEMO_DATASET_ID,
+          },
         ],
       };
     },
@@ -1409,6 +1446,25 @@ export const DEMO_MOTHERS: DemoMotherDef[] = [
             clinicianId: clinicianUids?.['dr.faith.amani@momhaven-demo.co.ke'] || Object.values(clinicianUids || {})[0] || 'clinician-dr-faith',
             text: 'Patient has closely spaced pregnancy with an 11-week-old nursing infant. Discussed high maternal caloric and iron demands, continuous breastfeeding safety, and close fetal growth monitoring.',
             createdAt: weeksAgo(4),
+          },
+        ],
+        referrals: [
+          {
+            id: `ref-${motherUid}-1`,
+            motherId: motherUid,
+            childId: infantId,
+            pregnancyId: pregId,
+            sourceModule: 'postnatal',
+            sourceRecordId: `note-${motherUid}-1`,
+            reason: 'Pediatric Specialist Consultation (Post-AEFI Follow-up)',
+            urgency: 'urgent',
+            status: 'open',
+            createdBy: clinicianUids?.['dr.faith.amani@momhaven-demo.co.ke'] || Object.values(clinicianUids || {})[0] || 'clinician-dr-faith',
+            facilityId: '13800',
+            facilityName: 'Nyeri County Referral Hospital',
+            targetFacility: 'Kenyatta National Hospital Pediatric Specialty Clinic',
+            notes: 'Follow-up assessment after mild 10-week vaccination reaction before scheduling next immunization series.',
+            createdAt: daysAgo(10),
           },
         ],
         reminders: [

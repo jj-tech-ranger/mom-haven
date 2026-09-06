@@ -27,6 +27,7 @@ import { getUpcomingReminders } from '../../services/reminderService';
 import { calculateMaternalTdSchedule } from '../../utils/maternalTdSchedule';
 import { DailyHealthLog } from '../../types/healthLog';
 import { DocumentRecord } from '../../types';
+import { ReferralBadge } from '../common/ProvenanceBadge';
 import Button from '../Button';
 
 interface MotherRecordsViewProps {
@@ -313,7 +314,7 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
             pncSnap.forEach((d) => postnatalEncountersList.push({ id: d.id, ...d.data() }));
           } catch {}
         }
-        for (const child of (childrenList || [])) {
+        for (const child of (realChildren || [])) {
           try {
             const pncSnap = await getDocs(collection(db, `children/${child.id}/postnatalEncounters`));
             pncSnap.forEach((d) => postnatalEncountersList.push({ id: d.id, ...d.data() }));
@@ -575,6 +576,11 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span>{freshnessLabel}</span>
           </div>
+
+          {/* Active Clinical Referral Badge */}
+          {summary?.openReferrals && summary.openReferrals.length > 0 && (
+            <ReferralBadge label="Referred — awaiting follow-up" status="open" />
+          )}
         </div>
 
         <button
@@ -586,6 +592,28 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
           <span>Bedside Fast Share PIN</span>
         </button>
       </div>
+
+      {/* Active Clinical Referral Guidance Banner */}
+      {summary?.openReferrals && summary.openReferrals.length > 0 && (
+        <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl flex items-start justify-between gap-3 text-xs text-amber-950 shadow-2xs">
+          <div className="flex items-start gap-2.5 min-w-0">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-bold text-amber-900 font-display">Active Care Referral:</span>
+                <ReferralBadge label="Referred — awaiting follow-up" status="open" />
+              </div>
+              <p className="text-amber-900 leading-relaxed font-medium">
+                {summary.openReferrals[0].reason || 'Your healthcare provider recorded a specialized review or follow-up recommendation.'}
+                {(summary.openReferrals[0].targetFacilityName || summary.openReferrals[0].targetFacilityId) && ` (${summary.openReferrals[0].targetFacilityName || summary.openReferrals[0].targetFacilityId})`}
+              </p>
+              <p className="text-[11px] text-amber-800/90">
+                Please attend your referral appointment with your MOH 216 Mother &amp; Child Health Handbook for coordinated continuum of care.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Flagged Danger Signs Clinical Alert Banner */}
       {dangerLogsCount > 0 && (

@@ -362,6 +362,17 @@ export async function seedDemoMothers(): Promise<SeedManifest> {
       }
     }
 
+    // 14.5 Referrals (MOH Referral System)
+    if (payload.referrals) {
+      for (const ref of payload.referrals) {
+        await setFirestoreDocument(`referrals/${ref.id}`, {
+          ...ref,
+          demoDataset: DEMO_DATASET_ID,
+        });
+        recordCounts.otherClinicalRecords++;
+      }
+    }
+
     // 15. Partner Relationships & Shares
     if (payload.partnerRelationship && partnerUid) {
       await setFirestoreDocument(`partnerRelationships/${payload.partnerRelationship.id}`, {

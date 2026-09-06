@@ -2342,8 +2342,8 @@
     "displayName": "Dr. Faith Amani",
     "role": "CLINICIAN",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:06:59.756Z",
-    "updatedAt": "2026-09-05T08:06:59.756Z",
+    "createdAt": "2026-09-06T04:02:31.308Z",
+    "updatedAt": "2026-09-06T04:02:31.308Z",
     "_path": "users/w8cCU0OC0JcaHc1IqbGLgKI69kg2"
   },
   "clinicians/w8cCU0OC0JcaHc1IqbGLgKI69kg2": {
@@ -2357,8 +2357,8 @@
     "county": "Nairobi",
     "verificationStatus": "approved",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:00.089Z",
-    "updatedAt": "2026-09-05T08:07:00.089Z",
+    "createdAt": "2026-09-06T04:02:31.621Z",
+    "updatedAt": "2026-09-06T04:02:31.621Z",
     "_path": "clinicians/w8cCU0OC0JcaHc1IqbGLgKI69kg2"
   },
   "users/6XcsCIUkuDTLREEAzQdFve85lxv2": {
@@ -2368,8 +2368,8 @@
     "displayName": "Dr. Grace Neema",
     "role": "CLINICIAN",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:01.230Z",
-    "updatedAt": "2026-09-05T08:07:01.230Z",
+    "createdAt": "2026-09-06T04:02:32.195Z",
+    "updatedAt": "2026-09-06T04:02:32.195Z",
     "_path": "users/6XcsCIUkuDTLREEAzQdFve85lxv2"
   },
   "clinicians/6XcsCIUkuDTLREEAzQdFve85lxv2": {
@@ -2383,8 +2383,8 @@
     "county": "Nairobi",
     "verificationStatus": "approved",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:01.245Z",
-    "updatedAt": "2026-09-05T08:07:01.245Z",
+    "createdAt": "2026-09-06T04:02:32.220Z",
+    "updatedAt": "2026-09-06T04:02:32.220Z",
     "_path": "clinicians/6XcsCIUkuDTLREEAzQdFve85lxv2"
   },
   "users/k2466OP5yfgP5WeKY6DiarUCral2": {
@@ -2394,8 +2394,8 @@
     "displayName": "Winnie Baraka",
     "role": "CLINICIAN",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:02.315Z",
-    "updatedAt": "2026-09-05T08:07:02.315Z",
+    "createdAt": "2026-09-06T04:02:32.799Z",
+    "updatedAt": "2026-09-06T04:02:32.800Z",
     "_path": "users/k2466OP5yfgP5WeKY6DiarUCral2"
   },
   "clinicians/k2466OP5yfgP5WeKY6DiarUCral2": {
@@ -2409,8 +2409,8 @@
     "county": "Mombasa",
     "verificationStatus": "approved",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:02.329Z",
-    "updatedAt": "2026-09-05T08:07:02.329Z",
+    "createdAt": "2026-09-06T04:02:32.827Z",
+    "updatedAt": "2026-09-06T04:02:32.827Z",
     "_path": "clinicians/k2466OP5yfgP5WeKY6DiarUCral2"
   },
   "users/YiqHVvn4jfYz4Ey3KEuli3jp0Ft2": {
@@ -2420,8 +2420,8 @@
     "displayName": "Brian Furaha",
     "role": "CLINICIAN",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:03.292Z",
-    "updatedAt": "2026-09-05T08:07:03.292Z",
+    "createdAt": "2026-09-06T04:02:33.320Z",
+    "updatedAt": "2026-09-06T04:02:33.320Z",
     "_path": "users/YiqHVvn4jfYz4Ey3KEuli3jp0Ft2"
   },
   "clinicians/YiqHVvn4jfYz4Ey3KEuli3jp0Ft2": {
@@ -2435,8 +2435,8 @@
     "county": "Kisumu",
     "verificationStatus": "approved",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:03.305Z",
-    "updatedAt": "2026-09-05T08:07:03.305Z",
+    "createdAt": "2026-09-06T04:02:33.345Z",
+    "updatedAt": "2026-09-06T04:02:33.345Z",
     "_path": "clinicians/YiqHVvn4jfYz4Ey3KEuli3jp0Ft2"
   },
   "users/6a8ZJ04zAdW3pEy2y8XqZFo5k363": {
@@ -2446,8 +2446,8 @@
     "displayName": "Dr. Peter Imani",
     "role": "CLINICIAN",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:04.712Z",
-    "updatedAt": "2026-09-05T08:07:04.712Z",
+    "createdAt": "2026-09-06T04:02:33.844Z",
+    "updatedAt": "2026-09-06T04:02:33.844Z",
     "_path": "users/6a8ZJ04zAdW3pEy2y8XqZFo5k363"
   },
   "clinicians/6a8ZJ04zAdW3pEy2y8XqZFo5k363": {
@@ -2461,8 +2461,8 @@
     "county": "Nakuru",
     "verificationStatus": "pending",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:04.733Z",
-    "updatedAt": "2026-09-05T08:07:04.733Z",
+    "createdAt": "2026-09-06T04:02:33.855Z",
+    "updatedAt": "2026-09-06T04:02:33.855Z",
     "_path": "clinicians/6a8ZJ04zAdW3pEy2y8XqZFo5k363"
   },
   "users/ULJtr0lzFXaZxVdX8se4GjUlt0z1": {
@@ -2472,8 +2472,8 @@
     "displayName": "Joseph Zawadi",
     "role": "CLINICIAN",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:05.828Z",
-    "updatedAt": "2026-09-05T08:07:05.828Z",
+    "createdAt": "2026-09-06T04:02:34.309Z",
+    "updatedAt": "2026-09-06T04:02:34.309Z",
     "_path": "users/ULJtr0lzFXaZxVdX8se4GjUlt0z1"
   },
   "clinicians/ULJtr0lzFXaZxVdX8se4GjUlt0z1": {
@@ -2488,8 +2488,8 @@
     "verificationStatus": "rejected",
     "rejectionReason": "Community Health Officer cadre is not eligible for independent clinical prescribing/record verification portal access. Requires institutional sponsorship under a verified medical facility officer.",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:05.840Z",
-    "updatedAt": "2026-09-05T08:07:05.840Z",
+    "createdAt": "2026-09-06T04:02:34.338Z",
+    "updatedAt": "2026-09-06T04:02:34.338Z",
     "_path": "clinicians/ULJtr0lzFXaZxVdX8se4GjUlt0z1"
   },
   "users/demo-partner-partner-grace": {
@@ -2499,8 +2499,8 @@
     "displayName": "Samuel Neema",
     "role": "PARTNER",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:06.399Z",
-    "updatedAt": "2026-09-05T08:07:06.399Z",
+    "createdAt": "2026-09-06T04:02:34.841Z",
+    "updatedAt": "2026-09-06T04:02:34.841Z",
     "_path": "users/demo-partner-partner-grace"
   },
   "users/demo-partner-partner-brenda": {
@@ -2510,8 +2510,8 @@
     "displayName": "Brian Imani",
     "role": "PARTNER",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:06.991Z",
-    "updatedAt": "2026-09-05T08:07:06.991Z",
+    "createdAt": "2026-09-06T04:02:35.368Z",
+    "updatedAt": "2026-09-06T04:02:35.368Z",
     "_path": "users/demo-partner-partner-brenda"
   },
   "users/demo-partner-partner-christine": {
@@ -2521,8 +2521,8 @@
     "displayName": "Dennis Amani",
     "role": "PARTNER",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:07.524Z",
-    "updatedAt": "2026-09-05T08:07:07.524Z",
+    "createdAt": "2026-09-06T04:02:35.878Z",
+    "updatedAt": "2026-09-06T04:02:35.878Z",
     "_path": "users/demo-partner-partner-christine"
   },
   "users/demo-mother-grace-neema": {
@@ -2532,8 +2532,8 @@
     "displayName": "Grace Neema",
     "email": "grace.neema@momhaven-demo.co.ke",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.112Z",
-    "updatedAt": "2026-09-05T08:07:08.112Z",
+    "createdAt": "2026-09-06T04:02:36.796Z",
+    "updatedAt": "2026-09-06T04:02:36.796Z",
     "_path": "users/demo-mother-grace-neema"
   },
   "motherProfiles/demo-mother-grace-neema": {
@@ -2546,8 +2546,8 @@
     "emergencyContactPhone": "+254712000001",
     "emergencyContactRelationship": "Partner",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.123Z",
-    "updatedAt": "2026-09-05T08:07:08.123Z",
+    "createdAt": "2026-09-06T04:02:36.805Z",
+    "updatedAt": "2026-09-06T04:02:36.805Z",
     "_path": "motherProfiles/demo-mother-grace-neema"
   },
   "healthContexts/demo-mother-grace-neema": {
@@ -2564,16 +2564,16 @@
       "exercise"
     ],
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.136Z",
-    "updatedAt": "2026-09-05T08:07:08.136Z",
+    "createdAt": "2026-09-06T04:02:36.827Z",
+    "updatedAt": "2026-09-06T04:02:36.827Z",
     "_path": "healthContexts/demo-mother-grace-neema"
   },
   "pregnancies/preg-demo-mother-grace-neema": {
     "id": "preg-demo-mother-grace-neema",
     "motherId": "demo-mother-grace-neema",
     "status": "active",
-    "lmp": "2026-07-04",
-    "edd": "2027-04-10",
+    "lmp": "2026-07-05",
+    "edd": "2027-04-11",
     "gestationalAgeWeeks": 9,
     "gravida": 1,
     "parity": 0,
@@ -2589,14 +2589,14 @@
       }
     },
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.164Z",
-    "updatedAt": "2026-09-05T08:07:08.164Z",
+    "createdAt": "2026-09-06T04:02:36.837Z",
+    "updatedAt": "2026-09-06T04:02:36.837Z",
     "_path": "pregnancies/preg-demo-mother-grace-neema"
   },
   "pregnancies/preg-demo-mother-grace-neema/ancEncounters/anc-preg-demo-mother-grace-neema-1": {
     "id": "anc-preg-demo-mother-grace-neema-1",
     "pregnancyId": "preg-demo-mother-grace-neema",
-    "date": "2026-08-29",
+    "date": "2026-08-30",
     "visitNumber": 1,
     "gestationalAgeWeeks": 8,
     "systolicBp": 116,
@@ -2605,10 +2605,10 @@
     "hbLevelGdl": 12.8,
     "ironFolicGiven": true,
     "iptpGiven": false,
-    "nextAppointmentDate": "2026-09-19",
+    "nextAppointmentDate": "2026-09-20",
     "summary": "ANC Contact 1 (Booking & Baseline Profile): Normal early gestation, started IFAS, scheduled for dating ultrasound scan.",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.177Z",
+    "createdAt": "2026-09-06T04:02:36.847Z",
     "_path": "pregnancies/preg-demo-mother-grace-neema/ancEncounters/anc-preg-demo-mother-grace-neema-1"
   },
   "reminders/rem-demo-mother-grace-neema-anc2": {
@@ -2616,19 +2616,19 @@
     "userId": "demo-mother-grace-neema",
     "title": "ANC Contact 2 (12-Week Review & Dating Ultrasound)",
     "description": "Second antenatal follow-up visit at Pumwani Maternity Hospital.",
-    "dueDate": "2026-09-19",
+    "dueDate": "2026-09-20",
     "category": "anc",
     "completed": false,
     "sharedWithPartner": true,
     "pregnancyId": "preg-demo-mother-grace-neema",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.191Z",
+    "createdAt": "2026-09-06T04:02:36.856Z",
     "_path": "reminders/rem-demo-mother-grace-neema-anc2"
   },
   "dailyHealthLogs/log-demo-mother-grace-neema-1": {
     "id": "log-demo-mother-grace-neema-1",
     "userId": "demo-mother-grace-neema",
-    "date": "2026-09-03",
+    "date": "2026-09-04",
     "type": "symptoms",
     "values": {
       "symptoms": [
@@ -2638,7 +2638,7 @@
       "notes": "Managing morning sickness with small frequent meals and adequate hydration."
     },
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.203Z",
+    "createdAt": "2026-09-06T04:02:36.865Z",
     "_path": "dailyHealthLogs/log-demo-mother-grace-neema-1"
   },
   "partnerRelationships/demo-mother-grace-neema_demo-partner-partner-grace": {
@@ -2657,8 +2657,8 @@
       "emergencyContacts": true,
       "moodSignal": true
     },
-    "createdAt": "2026-08-08",
-    "connectedAt": "2026-08-15",
+    "createdAt": "2026-08-09",
+    "connectedAt": "2026-08-16",
     "demoDataset": "defense-demo-v1",
     "_path": "partnerRelationships/demo-mother-grace-neema_demo-partner-partner-grace"
   },
@@ -2668,7 +2668,7 @@
     "motherName": "Grace Neema",
     "status": "used",
     "usedBy": "demo-partner-partner-grace",
-    "createdAt": "2026-09-05T08:07:08.242Z",
+    "createdAt": "2026-09-06T04:02:36.891Z",
     "demoDataset": "defense-demo-v1",
     "_path": "partnerConnections/MH-GRACE1"
   },
@@ -2676,7 +2676,7 @@
     "motherId": "demo-mother-grace-neema",
     "coarseMood": "good",
     "coarseEnergy": "normal",
-    "updatedAt": "2026-09-04",
+    "updatedAt": "2026-09-05",
     "demoDataset": "defense-demo-v1",
     "_path": "partnerShares/demo-mother-grace-neema"
   },
@@ -2687,8 +2687,8 @@
     "displayName": "Mercy Faraja",
     "email": "mercy.faraja@momhaven-demo.co.ke",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.807Z",
-    "updatedAt": "2026-09-05T08:07:08.807Z",
+    "createdAt": "2026-09-06T04:02:37.411Z",
+    "updatedAt": "2026-09-06T04:02:37.411Z",
     "_path": "users/demo-mother-mercy-faraja"
   },
   "motherProfiles/demo-mother-mercy-faraja": {
@@ -2701,8 +2701,8 @@
     "emergencyContactPhone": "+254722000002",
     "emergencyContactRelationship": "Sister",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.816Z",
-    "updatedAt": "2026-09-05T08:07:08.816Z",
+    "createdAt": "2026-09-06T04:02:37.420Z",
+    "updatedAt": "2026-09-06T04:02:37.420Z",
     "_path": "motherProfiles/demo-mother-mercy-faraja"
   },
   "healthContexts/demo-mother-mercy-faraja": {
@@ -2719,16 +2719,16 @@
       "birth_plan"
     ],
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.826Z",
-    "updatedAt": "2026-09-05T08:07:08.826Z",
+    "createdAt": "2026-09-06T04:02:37.429Z",
+    "updatedAt": "2026-09-06T04:02:37.429Z",
     "_path": "healthContexts/demo-mother-mercy-faraja"
   },
   "pregnancies/preg-demo-mother-mercy-faraja": {
     "id": "preg-demo-mother-mercy-faraja",
     "motherId": "demo-mother-mercy-faraja",
     "status": "active",
-    "lmp": "2026-01-17",
-    "edd": "2026-10-24",
+    "lmp": "2026-01-18",
+    "edd": "2026-10-25",
     "gestationalAgeWeeks": 33,
     "gravida": 2,
     "parity": 1,
@@ -2743,15 +2743,29 @@
         "contactPhone": "+254721444555"
       }
     },
+    "tdDoses": [
+      {
+        "doseNumber": 1,
+        "dateGiven": "2026-04-12",
+        "facilityName": "Coast General Teaching & Referral Hospital",
+        "batchNumber": "TD-KE-2024-08"
+      },
+      {
+        "doseNumber": 2,
+        "dateGiven": "2026-06-07",
+        "facilityName": "Coast General Teaching & Referral Hospital",
+        "batchNumber": "TD-KE-2024-11"
+      }
+    ],
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.839Z",
-    "updatedAt": "2026-09-05T08:07:08.839Z",
+    "createdAt": "2026-09-06T04:02:37.438Z",
+    "updatedAt": "2026-09-06T04:02:37.438Z",
     "_path": "pregnancies/preg-demo-mother-mercy-faraja"
   },
   "pregnancies/preg-demo-mother-mercy-faraja/ancEncounters/anc-preg-demo-mother-mercy-faraja-1": {
     "id": "anc-preg-demo-mother-mercy-faraja-1",
     "pregnancyId": "preg-demo-mother-mercy-faraja",
-    "date": "2026-04-11",
+    "date": "2026-04-12",
     "visitNumber": 1,
     "gestationalAgeWeeks": 12,
     "systolicBp": 118,
@@ -2762,13 +2776,13 @@
     "iptpGiven": false,
     "summary": "Booking ANC: Baseline evaluation, confirmed ART adherence, routine booking labs.",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.849Z",
+    "createdAt": "2026-09-06T04:02:37.446Z",
     "_path": "pregnancies/preg-demo-mother-mercy-faraja/ancEncounters/anc-preg-demo-mother-mercy-faraja-1"
   },
   "pregnancies/preg-demo-mother-mercy-faraja/ancEncounters/anc-preg-demo-mother-mercy-faraja-2": {
     "id": "anc-preg-demo-mother-mercy-faraja-2",
     "pregnancyId": "preg-demo-mother-mercy-faraja",
-    "date": "2026-06-06",
+    "date": "2026-06-07",
     "visitNumber": 2,
     "gestationalAgeWeeks": 20,
     "systolicBp": 120,
@@ -2782,13 +2796,13 @@
     "iptpDose": 1,
     "summary": "ANC Contact 2: Anomaly ultrasound reviewed, IPTp-SP Dose 1 administered, fetal heart rate normal.",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.870Z",
+    "createdAt": "2026-09-06T04:02:37.458Z",
     "_path": "pregnancies/preg-demo-mother-mercy-faraja/ancEncounters/anc-preg-demo-mother-mercy-faraja-2"
   },
   "pregnancies/preg-demo-mother-mercy-faraja/ancEncounters/anc-preg-demo-mother-mercy-faraja-3": {
     "id": "anc-preg-demo-mother-mercy-faraja-3",
     "pregnancyId": "preg-demo-mother-mercy-faraja",
-    "date": "2026-07-18",
+    "date": "2026-07-19",
     "visitNumber": 3,
     "gestationalAgeWeeks": 26,
     "systolicBp": 122,
@@ -2802,13 +2816,13 @@
     "iptpDose": 2,
     "summary": "ANC Contact 3: IPTp-SP Dose 2 given, IFAS replenished, infant feeding options discussed.",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.880Z",
+    "createdAt": "2026-09-06T04:02:37.466Z",
     "_path": "pregnancies/preg-demo-mother-mercy-faraja/ancEncounters/anc-preg-demo-mother-mercy-faraja-3"
   },
   "pregnancies/preg-demo-mother-mercy-faraja/ancEncounters/anc-preg-demo-mother-mercy-faraja-4": {
     "id": "anc-preg-demo-mother-mercy-faraja-4",
     "pregnancyId": "preg-demo-mother-mercy-faraja",
-    "date": "2026-08-15",
+    "date": "2026-08-16",
     "visitNumber": 4,
     "gestationalAgeWeeks": 30,
     "systolicBp": 124,
@@ -2820,10 +2834,10 @@
     "ironFolicGiven": true,
     "iptpGiven": true,
     "iptpDose": 3,
-    "nextAppointmentDate": "2026-09-23",
+    "nextAppointmentDate": "2026-09-24",
     "summary": "ANC Contact 4: 3rd trimester scan reviewed (cephalic presentation), viral load sample taken, IPTp-SP Dose 3 given.",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.894Z",
+    "createdAt": "2026-09-06T04:02:37.475Z",
     "_path": "pregnancies/preg-demo-mother-mercy-faraja/ancEncounters/anc-preg-demo-mother-mercy-faraja-4"
   },
   "reminders/rem-demo-mother-mercy-faraja-anc5": {
@@ -2831,12 +2845,12 @@
     "userId": "demo-mother-mercy-faraja",
     "title": "ANC Contact 5 (36-Week Birth Readiness & Delivery Planning)",
     "description": "Review birth pack, PMTCT infant prophylaxis protocol, and signs of labor at Coast General.",
-    "dueDate": "2026-09-23",
+    "dueDate": "2026-09-24",
     "category": "anc",
     "completed": false,
     "pregnancyId": "preg-demo-mother-mercy-faraja",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:08.906Z",
+    "createdAt": "2026-09-06T04:02:37.486Z",
     "_path": "reminders/rem-demo-mother-mercy-faraja-anc5"
   },
   "pmtctRecords/pmtct-demo-mother-mercy-faraja": {
@@ -2849,7 +2863,7 @@
     "maternalArtVisits": [
       {
         "visitNumber": 1,
-        "date": "2026-04-18",
+        "date": "2026-04-19",
         "regimen": "TDF + 3TC + DTG",
         "dispensed": true,
         "adherenceAssessed": true,
@@ -2857,7 +2871,7 @@
       },
       {
         "visitNumber": 2,
-        "date": "2026-06-27",
+        "date": "2026-06-28",
         "regimen": "TDF + 3TC + DTG",
         "dispensed": true,
         "adherenceAssessed": true,
@@ -2865,7 +2879,7 @@
       },
       {
         "visitNumber": 3,
-        "date": "2026-08-22",
+        "date": "2026-08-23",
         "regimen": "TDF + 3TC + DTG",
         "dispensed": true,
         "adherenceAssessed": true,
@@ -2873,15 +2887,15 @@
       }
     ],
     "maternalViralLoad": {
-      "dateSampleTaken": "2026-08-22",
+      "dateSampleTaken": "2026-08-23",
       "resultCopiesMl": "< 50",
       "suppressionStatus": "suppressed",
-      "dateResultReceived": "2026-09-02",
-      "nextVlDueDate": "2027-03-05",
+      "dateResultReceived": "2026-09-03",
+      "nextVlDueDate": "2027-03-06",
       "comments": "Target not detected / suppressed (<50 copies/mL). Low MTCT risk, continue standard regimen."
     },
     "carePlanSummary": {
-      "nextAppointmentDate": "2026-09-23",
+      "nextAppointmentDate": "2026-09-24",
       "activeMedications": [
         "TDF + 3TC + DTG (TLD)",
         "IFAS daily"
@@ -2890,8 +2904,8 @@
       "supportGroupReferred": true,
       "counselorName": "Sister Fatuma, MCH Clinic"
     },
-    "createdAt": "2026-04-11",
-    "updatedAt": "2026-09-02",
+    "createdAt": "2026-04-12",
+    "updatedAt": "2026-09-03",
     "demoDataset": "defense-demo-v1",
     "_path": "pmtctRecords/pmtct-demo-mother-mercy-faraja"
   },
@@ -2905,7 +2919,7 @@
     "maternalArtVisits": [
       {
         "visitNumber": 1,
-        "date": "2026-04-18",
+        "date": "2026-04-19",
         "regimen": "TDF + 3TC + DTG",
         "dispensed": true,
         "adherenceAssessed": true,
@@ -2913,7 +2927,7 @@
       },
       {
         "visitNumber": 2,
-        "date": "2026-06-27",
+        "date": "2026-06-28",
         "regimen": "TDF + 3TC + DTG",
         "dispensed": true,
         "adherenceAssessed": true,
@@ -2921,7 +2935,7 @@
       },
       {
         "visitNumber": 3,
-        "date": "2026-08-22",
+        "date": "2026-08-23",
         "regimen": "TDF + 3TC + DTG",
         "dispensed": true,
         "adherenceAssessed": true,
@@ -2929,15 +2943,15 @@
       }
     ],
     "maternalViralLoad": {
-      "dateSampleTaken": "2026-08-22",
+      "dateSampleTaken": "2026-08-23",
       "resultCopiesMl": "< 50",
       "suppressionStatus": "suppressed",
-      "dateResultReceived": "2026-09-02",
-      "nextVlDueDate": "2027-03-05",
+      "dateResultReceived": "2026-09-03",
+      "nextVlDueDate": "2027-03-06",
       "comments": "Target not detected / suppressed (<50 copies/mL). Low MTCT risk, continue standard regimen."
     },
     "carePlanSummary": {
-      "nextAppointmentDate": "2026-09-23",
+      "nextAppointmentDate": "2026-09-24",
       "activeMedications": [
         "TDF + 3TC + DTG (TLD)",
         "IFAS daily"
@@ -2946,8 +2960,8 @@
       "supportGroupReferred": true,
       "counselorName": "Sister Fatuma, MCH Clinic"
     },
-    "createdAt": "2026-04-11",
-    "updatedAt": "2026-09-02",
+    "createdAt": "2026-04-12",
+    "updatedAt": "2026-09-03",
     "demoDataset": "defense-demo-v1",
     "_path": "users/demo-mother-mercy-faraja/pmtctRecords/pmtct-demo-mother-mercy-faraja"
   },
@@ -2965,28 +2979,28 @@
       {
         "testType": "HIV",
         "milestone": "Booking ANC",
-        "dateTested": "2026-04-11",
+        "dateTested": "2026-04-12",
         "result": "reactive",
         "comments": "Known reactive on ART since 2021"
       },
       {
         "testType": "Syphilis",
         "milestone": "Booking ANC",
-        "dateTested": "2026-04-11",
+        "dateTested": "2026-04-12",
         "result": "non-reactive",
         "comments": "VDRL non-reactive"
       },
       {
         "testType": "Hepatitis B",
         "milestone": "Booking ANC",
-        "dateTested": "2026-04-11",
+        "dateTested": "2026-04-12",
         "result": "non-reactive",
         "comments": "HBsAg negative"
       },
       {
         "testType": "Syphilis",
         "milestone": "3rd Trimester (32 wks)",
-        "dateTested": "2026-08-29",
+        "dateTested": "2026-08-30",
         "result": "non-reactive",
         "comments": "Repeat syphilis negative"
       }
@@ -2994,7 +3008,7 @@
     "ultrasound1": {
       "scanNumber": 1,
       "windowLabel": "Ultrasound #1 (<24 weeks)",
-      "date": "2026-06-06",
+      "date": "2026-06-07",
       "gestationWeeks": 20,
       "placentaLocation": "Posterior",
       "fetalViability": true,
@@ -3003,14 +3017,14 @@
     "ultrasound2": {
       "scanNumber": 2,
       "windowLabel": "Ultrasound #2 (3rd trimester)",
-      "date": "2026-08-15",
+      "date": "2026-08-16",
       "gestationWeeks": 30,
       "placentaLocation": "Posterior clear of os",
       "fetalViability": true,
       "findings": "Cephalic presentation, estimated fetal weight 1.65kg, normal biophysical parameters."
     },
-    "createdAt": "2026-04-11",
-    "updatedAt": "2026-08-29",
+    "createdAt": "2026-04-12",
+    "updatedAt": "2026-08-30",
     "demoDataset": "defense-demo-v1",
     "_path": "antenatalProfiles/preg-demo-mother-mercy-faraja"
   },
@@ -3028,28 +3042,28 @@
       {
         "testType": "HIV",
         "milestone": "Booking ANC",
-        "dateTested": "2026-04-11",
+        "dateTested": "2026-04-12",
         "result": "reactive",
         "comments": "Known reactive on ART since 2021"
       },
       {
         "testType": "Syphilis",
         "milestone": "Booking ANC",
-        "dateTested": "2026-04-11",
+        "dateTested": "2026-04-12",
         "result": "non-reactive",
         "comments": "VDRL non-reactive"
       },
       {
         "testType": "Hepatitis B",
         "milestone": "Booking ANC",
-        "dateTested": "2026-04-11",
+        "dateTested": "2026-04-12",
         "result": "non-reactive",
         "comments": "HBsAg negative"
       },
       {
         "testType": "Syphilis",
         "milestone": "3rd Trimester (32 wks)",
-        "dateTested": "2026-08-29",
+        "dateTested": "2026-08-30",
         "result": "non-reactive",
         "comments": "Repeat syphilis negative"
       }
@@ -3057,7 +3071,7 @@
     "ultrasound1": {
       "scanNumber": 1,
       "windowLabel": "Ultrasound #1 (<24 weeks)",
-      "date": "2026-06-06",
+      "date": "2026-06-07",
       "gestationWeeks": 20,
       "placentaLocation": "Posterior",
       "fetalViability": true,
@@ -3066,21 +3080,21 @@
     "ultrasound2": {
       "scanNumber": 2,
       "windowLabel": "Ultrasound #2 (3rd trimester)",
-      "date": "2026-08-15",
+      "date": "2026-08-16",
       "gestationWeeks": 30,
       "placentaLocation": "Posterior clear of os",
       "fetalViability": true,
       "findings": "Cephalic presentation, estimated fetal weight 1.65kg, normal biophysical parameters."
     },
-    "createdAt": "2026-04-11",
-    "updatedAt": "2026-08-29",
+    "createdAt": "2026-04-12",
+    "updatedAt": "2026-08-30",
     "demoDataset": "defense-demo-v1",
     "_path": "pregnancies/preg-demo-mother-mercy-faraja/antenatalProfiles/profile"
   },
   "cancerScreenings/cs-demo-mother-mercy-faraja": {
     "id": "cs-demo-mother-mercy-faraja",
     "motherId": "demo-mother-mercy-faraja",
-    "date": "2025-07-05",
+    "date": "2025-07-06",
     "cervicalDone": true,
     "cervicalTestType": "VIA",
     "cervicalResult": "negative",
@@ -3090,15 +3104,15 @@
     "breastResult": "normal",
     "hasPositiveOrSuspicious": false,
     "notes": "Routine pre-pregnancy cervical & clinical breast exam screening clear.",
-    "createdAt": "2025-07-05",
-    "updatedAt": "2025-07-05",
+    "createdAt": "2025-07-06",
+    "updatedAt": "2025-07-06",
     "demoDataset": "defense-demo-v1",
     "_path": "cancerScreenings/cs-demo-mother-mercy-faraja"
   },
   "users/demo-mother-mercy-faraja/cancerScreenings/cs-demo-mother-mercy-faraja": {
     "id": "cs-demo-mother-mercy-faraja",
     "motherId": "demo-mother-mercy-faraja",
-    "date": "2025-07-05",
+    "date": "2025-07-06",
     "cervicalDone": true,
     "cervicalTestType": "VIA",
     "cervicalResult": "negative",
@@ -3108,8 +3122,8 @@
     "breastResult": "normal",
     "hasPositiveOrSuspicious": false,
     "notes": "Routine pre-pregnancy cervical & clinical breast exam screening clear.",
-    "createdAt": "2025-07-05",
-    "updatedAt": "2025-07-05",
+    "createdAt": "2025-07-06",
+    "updatedAt": "2025-07-06",
     "demoDataset": "defense-demo-v1",
     "_path": "users/demo-mother-mercy-faraja/cancerScreenings/cs-demo-mother-mercy-faraja"
   },
@@ -3120,8 +3134,8 @@
     "displayName": "Joy Baraka",
     "email": "joy.baraka@momhaven-demo.co.ke",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.556Z",
-    "updatedAt": "2026-09-05T08:07:09.556Z",
+    "createdAt": "2026-09-06T04:02:38.061Z",
+    "updatedAt": "2026-09-06T04:02:38.062Z",
     "_path": "users/demo-mother-joy-baraka"
   },
   "motherProfiles/demo-mother-joy-baraka": {
@@ -3131,8 +3145,8 @@
     "primaryHospitalFacilityId": "15400",
     "primaryHospitalName": "Jaramogi Oginga Odinga Teaching & Referral Hospital",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.567Z",
-    "updatedAt": "2026-09-05T08:07:09.567Z",
+    "createdAt": "2026-09-06T04:02:38.072Z",
+    "updatedAt": "2026-09-06T04:02:38.072Z",
     "_path": "motherProfiles/demo-mother-joy-baraka"
   },
   "healthContexts/demo-mother-joy-baraka": {
@@ -3149,15 +3163,15 @@
       "development"
     ],
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.578Z",
-    "updatedAt": "2026-09-05T08:07:09.578Z",
+    "createdAt": "2026-09-06T04:02:38.081Z",
+    "updatedAt": "2026-09-06T04:02:38.081Z",
     "_path": "healthContexts/demo-mother-joy-baraka"
   },
   "children/child-demo-mother-joy-baraka-1": {
     "id": "child-demo-mother-joy-baraka-1",
     "motherId": "demo-mother-joy-baraka",
     "name": "Amani Baraka",
-    "dateOfBirth": "2026-03-05",
+    "dateOfBirth": "2026-03-06",
     "sex": "female",
     "birthWeightKg": 3.2,
     "birthLengthCm": 49,
@@ -3165,8 +3179,8 @@
     "deliveryFacility": "Jaramogi Oginga Odinga Teaching & Referral Hospital",
     "deliveryType": "SVD",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.588Z",
-    "updatedAt": "2026-09-05T08:07:09.588Z",
+    "createdAt": "2026-09-06T04:02:38.091Z",
+    "updatedAt": "2026-09-06T04:02:38.091Z",
     "_path": "children/child-demo-mother-joy-baraka-1"
   },
   "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-bcg": {
@@ -3175,14 +3189,14 @@
     "vaccineName": "BCG",
     "dose": "Birth",
     "targetAge": "Birth",
-    "dueDate": "2026-03-05",
+    "dueDate": "2026-03-06",
     "status": "GIVEN",
-    "dateAdministered": "2026-03-05",
+    "dateAdministered": "2026-03-06",
     "facility": "JOOTRH",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.599Z",
-    "updatedAt": "2026-09-05T08:07:09.599Z",
+    "createdAt": "2026-09-06T04:02:38.100Z",
+    "updatedAt": "2026-09-06T04:02:38.100Z",
     "_path": "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-bcg"
   },
   "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-opv0": {
@@ -3191,14 +3205,14 @@
     "vaccineName": "OPV 0",
     "dose": "Birth",
     "targetAge": "Birth",
-    "dueDate": "2026-03-05",
+    "dueDate": "2026-03-06",
     "status": "GIVEN",
-    "dateAdministered": "2026-03-05",
+    "dateAdministered": "2026-03-06",
     "facility": "JOOTRH",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.612Z",
-    "updatedAt": "2026-09-05T08:07:09.612Z",
+    "createdAt": "2026-09-06T04:02:38.109Z",
+    "updatedAt": "2026-09-06T04:02:38.109Z",
     "_path": "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-opv0"
   },
   "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-penta1": {
@@ -3207,14 +3221,14 @@
     "vaccineName": "Pentavalent 1",
     "dose": "Dose 1",
     "targetAge": "6 weeks",
-    "dueDate": "2026-04-16",
+    "dueDate": "2026-04-17",
     "status": "GIVEN",
-    "dateAdministered": "2026-04-16",
+    "dateAdministered": "2026-04-17",
     "facility": "JOOTRH",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.630Z",
-    "updatedAt": "2026-09-05T08:07:09.630Z",
+    "createdAt": "2026-09-06T04:02:38.122Z",
+    "updatedAt": "2026-09-06T04:02:38.122Z",
     "_path": "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-penta1"
   },
   "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-opv1": {
@@ -3223,14 +3237,14 @@
     "vaccineName": "OPV 1",
     "dose": "Dose 1",
     "targetAge": "6 weeks",
-    "dueDate": "2026-04-16",
+    "dueDate": "2026-04-17",
     "status": "GIVEN",
-    "dateAdministered": "2026-04-16",
+    "dateAdministered": "2026-04-17",
     "facility": "JOOTRH",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.641Z",
-    "updatedAt": "2026-09-05T08:07:09.641Z",
+    "createdAt": "2026-09-06T04:02:38.130Z",
+    "updatedAt": "2026-09-06T04:02:38.130Z",
     "_path": "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-opv1"
   },
   "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-pcv1": {
@@ -3239,14 +3253,14 @@
     "vaccineName": "PCV 1",
     "dose": "Dose 1",
     "targetAge": "6 weeks",
-    "dueDate": "2026-04-16",
+    "dueDate": "2026-04-17",
     "status": "GIVEN",
-    "dateAdministered": "2026-04-16",
+    "dateAdministered": "2026-04-17",
     "facility": "JOOTRH",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.652Z",
-    "updatedAt": "2026-09-05T08:07:09.652Z",
+    "createdAt": "2026-09-06T04:02:38.140Z",
+    "updatedAt": "2026-09-06T04:02:38.140Z",
     "_path": "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-pcv1"
   },
   "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-rota1": {
@@ -3255,14 +3269,14 @@
     "vaccineName": "Rotavirus 1",
     "dose": "Dose 1",
     "targetAge": "6 weeks",
-    "dueDate": "2026-04-16",
+    "dueDate": "2026-04-17",
     "status": "GIVEN",
-    "dateAdministered": "2026-04-16",
+    "dateAdministered": "2026-04-17",
     "facility": "JOOTRH",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.662Z",
-    "updatedAt": "2026-09-05T08:07:09.662Z",
+    "createdAt": "2026-09-06T04:02:38.148Z",
+    "updatedAt": "2026-09-06T04:02:38.148Z",
     "_path": "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-rota1"
   },
   "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-penta2": {
@@ -3271,14 +3285,14 @@
     "vaccineName": "Pentavalent 2",
     "dose": "Dose 2",
     "targetAge": "10 weeks",
-    "dueDate": "2026-05-14",
+    "dueDate": "2026-05-15",
     "status": "GIVEN",
-    "dateAdministered": "2026-05-14",
+    "dateAdministered": "2026-05-15",
     "facility": "JOOTRH",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.673Z",
-    "updatedAt": "2026-09-05T08:07:09.673Z",
+    "createdAt": "2026-09-06T04:02:38.158Z",
+    "updatedAt": "2026-09-06T04:02:38.158Z",
     "_path": "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-penta2"
   },
   "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-opv2": {
@@ -3287,14 +3301,14 @@
     "vaccineName": "OPV 2",
     "dose": "Dose 2",
     "targetAge": "10 weeks",
-    "dueDate": "2026-05-14",
+    "dueDate": "2026-05-15",
     "status": "GIVEN",
-    "dateAdministered": "2026-05-14",
+    "dateAdministered": "2026-05-15",
     "facility": "JOOTRH",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.684Z",
-    "updatedAt": "2026-09-05T08:07:09.684Z",
+    "createdAt": "2026-09-06T04:02:38.166Z",
+    "updatedAt": "2026-09-06T04:02:38.166Z",
     "_path": "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-opv2"
   },
   "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-pcv2": {
@@ -3303,14 +3317,14 @@
     "vaccineName": "PCV 2",
     "dose": "Dose 2",
     "targetAge": "10 weeks",
-    "dueDate": "2026-05-14",
+    "dueDate": "2026-05-15",
     "status": "GIVEN",
-    "dateAdministered": "2026-05-14",
+    "dateAdministered": "2026-05-15",
     "facility": "JOOTRH",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.696Z",
-    "updatedAt": "2026-09-05T08:07:09.696Z",
+    "createdAt": "2026-09-06T04:02:38.177Z",
+    "updatedAt": "2026-09-06T04:02:38.177Z",
     "_path": "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-pcv2"
   },
   "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-rota2": {
@@ -3319,14 +3333,14 @@
     "vaccineName": "Rotavirus 2",
     "dose": "Dose 2",
     "targetAge": "10 weeks",
-    "dueDate": "2026-05-14",
+    "dueDate": "2026-05-15",
     "status": "GIVEN",
-    "dateAdministered": "2026-05-14",
+    "dateAdministered": "2026-05-15",
     "facility": "JOOTRH",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.707Z",
-    "updatedAt": "2026-09-05T08:07:09.707Z",
+    "createdAt": "2026-09-06T04:02:38.188Z",
+    "updatedAt": "2026-09-06T04:02:38.188Z",
     "_path": "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-rota2"
   },
   "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-penta3": {
@@ -3335,14 +3349,14 @@
     "vaccineName": "Pentavalent 3",
     "dose": "Dose 3",
     "targetAge": "14 weeks",
-    "dueDate": "2026-06-11",
+    "dueDate": "2026-06-12",
     "status": "GIVEN",
-    "dateAdministered": "2026-06-11",
+    "dateAdministered": "2026-06-12",
     "facility": "JOOTRH",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.718Z",
-    "updatedAt": "2026-09-05T08:07:09.718Z",
+    "createdAt": "2026-09-06T04:02:38.198Z",
+    "updatedAt": "2026-09-06T04:02:38.198Z",
     "_path": "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-penta3"
   },
   "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-opv3": {
@@ -3351,14 +3365,14 @@
     "vaccineName": "OPV 3",
     "dose": "Dose 3",
     "targetAge": "14 weeks",
-    "dueDate": "2026-06-11",
+    "dueDate": "2026-06-12",
     "status": "GIVEN",
-    "dateAdministered": "2026-06-11",
+    "dateAdministered": "2026-06-12",
     "facility": "JOOTRH",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.728Z",
-    "updatedAt": "2026-09-05T08:07:09.728Z",
+    "createdAt": "2026-09-06T04:02:38.211Z",
+    "updatedAt": "2026-09-06T04:02:38.211Z",
     "_path": "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-opv3"
   },
   "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-pcv3": {
@@ -3367,14 +3381,14 @@
     "vaccineName": "PCV 3",
     "dose": "Dose 3",
     "targetAge": "14 weeks",
-    "dueDate": "2026-06-11",
+    "dueDate": "2026-06-12",
     "status": "GIVEN",
-    "dateAdministered": "2026-06-11",
+    "dateAdministered": "2026-06-12",
     "facility": "JOOTRH",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.740Z",
-    "updatedAt": "2026-09-05T08:07:09.740Z",
+    "createdAt": "2026-09-06T04:02:38.224Z",
+    "updatedAt": "2026-09-06T04:02:38.224Z",
     "_path": "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-pcv3"
   },
   "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-ipv": {
@@ -3383,14 +3397,14 @@
     "vaccineName": "IPV",
     "dose": "Dose 1",
     "targetAge": "14 weeks",
-    "dueDate": "2026-06-11",
+    "dueDate": "2026-06-12",
     "status": "GIVEN",
-    "dateAdministered": "2026-06-11",
+    "dateAdministered": "2026-06-12",
     "facility": "JOOTRH",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.751Z",
-    "updatedAt": "2026-09-05T08:07:09.751Z",
+    "createdAt": "2026-09-06T04:02:38.233Z",
+    "updatedAt": "2026-09-06T04:02:38.233Z",
     "_path": "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-ipv"
   },
   "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-vita": {
@@ -3399,72 +3413,72 @@
     "vaccineName": "Vitamin A (100,000 IU)",
     "dose": "Dose 1",
     "targetAge": "6 months",
-    "dueDate": "2026-09-10",
+    "dueDate": "2026-09-11",
     "status": "SCHEDULED",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.762Z",
-    "updatedAt": "2026-09-05T08:07:09.762Z",
+    "createdAt": "2026-09-06T04:02:38.245Z",
+    "updatedAt": "2026-09-06T04:02:38.245Z",
     "_path": "children/child-demo-mother-joy-baraka-1/immunizationRecords/imm-child-demo-mother-joy-baraka-1-vita"
   },
   "children/child-demo-mother-joy-baraka-1/growthMeasurements/growth-child-demo-mother-joy-baraka-1-birth": {
     "id": "growth-child-demo-mother-joy-baraka-1-birth",
-    "date": "2026-03-05",
+    "date": "2026-03-06",
     "weightKg": 3.2,
     "heightCm": 49,
     "headCircumferenceCm": 34,
     "notes": "Birth weight",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.773Z",
+    "createdAt": "2026-09-06T04:02:38.260Z",
     "_path": "children/child-demo-mother-joy-baraka-1/growthMeasurements/growth-child-demo-mother-joy-baraka-1-birth"
   },
   "children/child-demo-mother-joy-baraka-1/growthMeasurements/growth-child-demo-mother-joy-baraka-1-6w": {
     "id": "growth-child-demo-mother-joy-baraka-1-6w",
-    "date": "2026-04-16",
+    "date": "2026-04-17",
     "weightKg": 4.4,
     "heightCm": 54.5,
     "muacCm": 12.8,
     "notes": "6-week review",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.782Z",
+    "createdAt": "2026-09-06T04:02:38.268Z",
     "_path": "children/child-demo-mother-joy-baraka-1/growthMeasurements/growth-child-demo-mother-joy-baraka-1-6w"
   },
   "children/child-demo-mother-joy-baraka-1/growthMeasurements/growth-child-demo-mother-joy-baraka-1-10w": {
     "id": "growth-child-demo-mother-joy-baraka-1-10w",
-    "date": "2026-05-14",
+    "date": "2026-05-15",
     "weightKg": 5.3,
     "heightCm": 58,
     "muacCm": 13.4,
     "notes": "10-week review",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.793Z",
+    "createdAt": "2026-09-06T04:02:38.284Z",
     "_path": "children/child-demo-mother-joy-baraka-1/growthMeasurements/growth-child-demo-mother-joy-baraka-1-10w"
   },
   "children/child-demo-mother-joy-baraka-1/growthMeasurements/growth-child-demo-mother-joy-baraka-1-14w": {
     "id": "growth-child-demo-mother-joy-baraka-1-14w",
-    "date": "2026-06-11",
+    "date": "2026-06-12",
     "weightKg": 6.2,
     "heightCm": 62,
     "muacCm": 13.9,
     "notes": "14-week review",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.805Z",
+    "createdAt": "2026-09-06T04:02:38.293Z",
     "_path": "children/child-demo-mother-joy-baraka-1/growthMeasurements/growth-child-demo-mother-joy-baraka-1-14w"
   },
   "children/child-demo-mother-joy-baraka-1/growthMeasurements/growth-child-demo-mother-joy-baraka-1-6m": {
     "id": "growth-child-demo-mother-joy-baraka-1-6m",
-    "date": "2026-08-31",
+    "date": "2026-09-01",
     "weightKg": 7.4,
     "heightCm": 66,
     "muacCm": 14.3,
     "notes": "6-month growth monitoring - normal green band",
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.821Z",
+    "createdAt": "2026-09-06T04:02:38.306Z",
     "_path": "children/child-demo-mother-joy-baraka-1/growthMeasurements/growth-child-demo-mother-joy-baraka-1-6m"
   },
   "reminders/rem-demo-mother-joy-baraka-6m-wellchild": {
@@ -3472,12 +3486,12 @@
     "userId": "demo-mother-joy-baraka",
     "title": "6-Month Well-Child Visit & Vitamin A Supplementation",
     "description": "Administer Vitamin A dose 1, complementary feeding counseling, and growth monitoring.",
-    "dueDate": "2026-09-10",
+    "dueDate": "2026-09-11",
     "category": "immunization",
     "completed": false,
     "childId": "child-demo-mother-joy-baraka-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:09.835Z",
+    "createdAt": "2026-09-06T04:02:38.315Z",
     "_path": "reminders/rem-demo-mother-joy-baraka-6m-wellchild"
   },
   "users/demo-mother-faith-upendo": {
@@ -3487,8 +3501,8 @@
     "displayName": "Faith Upendo",
     "email": "faith.upendo@momhaven-demo.co.ke",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:10.408Z",
-    "updatedAt": "2026-09-05T08:07:10.408Z",
+    "createdAt": "2026-09-06T04:02:38.828Z",
+    "updatedAt": "2026-09-06T04:02:38.829Z",
     "_path": "users/demo-mother-faith-upendo"
   },
   "motherProfiles/demo-mother-faith-upendo": {
@@ -3501,8 +3515,8 @@
     "emergencyContactPhone": "+254733000003",
     "emergencyContactRelationship": "Mother",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:10.419Z",
-    "updatedAt": "2026-09-05T08:07:10.419Z",
+    "createdAt": "2026-09-06T04:02:38.837Z",
+    "updatedAt": "2026-09-06T04:02:38.837Z",
     "_path": "motherProfiles/demo-mother-faith-upendo"
   },
   "healthContexts/demo-mother-faith-upendo": {
@@ -3519,15 +3533,15 @@
       "nutrition"
     ],
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:10.430Z",
-    "updatedAt": "2026-09-05T08:07:10.430Z",
+    "createdAt": "2026-09-06T04:02:38.846Z",
+    "updatedAt": "2026-09-06T04:02:38.846Z",
     "_path": "healthContexts/demo-mother-faith-upendo"
   },
   "children/child-demo-mother-faith-upendo-1": {
     "id": "child-demo-mother-faith-upendo-1",
     "motherId": "demo-mother-faith-upendo",
     "name": "Ethan Upendo",
-    "dateOfBirth": "2024-09-05",
+    "dateOfBirth": "2024-09-06",
     "sex": "male",
     "birthWeightKg": 3.5,
     "birthLengthCm": 51,
@@ -3535,8 +3549,8 @@
     "deliveryFacility": "Nakuru Level 5 Hospital",
     "deliveryType": "SVD",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:10.441Z",
-    "updatedAt": "2026-09-05T08:07:10.441Z",
+    "createdAt": "2026-09-06T04:02:38.854Z",
+    "updatedAt": "2026-09-06T04:02:38.854Z",
     "_path": "children/child-demo-mother-faith-upendo-1"
   },
   "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-bcg": {
@@ -3545,13 +3559,13 @@
     "vaccineName": "BCG",
     "dose": "Birth",
     "targetAge": "Birth",
-    "dueDate": "2024-09-05",
+    "dueDate": "2024-09-06",
     "status": "GIVEN",
-    "dateAdministered": "2024-09-05",
+    "dateAdministered": "2024-09-06",
     "childId": "child-demo-mother-faith-upendo-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:10.452Z",
-    "updatedAt": "2026-09-05T08:07:10.452Z",
+    "createdAt": "2026-09-06T04:02:38.862Z",
+    "updatedAt": "2026-09-06T04:02:38.862Z",
     "_path": "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-bcg"
   },
   "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-opv0": {
@@ -3560,13 +3574,13 @@
     "vaccineName": "OPV 0",
     "dose": "Birth",
     "targetAge": "Birth",
-    "dueDate": "2024-09-05",
+    "dueDate": "2024-09-06",
     "status": "GIVEN",
-    "dateAdministered": "2024-09-05",
+    "dateAdministered": "2024-09-06",
     "childId": "child-demo-mother-faith-upendo-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:10.465Z",
-    "updatedAt": "2026-09-05T08:07:10.465Z",
+    "createdAt": "2026-09-06T04:02:38.870Z",
+    "updatedAt": "2026-09-06T04:02:38.870Z",
     "_path": "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-opv0"
   },
   "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-penta1": {
@@ -3575,13 +3589,13 @@
     "vaccineName": "Pentavalent 1",
     "dose": "Dose 1",
     "targetAge": "6 weeks",
-    "dueDate": "2024-10-17",
+    "dueDate": "2024-10-18",
     "status": "GIVEN",
-    "dateAdministered": "2024-10-17",
+    "dateAdministered": "2024-10-18",
     "childId": "child-demo-mother-faith-upendo-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:10.476Z",
-    "updatedAt": "2026-09-05T08:07:10.476Z",
+    "createdAt": "2026-09-06T04:02:38.879Z",
+    "updatedAt": "2026-09-06T04:02:38.879Z",
     "_path": "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-penta1"
   },
   "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-penta2": {
@@ -3590,13 +3604,13 @@
     "vaccineName": "Pentavalent 2",
     "dose": "Dose 2",
     "targetAge": "10 weeks",
-    "dueDate": "2024-11-14",
+    "dueDate": "2024-11-15",
     "status": "GIVEN",
-    "dateAdministered": "2024-11-14",
+    "dateAdministered": "2024-11-15",
     "childId": "child-demo-mother-faith-upendo-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:10.488Z",
-    "updatedAt": "2026-09-05T08:07:10.488Z",
+    "createdAt": "2026-09-06T04:02:38.888Z",
+    "updatedAt": "2026-09-06T04:02:38.888Z",
     "_path": "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-penta2"
   },
   "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-penta3": {
@@ -3605,13 +3619,13 @@
     "vaccineName": "Pentavalent 3",
     "dose": "Dose 3",
     "targetAge": "14 weeks",
-    "dueDate": "2024-12-12",
+    "dueDate": "2024-12-13",
     "status": "GIVEN",
-    "dateAdministered": "2024-12-12",
+    "dateAdministered": "2024-12-13",
     "childId": "child-demo-mother-faith-upendo-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:10.499Z",
-    "updatedAt": "2026-09-05T08:07:10.499Z",
+    "createdAt": "2026-09-06T04:02:38.898Z",
+    "updatedAt": "2026-09-06T04:02:38.898Z",
     "_path": "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-penta3"
   },
   "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-mr1": {
@@ -3620,13 +3634,13 @@
     "vaccineName": "Measles-Rubella 1",
     "dose": "Dose 1",
     "targetAge": "9 months",
-    "dueDate": "2025-06-02",
+    "dueDate": "2025-06-03",
     "status": "GIVEN",
-    "dateAdministered": "2025-06-07",
+    "dateAdministered": "2025-06-08",
     "childId": "child-demo-mother-faith-upendo-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:10.511Z",
-    "updatedAt": "2026-09-05T08:07:10.511Z",
+    "createdAt": "2026-09-06T04:02:38.906Z",
+    "updatedAt": "2026-09-06T04:02:38.906Z",
     "_path": "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-mr1"
   },
   "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-mr2": {
@@ -3635,13 +3649,13 @@
     "vaccineName": "Measles-Rubella 2",
     "dose": "Dose 2 (18 months)",
     "targetAge": "18 months",
-    "dueDate": "2026-02-27",
+    "dueDate": "2026-02-28",
     "status": "MISSED",
     "notes": "Missed due to rural travel; needs urgent catch-up vaccination dose.",
     "childId": "child-demo-mother-faith-upendo-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:10.521Z",
-    "updatedAt": "2026-09-05T08:07:10.521Z",
+    "createdAt": "2026-09-06T04:02:38.914Z",
+    "updatedAt": "2026-09-06T04:02:38.914Z",
     "_path": "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-mr2"
   },
   "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-deworm24m": {
@@ -3650,12 +3664,12 @@
     "vaccineName": "Deworming (Albendazole 200mg)",
     "dose": "24 months",
     "targetAge": "24 months",
-    "dueDate": "2026-08-26",
+    "dueDate": "2026-08-27",
     "status": "OVERDUE",
     "childId": "child-demo-mother-faith-upendo-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:10.533Z",
-    "updatedAt": "2026-09-05T08:07:10.533Z",
+    "createdAt": "2026-09-06T04:02:38.923Z",
+    "updatedAt": "2026-09-06T04:02:38.923Z",
     "_path": "children/child-demo-mother-faith-upendo-1/immunizationRecords/imm-child-demo-mother-faith-upendo-1-deworm24m"
   },
   "children/child-demo-mother-faith-upendo-1/toothEruptions/current": {
@@ -3674,7 +3688,7 @@
     ],
     "dentalCareAdvised": true,
     "notes": "Clean oral cavity, advised fluoride toothpaste brushing twice daily.",
-    "createdAt": "2026-08-05",
+    "createdAt": "2026-08-06",
     "demoDataset": "defense-demo-v1",
     "_path": "children/child-demo-mother-faith-upendo-1/toothEruptions/current"
   },
@@ -3694,7 +3708,7 @@
     ],
     "dentalCareAdvised": true,
     "notes": "Clean oral cavity, advised fluoride toothpaste brushing twice daily.",
-    "createdAt": "2026-08-05",
+    "createdAt": "2026-08-06",
     "motherId": "demo-mother-faith-upendo",
     "demoDataset": "defense-demo-v1",
     "_path": "toothEruptions/child-demo-mother-faith-upendo-1"
@@ -3702,7 +3716,7 @@
   "children/child-demo-mother-faith-upendo-1/illnessRecords/ill-child-demo-mother-faith-upendo-1-1": {
     "id": "ill-child-demo-mother-faith-upendo-1-1",
     "childId": "child-demo-mother-faith-upendo-1",
-    "date": "2026-04-05",
+    "date": "2026-04-06",
     "symptoms": [
       "High fever",
       "Cough",
@@ -3715,7 +3729,7 @@
     ],
     "careActionTaken": "Urgent presentation to Nakuru Level 5 Hospital. Treated for acute febrile illness with oral rehydration and antibiotics. Full recovery.",
     "facilityVisited": "Nakuru Level 5 Hospital",
-    "createdAt": "2026-04-05",
+    "createdAt": "2026-04-06",
     "demoDataset": "defense-demo-v1",
     "_path": "children/child-demo-mother-faith-upendo-1/illnessRecords/ill-child-demo-mother-faith-upendo-1-1"
   },
@@ -3725,7 +3739,7 @@
     "milestoneId": "walk_indep",
     "category": "gross_motor",
     "title": "Walking independently without support",
-    "achievedDate": "2025-09-05",
+    "achievedDate": "2025-09-06",
     "status": "achieved",
     "demoDataset": "defense-demo-v1",
     "_path": "children/child-demo-mother-faith-upendo-1/milestoneRecords/ms-child-demo-mother-faith-upendo-1-1"
@@ -3736,7 +3750,7 @@
     "milestoneId": "talk_sentences",
     "category": "speech_language",
     "title": "Speaking 2-3 word sentences",
-    "achievedDate": "2026-05-05",
+    "achievedDate": "2026-05-06",
     "status": "achieved",
     "demoDataset": "defense-demo-v1",
     "_path": "children/child-demo-mother-faith-upendo-1/milestoneRecords/ms-child-demo-mother-faith-upendo-1-2"
@@ -3747,7 +3761,7 @@
     "milestoneId": "spoon_use",
     "category": "fine_motor",
     "title": "Uses spoon independently to eat",
-    "achievedDate": "2026-07-05",
+    "achievedDate": "2026-07-06",
     "status": "achieved",
     "demoDataset": "defense-demo-v1",
     "_path": "children/child-demo-mother-faith-upendo-1/milestoneRecords/ms-child-demo-mother-faith-upendo-1-3"
@@ -3757,12 +3771,12 @@
     "userId": "demo-mother-faith-upendo",
     "title": "Overdue: 18-Month Measles-Rubella 2 Catch-Up Dose",
     "description": "Ethan has missed the 18-month MR2 immunization booster. Visit Nakuru Level 5 Hospital or nearest dispensary for immediate catch-up.",
-    "dueDate": "2026-08-22",
+    "dueDate": "2026-08-23",
     "category": "immunization",
     "completed": false,
     "childId": "child-demo-mother-faith-upendo-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:10.642Z",
+    "createdAt": "2026-09-06T04:02:38.991Z",
     "_path": "reminders/rem-demo-mother-faith-upendo-mr2-overdue"
   },
   "reminders/rem-demo-mother-faith-upendo-deworm-overdue": {
@@ -3770,12 +3784,12 @@
     "userId": "demo-mother-faith-upendo",
     "title": "Overdue: 24-Month Vitamin A & Deworming Tablet",
     "description": "Scheduled semi-annual deworming (Albendazole) and Vitamin A capsule due.",
-    "dueDate": "2026-08-29",
+    "dueDate": "2026-08-30",
     "category": "immunization",
     "completed": false,
     "childId": "child-demo-mother-faith-upendo-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:10.654Z",
+    "createdAt": "2026-09-06T04:02:39.000Z",
     "_path": "reminders/rem-demo-mother-faith-upendo-deworm-overdue"
   },
   "users/demo-mother-brenda-imani": {
@@ -3785,8 +3799,8 @@
     "displayName": "Brenda Imani",
     "email": "brenda.imani@momhaven-demo.co.ke",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:11.215Z",
-    "updatedAt": "2026-09-05T08:07:11.215Z",
+    "createdAt": "2026-09-06T04:02:39.663Z",
+    "updatedAt": "2026-09-06T04:02:39.663Z",
     "_path": "users/demo-mother-brenda-imani"
   },
   "motherProfiles/demo-mother-brenda-imani": {
@@ -3799,8 +3813,8 @@
     "emergencyContactPhone": "+254712000004",
     "emergencyContactRelationship": "Partner",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:11.226Z",
-    "updatedAt": "2026-09-05T08:07:11.226Z",
+    "createdAt": "2026-09-06T04:02:39.672Z",
+    "updatedAt": "2026-09-06T04:02:39.672Z",
     "_path": "motherProfiles/demo-mother-brenda-imani"
   },
   "healthContexts/demo-mother-brenda-imani": {
@@ -3817,35 +3831,35 @@
       "newborn_care"
     ],
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:11.238Z",
-    "updatedAt": "2026-09-05T08:07:11.238Z",
+    "createdAt": "2026-09-06T04:02:39.682Z",
+    "updatedAt": "2026-09-06T04:02:39.682Z",
     "_path": "healthContexts/demo-mother-brenda-imani"
   },
   "pregnancies/preg-demo-mother-brenda-imani-completed": {
     "id": "preg-demo-mother-brenda-imani-completed",
     "motherId": "demo-mother-brenda-imani",
     "status": "completed",
-    "lmp": "2025-11-22",
-    "edd": "2026-08-29",
+    "lmp": "2025-11-23",
+    "edd": "2026-08-30",
     "gestationalAgeWeeks": 40,
     "gravida": 1,
     "parity": 1,
     "outcomeDetails": {
-      "deliveryDate": "2026-09-01",
+      "deliveryDate": "2026-09-02",
       "deliveryType": "SVD",
       "outcomeType": "Live Birth",
       "facilityName": "Moi Teaching and Referral Hospital (MTRH)"
     },
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:11.254Z",
-    "updatedAt": "2026-09-05T08:07:11.254Z",
+    "createdAt": "2026-09-06T04:02:39.691Z",
+    "updatedAt": "2026-09-06T04:02:39.691Z",
     "_path": "pregnancies/preg-demo-mother-brenda-imani-completed"
   },
   "children/child-demo-mother-brenda-imani-1": {
     "id": "child-demo-mother-brenda-imani-1",
     "motherId": "demo-mother-brenda-imani",
     "name": "Jabari Imani",
-    "dateOfBirth": "2026-09-01",
+    "dateOfBirth": "2026-09-02",
     "sex": "male",
     "birthWeightKg": 3.4,
     "birthLengthCm": 50,
@@ -3853,8 +3867,8 @@
     "deliveryFacility": "Moi Teaching and Referral Hospital (MTRH)",
     "deliveryType": "SVD",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:11.265Z",
-    "updatedAt": "2026-09-05T08:07:11.265Z",
+    "createdAt": "2026-09-06T04:02:39.699Z",
+    "updatedAt": "2026-09-06T04:02:39.699Z",
     "_path": "children/child-demo-mother-brenda-imani-1"
   },
   "children/child-demo-mother-brenda-imani-1/immunizationRecords/imm-child-demo-mother-brenda-imani-1-bcg": {
@@ -3863,14 +3877,14 @@
     "vaccineName": "BCG",
     "dose": "Birth",
     "targetAge": "Birth",
-    "dueDate": "2026-09-01",
+    "dueDate": "2026-09-02",
     "status": "GIVEN",
-    "dateAdministered": "2026-09-01",
+    "dateAdministered": "2026-09-02",
     "facility": "MTRH",
     "childId": "child-demo-mother-brenda-imani-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:11.276Z",
-    "updatedAt": "2026-09-05T08:07:11.276Z",
+    "createdAt": "2026-09-06T04:02:39.710Z",
+    "updatedAt": "2026-09-06T04:02:39.710Z",
     "_path": "children/child-demo-mother-brenda-imani-1/immunizationRecords/imm-child-demo-mother-brenda-imani-1-bcg"
   },
   "children/child-demo-mother-brenda-imani-1/immunizationRecords/imm-child-demo-mother-brenda-imani-1-opv0": {
@@ -3879,14 +3893,14 @@
     "vaccineName": "OPV 0",
     "dose": "Birth",
     "targetAge": "Birth",
-    "dueDate": "2026-09-01",
+    "dueDate": "2026-09-02",
     "status": "GIVEN",
-    "dateAdministered": "2026-09-01",
+    "dateAdministered": "2026-09-02",
     "facility": "MTRH",
     "childId": "child-demo-mother-brenda-imani-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:11.288Z",
-    "updatedAt": "2026-09-05T08:07:11.288Z",
+    "createdAt": "2026-09-06T04:02:39.719Z",
+    "updatedAt": "2026-09-06T04:02:39.719Z",
     "_path": "children/child-demo-mother-brenda-imani-1/immunizationRecords/imm-child-demo-mother-brenda-imani-1-opv0"
   },
   "children/child-demo-mother-brenda-imani-1/immunizationRecords/imm-child-demo-mother-brenda-imani-1-penta1": {
@@ -3895,12 +3909,12 @@
     "vaccineName": "Pentavalent 1",
     "dose": "Dose 1",
     "targetAge": "6 weeks",
-    "dueDate": "2026-10-10",
+    "dueDate": "2026-10-11",
     "status": "SCHEDULED",
     "childId": "child-demo-mother-brenda-imani-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:11.299Z",
-    "updatedAt": "2026-09-05T08:07:11.299Z",
+    "createdAt": "2026-09-06T04:02:39.728Z",
+    "updatedAt": "2026-09-06T04:02:39.728Z",
     "_path": "children/child-demo-mother-brenda-imani-1/immunizationRecords/imm-child-demo-mother-brenda-imani-1-penta1"
   },
   "children/child-demo-mother-brenda-imani-1/newbornRecords/child-demo-mother-brenda-imani-1": {
@@ -3911,7 +3925,7 @@
     "apgarScore": "9/10",
     "deliveryType": "SVD",
     "notes": "Cried vigorously at birth, skin-to-skin contact immediate, early breastfeeding latch successful.",
-    "createdAt": "2026-09-01",
+    "createdAt": "2026-09-02",
     "demoDataset": "defense-demo-v1",
     "_path": "children/child-demo-mother-brenda-imani-1/newbornRecords/child-demo-mother-brenda-imani-1"
   },
@@ -3919,7 +3933,7 @@
     "id": "child-demo-mother-brenda-imani-1",
     "childId": "child-demo-mother-brenda-imani-1",
     "examWindow": "within48h",
-    "date": "2026-09-02",
+    "date": "2026-09-03",
     "headSize": "normal",
     "mouthGums": "normal",
     "ears": "normal",
@@ -3931,7 +3945,7 @@
     "anus": "perforate",
     "hasAbnormality": false,
     "notes": "Complete MOH congenital assessment normal. No birth injuries or defects detected.",
-    "createdAt": "2026-09-02",
+    "createdAt": "2026-09-03",
     "demoDataset": "defense-demo-v1",
     "_path": "children/child-demo-mother-brenda-imani-1/congenitalExams/child-demo-mother-brenda-imani-1"
   },
@@ -3939,10 +3953,32 @@
     "id": "pnc-child-demo-mother-brenda-imani-1-48h",
     "childId": "child-demo-mother-brenda-imani-1",
     "visit": "48h",
-    "date": "2026-09-03",
+    "date": "2026-09-04",
+    "bloodPressure": "115/72",
+    "systolicBp": 115,
+    "diastolicBp": 72,
+    "temperature": 36.6,
+    "pulse": 76,
+    "respiratoryRate": 18,
+    "uterineInvolution": "Well Involuted",
+    "lochiaAmount": "normal",
+    "lochiaColour": "rubra",
+    "lochiaSmell": "normal",
+    "haemoglobin": 12.2,
+    "hivRetestDone": true,
+    "hivRetestResult": "non-reactive",
+    "familyPlanningCounselled": true,
+    "fpMethod": "Exclusive Breastfeeding (LAM)",
+    "mentalHealthScreenDone": true,
+    "mentalHealthScreenResult": "no_concerns",
+    "babyWeight": 3.35,
+    "babyWeightKg": 3.35,
+    "babyTemp": 36.7,
+    "cordCondition": "clean_dry",
+    "infantFeedingMethod": "Exclusive Breastfeeding (EBF)",
     "motherFindings": "BP 115/72, pulse 76, fundus well contracted at umbilicus, normal lochia rubra, no perineal tear, lactation initiated.",
     "babyFindings": "Weight 3.35kg, warm, active suckling, cord stump clean and dry, no neonatal jaundice, pass meconium and urine.",
-    "createdAt": "2026-09-03",
+    "createdAt": "2026-09-04",
     "demoDataset": "defense-demo-v1",
     "_path": "children/child-demo-mother-brenda-imani-1/postnatalEncounters/pnc-child-demo-mother-brenda-imani-1-48h"
   },
@@ -3950,7 +3986,7 @@
     "id": "child-demo-mother-brenda-imani-1",
     "childId": "child-demo-mother-brenda-imani-1",
     "ageStage": "birth",
-    "date": "2026-09-02",
+    "date": "2026-09-03",
     "teoGivenAtBirth": true,
     "pupil": "black",
     "sightFollowing": "present",
@@ -3958,7 +3994,7 @@
     "isUrgentWhitePupil": false,
     "hasAbnormality": false,
     "notes": "Prophylactic 1% Tetracycline Eye Ointment administered at delivery; normal red reflex examined.",
-    "createdAt": "2026-09-02",
+    "createdAt": "2026-09-03",
     "demoDataset": "defense-demo-v1",
     "_path": "children/child-demo-mother-brenda-imani-1/eyeCareAssessments/child-demo-mother-brenda-imani-1"
   },
@@ -3966,7 +4002,7 @@
     "id": "child-demo-mother-brenda-imani-1",
     "childId": "child-demo-mother-brenda-imani-1",
     "ageStage": "birth",
-    "date": "2026-09-02",
+    "date": "2026-09-03",
     "teoGivenAtBirth": true,
     "pupil": "black",
     "sightFollowing": "present",
@@ -3974,7 +4010,7 @@
     "isUrgentWhitePupil": false,
     "hasAbnormality": false,
     "notes": "Prophylactic 1% Tetracycline Eye Ointment administered at delivery; normal red reflex examined.",
-    "createdAt": "2026-09-02",
+    "createdAt": "2026-09-03",
     "motherId": "demo-mother-brenda-imani",
     "demoDataset": "defense-demo-v1",
     "_path": "eyeCareAssessments/child-demo-mother-brenda-imani-1"
@@ -3984,13 +4020,13 @@
     "userId": "demo-mother-brenda-imani",
     "title": "PNC Contact 2 (1-2 Weeks Postnatal Clinical Review)",
     "description": "Maternal recovery check (lochia, involution, blood pressure) and newborn cord & feeding assessment at MTRH.",
-    "dueDate": "2026-09-11",
+    "dueDate": "2026-09-12",
     "category": "pnc",
     "completed": false,
     "sharedWithPartner": true,
     "childId": "child-demo-mother-brenda-imani-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:11.368Z",
+    "createdAt": "2026-09-06T04:02:39.785Z",
     "_path": "reminders/rem-demo-mother-brenda-imani-pnc2"
   },
   "reminders/rem-demo-mother-brenda-imani-penta1": {
@@ -3998,13 +4034,13 @@
     "userId": "demo-mother-brenda-imani",
     "title": "6-Week Immunization (Penta 1, PCV 1, Rota 1, OPV 1)",
     "description": "First KEPI routine infant immunizations at MTRH MCH clinic.",
-    "dueDate": "2026-10-10",
+    "dueDate": "2026-10-11",
     "category": "immunization",
     "completed": false,
     "sharedWithPartner": true,
     "childId": "child-demo-mother-brenda-imani-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:11.379Z",
+    "createdAt": "2026-09-06T04:02:39.800Z",
     "_path": "reminders/rem-demo-mother-brenda-imani-penta1"
   },
   "partnerRelationships/demo-mother-brenda-imani_demo-partner-partner-brenda": {
@@ -4023,8 +4059,8 @@
       "emergencyContacts": true,
       "moodSignal": true
     },
-    "createdAt": "2026-07-11",
-    "connectedAt": "2026-07-18",
+    "createdAt": "2026-07-12",
+    "connectedAt": "2026-07-19",
     "demoDataset": "defense-demo-v1",
     "_path": "partnerRelationships/demo-mother-brenda-imani_demo-partner-partner-brenda"
   },
@@ -4034,7 +4070,7 @@
     "motherName": "Brenda Imani",
     "status": "used",
     "usedBy": "demo-partner-partner-brenda",
-    "createdAt": "2026-09-05T08:07:11.412Z",
+    "createdAt": "2026-09-06T04:02:39.828Z",
     "demoDataset": "defense-demo-v1",
     "_path": "partnerConnections/MH-BREND1"
   },
@@ -4042,7 +4078,7 @@
     "motherId": "demo-mother-brenda-imani",
     "coarseMood": "ok",
     "coarseEnergy": "low",
-    "updatedAt": "2026-09-04",
+    "updatedAt": "2026-09-05",
     "demoDataset": "defense-demo-v1",
     "_path": "partnerShares/demo-mother-brenda-imani"
   },
@@ -4053,8 +4089,8 @@
     "displayName": "Diana Zawadi",
     "email": "diana.zawadi@momhaven-demo.co.ke",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:11.967Z",
-    "updatedAt": "2026-09-05T08:07:11.967Z",
+    "createdAt": "2026-09-06T04:02:40.339Z",
+    "updatedAt": "2026-09-06T04:02:40.339Z",
     "_path": "users/demo-mother-diana-zawadi"
   },
   "motherProfiles/demo-mother-diana-zawadi": {
@@ -4062,8 +4098,8 @@
     "userId": "demo-mother-diana-zawadi",
     "county": "Kiambu",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:11.978Z",
-    "updatedAt": "2026-09-05T08:07:11.978Z",
+    "createdAt": "2026-09-06T04:02:40.347Z",
+    "updatedAt": "2026-09-06T04:02:40.347Z",
     "_path": "motherProfiles/demo-mother-diana-zawadi"
   },
   "healthContexts/demo-mother-diana-zawadi": {
@@ -4078,52 +4114,52 @@
       "parenting_multiple"
     ],
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:11.991Z",
-    "updatedAt": "2026-09-05T08:07:11.991Z",
+    "createdAt": "2026-09-06T04:02:40.356Z",
+    "updatedAt": "2026-09-06T04:02:40.356Z",
     "_path": "healthContexts/demo-mother-diana-zawadi"
   },
   "pregnancies/preg-demo-mother-diana-zawadi": {
     "id": "preg-demo-mother-diana-zawadi",
     "motherId": "demo-mother-diana-zawadi",
     "status": "active",
-    "lmp": "2026-04-04",
-    "edd": "2027-01-09",
+    "lmp": "2026-04-05",
+    "edd": "2027-01-10",
     "gestationalAgeWeeks": 22,
     "gravida": 3,
     "parity": 2,
     "bloodGroup": "A",
     "rhesus": "+",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.002Z",
-    "updatedAt": "2026-09-05T08:07:12.002Z",
+    "createdAt": "2026-09-06T04:02:40.365Z",
+    "updatedAt": "2026-09-06T04:02:40.365Z",
     "_path": "pregnancies/preg-demo-mother-diana-zawadi"
   },
   "children/child-demo-mother-diana-zawadi-1": {
     "id": "child-demo-mother-diana-zawadi-1",
     "motherId": "demo-mother-diana-zawadi",
     "name": "Lucas Zawadi",
-    "dateOfBirth": "2024-05-05",
+    "dateOfBirth": "2024-05-06",
     "sex": "male",
     "birthWeightKg": 3.3,
     "birthLengthCm": 50,
     "headCircumferenceCm": 34.5,
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.015Z",
-    "updatedAt": "2026-09-05T08:07:12.015Z",
+    "createdAt": "2026-09-06T04:02:40.373Z",
+    "updatedAt": "2026-09-06T04:02:40.373Z",
     "_path": "children/child-demo-mother-diana-zawadi-1"
   },
   "children/child-demo-mother-diana-zawadi-2": {
     "id": "child-demo-mother-diana-zawadi-2",
     "motherId": "demo-mother-diana-zawadi",
     "name": "Chloe Zawadi",
-    "dateOfBirth": "2022-03-05",
+    "dateOfBirth": "2022-03-06",
     "sex": "female",
     "birthWeightKg": 3.1,
     "birthLengthCm": 49,
     "headCircumferenceCm": 34,
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.019Z",
-    "updatedAt": "2026-09-05T08:07:12.019Z",
+    "createdAt": "2026-09-06T04:02:40.375Z",
+    "updatedAt": "2026-09-06T04:02:40.375Z",
     "_path": "children/child-demo-mother-diana-zawadi-2"
   },
   "reminders/rem-demo-mother-diana-zawadi-anc3": {
@@ -4131,12 +4167,12 @@
     "userId": "demo-mother-diana-zawadi",
     "title": "ANC Contact 3 (26 Weeks Gestation Check)",
     "description": "Third antenatal visit, fundal growth check, blood pressure review, and IPTp dose.",
-    "dueDate": "2026-10-03",
+    "dueDate": "2026-10-04",
     "category": "anc",
     "completed": false,
     "pregnancyId": "preg-demo-mother-diana-zawadi",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.021Z",
+    "createdAt": "2026-09-06T04:02:40.377Z",
     "_path": "reminders/rem-demo-mother-diana-zawadi-anc3"
   },
   "antenatalProfiles/preg-demo-mother-diana-zawadi": {
@@ -4151,14 +4187,14 @@
     "ultrasound1": {
       "scanNumber": 1,
       "windowLabel": "Ultrasound #1 (20-week Anomaly Scan)",
-      "date": "2026-08-22",
+      "date": "2026-08-23",
       "gestationWeeks": 20,
       "placentaLocation": "Fundal / Anterior",
       "fetalViability": true,
       "findings": "Normal fetal anatomy survey. No congenital anomalies detected. Fetal biometry concordant with 20w 2d."
     },
-    "createdAt": "2026-06-13",
-    "updatedAt": "2026-08-22",
+    "createdAt": "2026-06-14",
+    "updatedAt": "2026-08-23",
     "demoDataset": "defense-demo-v1",
     "_path": "antenatalProfiles/preg-demo-mother-diana-zawadi"
   },
@@ -4174,14 +4210,14 @@
     "ultrasound1": {
       "scanNumber": 1,
       "windowLabel": "Ultrasound #1 (20-week Anomaly Scan)",
-      "date": "2026-08-22",
+      "date": "2026-08-23",
       "gestationWeeks": 20,
       "placentaLocation": "Fundal / Anterior",
       "fetalViability": true,
       "findings": "Normal fetal anatomy survey. No congenital anomalies detected. Fetal biometry concordant with 20w 2d."
     },
-    "createdAt": "2026-06-13",
-    "updatedAt": "2026-08-22",
+    "createdAt": "2026-06-14",
+    "updatedAt": "2026-08-23",
     "demoDataset": "defense-demo-v1",
     "_path": "pregnancies/preg-demo-mother-diana-zawadi/antenatalProfiles/profile"
   },
@@ -4189,13 +4225,13 @@
     "id": "fp-demo-mother-diana-zawadi",
     "motherId": "demo-mother-diana-zawadi",
     "methodChosen": "Copper T IUCD",
-    "counselingDate": "2024-03-05",
-    "dateStarted": "2024-03-05",
-    "removalDate": "2026-03-07",
+    "counselingDate": "2024-03-06",
+    "dateStarted": "2024-03-06",
+    "removalDate": "2026-03-08",
     "reasonForSwitch": "Elective removal to conceive planned third child",
     "notes": "Successful IUCD usage for over 2 years prior to conception.",
-    "createdAt": "2024-03-05",
-    "updatedAt": "2026-03-07",
+    "createdAt": "2024-03-06",
+    "updatedAt": "2026-03-08",
     "demoDataset": "defense-demo-v1",
     "_path": "familyPlanning/fp-demo-mother-diana-zawadi"
   },
@@ -4203,13 +4239,13 @@
     "id": "fp-demo-mother-diana-zawadi",
     "motherId": "demo-mother-diana-zawadi",
     "methodChosen": "Copper T IUCD",
-    "counselingDate": "2024-03-05",
-    "dateStarted": "2024-03-05",
-    "removalDate": "2026-03-07",
+    "counselingDate": "2024-03-06",
+    "dateStarted": "2024-03-06",
+    "removalDate": "2026-03-08",
     "reasonForSwitch": "Elective removal to conceive planned third child",
     "notes": "Successful IUCD usage for over 2 years prior to conception.",
-    "createdAt": "2024-03-05",
-    "updatedAt": "2026-03-07",
+    "createdAt": "2024-03-06",
+    "updatedAt": "2026-03-08",
     "demoDataset": "defense-demo-v1",
     "_path": "users/demo-mother-diana-zawadi/familyPlanning/fp-demo-mother-diana-zawadi"
   },
@@ -4220,8 +4256,8 @@
     "displayName": "Winnie Rehema",
     "email": "winnie.rehema@momhaven-demo.co.ke",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.664Z",
-    "updatedAt": "2026-09-05T08:07:12.664Z",
+    "createdAt": "2026-09-06T04:02:40.945Z",
+    "updatedAt": "2026-09-06T04:02:40.945Z",
     "_path": "users/demo-mother-winnie-rehema"
   },
   "motherProfiles/demo-mother-winnie-rehema": {
@@ -4234,8 +4270,8 @@
     "emergencyContactPhone": "+254722000007",
     "emergencyContactRelationship": "Sister",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.674Z",
-    "updatedAt": "2026-09-05T08:07:12.674Z",
+    "createdAt": "2026-09-06T04:02:40.953Z",
+    "updatedAt": "2026-09-06T04:02:40.953Z",
     "_path": "motherProfiles/demo-mother-winnie-rehema"
   },
   "healthContexts/demo-mother-winnie-rehema": {
@@ -4252,30 +4288,30 @@
       "immunization"
     ],
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.685Z",
-    "updatedAt": "2026-09-05T08:07:12.685Z",
+    "createdAt": "2026-09-06T04:02:40.960Z",
+    "updatedAt": "2026-09-06T04:02:40.960Z",
     "_path": "healthContexts/demo-mother-winnie-rehema"
   },
   "pregnancies/preg-demo-mother-winnie-rehema": {
     "id": "preg-demo-mother-winnie-rehema",
     "motherId": "demo-mother-winnie-rehema",
     "status": "active",
-    "lmp": "2026-05-30",
-    "edd": "2027-03-06",
+    "lmp": "2026-05-31",
+    "edd": "2027-03-07",
     "gestationalAgeWeeks": 14,
     "gravida": 2,
     "parity": 1,
     "bloodGroup": "O",
     "rhesus": "+",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.695Z",
-    "updatedAt": "2026-09-05T08:07:12.695Z",
+    "createdAt": "2026-09-06T04:02:40.969Z",
+    "updatedAt": "2026-09-06T04:02:40.969Z",
     "_path": "pregnancies/preg-demo-mother-winnie-rehema"
   },
   "pregnancies/preg-demo-mother-winnie-rehema/ancEncounters/anc-preg-demo-mother-winnie-rehema-1": {
     "id": "anc-preg-demo-mother-winnie-rehema-1",
     "pregnancyId": "preg-demo-mother-winnie-rehema",
-    "date": "2026-08-08",
+    "date": "2026-08-09",
     "visitNumber": 1,
     "gestationalAgeWeeks": 10,
     "systolicBp": 114,
@@ -4286,14 +4322,14 @@
     "iptpGiven": false,
     "summary": "ANC Contact 1: Closely spaced pregnancy while nursing 7-week infant. Provided maternal nutrition counseling and started IFAS.",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.706Z",
+    "createdAt": "2026-09-06T04:02:40.978Z",
     "_path": "pregnancies/preg-demo-mother-winnie-rehema/ancEncounters/anc-preg-demo-mother-winnie-rehema-1"
   },
   "children/child-demo-mother-winnie-rehema-1": {
     "id": "child-demo-mother-winnie-rehema-1",
     "motherId": "demo-mother-winnie-rehema",
     "name": "Baraka Rehema",
-    "dateOfBirth": "2026-06-20",
+    "dateOfBirth": "2026-06-21",
     "sex": "male",
     "birthWeightKg": 3.3,
     "birthLengthCm": 49,
@@ -4301,8 +4337,8 @@
     "deliveryFacility": "Nyeri County Referral Hospital",
     "deliveryType": "SVD",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.717Z",
-    "updatedAt": "2026-09-05T08:07:12.717Z",
+    "createdAt": "2026-09-06T04:02:40.987Z",
+    "updatedAt": "2026-09-06T04:02:40.987Z",
     "_path": "children/child-demo-mother-winnie-rehema-1"
   },
   "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-bcg": {
@@ -4311,13 +4347,13 @@
     "vaccineName": "BCG",
     "dose": "Birth",
     "targetAge": "Birth",
-    "dueDate": "2026-06-20",
+    "dueDate": "2026-06-21",
     "status": "GIVEN",
-    "dateAdministered": "2026-06-20",
+    "dateAdministered": "2026-06-21",
     "childId": "child-demo-mother-winnie-rehema-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.727Z",
-    "updatedAt": "2026-09-05T08:07:12.727Z",
+    "createdAt": "2026-09-06T04:02:40.996Z",
+    "updatedAt": "2026-09-06T04:02:40.996Z",
     "_path": "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-bcg"
   },
   "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-opv0": {
@@ -4326,13 +4362,13 @@
     "vaccineName": "OPV 0",
     "dose": "Birth",
     "targetAge": "Birth",
-    "dueDate": "2026-06-20",
+    "dueDate": "2026-06-21",
     "status": "GIVEN",
-    "dateAdministered": "2026-06-20",
+    "dateAdministered": "2026-06-21",
     "childId": "child-demo-mother-winnie-rehema-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.738Z",
-    "updatedAt": "2026-09-05T08:07:12.738Z",
+    "createdAt": "2026-09-06T04:02:41.004Z",
+    "updatedAt": "2026-09-06T04:02:41.004Z",
     "_path": "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-opv0"
   },
   "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-penta1": {
@@ -4341,13 +4377,13 @@
     "vaccineName": "Pentavalent 1",
     "dose": "Dose 1",
     "targetAge": "6 weeks",
-    "dueDate": "2026-08-01",
+    "dueDate": "2026-08-02",
     "status": "GIVEN",
-    "dateAdministered": "2026-08-01",
+    "dateAdministered": "2026-08-02",
     "childId": "child-demo-mother-winnie-rehema-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.750Z",
-    "updatedAt": "2026-09-05T08:07:12.750Z",
+    "createdAt": "2026-09-06T04:02:41.012Z",
+    "updatedAt": "2026-09-06T04:02:41.012Z",
     "_path": "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-penta1"
   },
   "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-pcv1": {
@@ -4356,13 +4392,13 @@
     "vaccineName": "PCV 1",
     "dose": "Dose 1",
     "targetAge": "6 weeks",
-    "dueDate": "2026-08-01",
+    "dueDate": "2026-08-02",
     "status": "GIVEN",
-    "dateAdministered": "2026-08-01",
+    "dateAdministered": "2026-08-02",
     "childId": "child-demo-mother-winnie-rehema-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.761Z",
-    "updatedAt": "2026-09-05T08:07:12.761Z",
+    "createdAt": "2026-09-06T04:02:41.021Z",
+    "updatedAt": "2026-09-06T04:02:41.021Z",
     "_path": "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-pcv1"
   },
   "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-rota1": {
@@ -4371,13 +4407,13 @@
     "vaccineName": "Rotavirus 1",
     "dose": "Dose 1",
     "targetAge": "6 weeks",
-    "dueDate": "2026-08-01",
+    "dueDate": "2026-08-02",
     "status": "GIVEN",
-    "dateAdministered": "2026-08-01",
+    "dateAdministered": "2026-08-02",
     "childId": "child-demo-mother-winnie-rehema-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.771Z",
-    "updatedAt": "2026-09-05T08:07:12.771Z",
+    "createdAt": "2026-09-06T04:02:41.030Z",
+    "updatedAt": "2026-09-06T04:02:41.030Z",
     "_path": "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-rota1"
   },
   "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-penta2": {
@@ -4386,13 +4422,13 @@
     "vaccineName": "Pentavalent 2",
     "dose": "Dose 2",
     "targetAge": "10 weeks",
-    "dueDate": "2026-08-29",
+    "dueDate": "2026-08-30",
     "status": "GIVEN",
-    "dateAdministered": "2026-08-29",
+    "dateAdministered": "2026-08-30",
     "childId": "child-demo-mother-winnie-rehema-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.782Z",
-    "updatedAt": "2026-09-05T08:07:12.782Z",
+    "createdAt": "2026-09-06T04:02:41.038Z",
+    "updatedAt": "2026-09-06T04:02:41.038Z",
     "_path": "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-penta2"
   },
   "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-pcv2": {
@@ -4401,13 +4437,13 @@
     "vaccineName": "PCV 2",
     "dose": "Dose 2",
     "targetAge": "10 weeks",
-    "dueDate": "2026-08-29",
+    "dueDate": "2026-08-30",
     "status": "GIVEN",
-    "dateAdministered": "2026-08-29",
+    "dateAdministered": "2026-08-30",
     "childId": "child-demo-mother-winnie-rehema-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.794Z",
-    "updatedAt": "2026-09-05T08:07:12.794Z",
+    "createdAt": "2026-09-06T04:02:41.047Z",
+    "updatedAt": "2026-09-06T04:02:41.047Z",
     "_path": "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-pcv2"
   },
   "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-rota2": {
@@ -4416,13 +4452,13 @@
     "vaccineName": "Rotavirus 2",
     "dose": "Dose 2",
     "targetAge": "10 weeks",
-    "dueDate": "2026-08-29",
+    "dueDate": "2026-08-30",
     "status": "GIVEN",
-    "dateAdministered": "2026-08-29",
+    "dateAdministered": "2026-08-30",
     "childId": "child-demo-mother-winnie-rehema-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.805Z",
-    "updatedAt": "2026-09-05T08:07:12.805Z",
+    "createdAt": "2026-09-06T04:02:41.059Z",
+    "updatedAt": "2026-09-06T04:02:41.059Z",
     "_path": "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-rota2"
   },
   "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-penta3": {
@@ -4431,25 +4467,25 @@
     "vaccineName": "Pentavalent 3",
     "dose": "Dose 3",
     "targetAge": "14 weeks",
-    "dueDate": "2026-09-26",
+    "dueDate": "2026-09-27",
     "status": "SCHEDULED",
     "childId": "child-demo-mother-winnie-rehema-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.825Z",
-    "updatedAt": "2026-09-05T08:07:12.825Z",
+    "createdAt": "2026-09-06T04:02:41.067Z",
+    "updatedAt": "2026-09-06T04:02:41.067Z",
     "_path": "children/child-demo-mother-winnie-rehema-1/immunizationRecords/imm-child-demo-mother-winnie-rehema-1-penta3"
   },
   "children/child-demo-mother-winnie-rehema-1/aefiReports/aefi-child-demo-mother-winnie-rehema-1-1": {
     "id": "aefi-child-demo-mother-winnie-rehema-1-1",
     "childId": "child-demo-mother-winnie-rehema-1",
     "vaccineOrAntigen": "Pentavalent 1 + PCV 1",
-    "date": "2026-08-01",
+    "date": "2026-08-02",
     "severity": "mild",
     "adverseEventDescription": "Low-grade fever (38.1 C) and mild localized thigh tenderness 6 hours post-immunization.",
     "reportedToFacility": true,
     "facilityName": "Nyeri County Referral Hospital",
     "actionTaken": "Advised paracetamol syrup and cool compress; symptom resolved within 24 hours without complications.",
-    "createdAt": "2026-08-01",
+    "createdAt": "2026-08-02",
     "demoDataset": "defense-demo-v1",
     "_path": "children/child-demo-mother-winnie-rehema-1/aefiReports/aefi-child-demo-mother-winnie-rehema-1-1"
   },
@@ -4457,13 +4493,13 @@
     "id": "aefi-child-demo-mother-winnie-rehema-1-1",
     "childId": "child-demo-mother-winnie-rehema-1",
     "vaccineOrAntigen": "Pentavalent 1 + PCV 1",
-    "date": "2026-08-01",
+    "date": "2026-08-02",
     "severity": "mild",
     "adverseEventDescription": "Low-grade fever (38.1 C) and mild localized thigh tenderness 6 hours post-immunization.",
     "reportedToFacility": true,
     "facilityName": "Nyeri County Referral Hospital",
     "actionTaken": "Advised paracetamol syrup and cool compress; symptom resolved within 24 hours without complications.",
-    "createdAt": "2026-08-01",
+    "createdAt": "2026-08-02",
     "motherId": "demo-mother-winnie-rehema",
     "demoDataset": "defense-demo-v1",
     "_path": "aefiReports/aefi-child-demo-mother-winnie-rehema-1-1"
@@ -4473,12 +4509,12 @@
     "userId": "demo-mother-winnie-rehema",
     "title": "ANC Contact 2 (20 Weeks Anomaly Scan & Routine Review)",
     "description": "Mid-pregnancy evaluation and ultrasound scan at Nyeri County Referral Hospital.",
-    "dueDate": "2026-10-17",
+    "dueDate": "2026-10-18",
     "category": "anc",
     "completed": false,
     "pregnancyId": "preg-demo-mother-winnie-rehema",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.859Z",
+    "createdAt": "2026-09-06T04:02:41.091Z",
     "_path": "reminders/rem-demo-mother-winnie-rehema-anc2"
   },
   "reminders/rem-demo-mother-winnie-rehema-infant-penta3": {
@@ -4486,12 +4522,12 @@
     "userId": "demo-mother-winnie-rehema",
     "title": "Infant 14-Week Immunization (Penta 3, PCV 3, OPV 3, IPV)",
     "description": "Baraka due for 14-week routine immunization doses at Nyeri MCH clinic.",
-    "dueDate": "2026-09-26",
+    "dueDate": "2026-09-27",
     "category": "immunization",
     "completed": false,
     "childId": "child-demo-mother-winnie-rehema-1",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:12.870Z",
+    "createdAt": "2026-09-06T04:02:41.099Z",
     "_path": "reminders/rem-demo-mother-winnie-rehema-infant-penta3"
   },
   "clinicianPrivateNotes/note-demo-mother-winnie-rehema-1": {
@@ -4499,7 +4535,7 @@
     "motherId": "demo-mother-winnie-rehema",
     "clinicianId": "w8cCU0OC0JcaHc1IqbGLgKI69kg2",
     "text": "Patient has closely spaced pregnancy with an 11-week-old nursing infant. Discussed high maternal caloric and iron demands, continuous breastfeeding safety, and close fetal growth monitoring.",
-    "createdAt": "2026-08-08",
+    "createdAt": "2026-08-09",
     "demoDataset": "defense-demo-v1",
     "_path": "clinicianPrivateNotes/note-demo-mother-winnie-rehema-1"
   },
@@ -4510,8 +4546,8 @@
     "displayName": "Sharon Nuru",
     "email": "sharon.nuru@momhaven-demo.co.ke",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:13.422Z",
-    "updatedAt": "2026-09-05T08:07:13.422Z",
+    "createdAt": "2026-09-06T04:02:41.620Z",
+    "updatedAt": "2026-09-06T04:02:41.620Z",
     "_path": "users/demo-mother-sharon-nuru"
   },
   "motherProfiles/demo-mother-sharon-nuru": {
@@ -4519,8 +4555,8 @@
     "userId": "demo-mother-sharon-nuru",
     "county": "Kakamega",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:13.433Z",
-    "updatedAt": "2026-09-05T08:07:13.433Z",
+    "createdAt": "2026-09-06T04:02:41.629Z",
+    "updatedAt": "2026-09-06T04:02:41.630Z",
     "_path": "motherProfiles/demo-mother-sharon-nuru"
   },
   "healthContexts/demo-mother-sharon-nuru": {
@@ -4535,8 +4571,8 @@
       "wellness"
     ],
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:13.445Z",
-    "updatedAt": "2026-09-05T08:07:13.445Z",
+    "createdAt": "2026-09-06T04:02:41.639Z",
+    "updatedAt": "2026-09-06T04:02:41.639Z",
     "_path": "healthContexts/demo-mother-sharon-nuru"
   },
   "reminders/rem-demo-mother-sharon-nuru-fp-refill": {
@@ -4544,23 +4580,23 @@
     "userId": "demo-mother-sharon-nuru",
     "title": "Preconception Health & Folic Acid Follow-up",
     "description": "Routine wellness check and periconceptional nutrition review.",
-    "dueDate": "2026-10-03",
+    "dueDate": "2026-10-04",
     "category": "custom",
     "completed": false,
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:13.460Z",
+    "createdAt": "2026-09-06T04:02:41.647Z",
     "_path": "reminders/rem-demo-mother-sharon-nuru-fp-refill"
   },
   "familyPlanning/fp-demo-mother-sharon-nuru": {
     "id": "fp-demo-mother-sharon-nuru",
     "motherId": "demo-mother-sharon-nuru",
     "methodChosen": "Combined Oral Contraceptives (COCs)",
-    "counselingDate": "2026-05-05",
-    "dateStarted": "2026-05-05",
-    "nextAppointmentDate": "2026-10-31",
+    "counselingDate": "2026-05-06",
+    "dateStarted": "2026-05-06",
+    "nextAppointmentDate": "2026-11-01",
     "notes": "Discussed preconception wellness, periconceptional folic acid supplementation (400 mcg daily), and planning for future pregnancy.",
-    "createdAt": "2026-05-05",
-    "updatedAt": "2026-05-05",
+    "createdAt": "2026-05-06",
+    "updatedAt": "2026-05-06",
     "demoDataset": "defense-demo-v1",
     "_path": "familyPlanning/fp-demo-mother-sharon-nuru"
   },
@@ -4568,12 +4604,12 @@
     "id": "fp-demo-mother-sharon-nuru",
     "motherId": "demo-mother-sharon-nuru",
     "methodChosen": "Combined Oral Contraceptives (COCs)",
-    "counselingDate": "2026-05-05",
-    "dateStarted": "2026-05-05",
-    "nextAppointmentDate": "2026-10-31",
+    "counselingDate": "2026-05-06",
+    "dateStarted": "2026-05-06",
+    "nextAppointmentDate": "2026-11-01",
     "notes": "Discussed preconception wellness, periconceptional folic acid supplementation (400 mcg daily), and planning for future pregnancy.",
-    "createdAt": "2026-05-05",
-    "updatedAt": "2026-05-05",
+    "createdAt": "2026-05-06",
+    "updatedAt": "2026-05-06",
     "demoDataset": "defense-demo-v1",
     "_path": "users/demo-mother-sharon-nuru/familyPlanning/fp-demo-mother-sharon-nuru"
   },
@@ -4584,8 +4620,8 @@
     "displayName": "Christine Amani",
     "email": "christine.amani@momhaven-demo.co.ke",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:14.061Z",
-    "updatedAt": "2026-09-05T08:07:14.061Z",
+    "createdAt": "2026-09-06T04:02:42.195Z",
+    "updatedAt": "2026-09-06T04:02:42.196Z",
     "_path": "users/demo-mother-christine-amani"
   },
   "motherProfiles/demo-mother-christine-amani": {
@@ -4596,8 +4632,8 @@
     "emergencyContactPhone": "+254712000009",
     "emergencyContactRelationship": "Partner",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:14.073Z",
-    "updatedAt": "2026-09-05T08:07:14.073Z",
+    "createdAt": "2026-09-06T04:02:42.205Z",
+    "updatedAt": "2026-09-06T04:02:42.205Z",
     "_path": "motherProfiles/demo-mother-christine-amani"
   },
   "healthContexts/demo-mother-christine-amani": {
@@ -4612,14 +4648,14 @@
       "partner_support"
     ],
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:14.084Z",
-    "updatedAt": "2026-09-05T08:07:14.084Z",
+    "createdAt": "2026-09-06T04:02:42.215Z",
+    "updatedAt": "2026-09-06T04:02:42.215Z",
     "_path": "healthContexts/demo-mother-christine-amani"
   },
   "dailyHealthLogs/log-demo-mother-christine-amani-1": {
     "id": "log-demo-mother-christine-amani-1",
     "userId": "demo-mother-christine-amani",
-    "date": "2026-09-02",
+    "date": "2026-09-03",
     "type": "wellness",
     "values": {
       "hydrationGlasses": 8,
@@ -4628,7 +4664,7 @@
       "notes": "Maintaining daily folic acid supplement and hydration."
     },
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:14.096Z",
+    "createdAt": "2026-09-06T04:02:42.225Z",
     "_path": "dailyHealthLogs/log-demo-mother-christine-amani-1"
   },
   "hospitalAdmissions/adm-demo-mother-christine-amani-1": {
@@ -4637,12 +4673,12 @@
     "personType": "mother",
     "hospitalName": "Kilifi County Hospital",
     "admissionNumber": "KCH-ADM-2025-0891",
-    "admissionDate": "2026-02-05",
-    "dischargeDate": "2026-02-08",
+    "admissionDate": "2026-02-06",
+    "dischargeDate": "2026-02-09",
     "dischargeDiagnosis": "Acute uncomplicated Plasmodium falciparum malaria with dehydration",
     "outcome": "Discharged well",
     "notes": "Completed full IV artesunate followed by oral AL. Electrolytes normalized, full recovery at discharge.",
-    "createdAt": "2026-02-05",
+    "createdAt": "2026-02-06",
     "demoDataset": "defense-demo-v1",
     "_path": "hospitalAdmissions/adm-demo-mother-christine-amani-1"
   },
@@ -4652,12 +4688,12 @@
     "personType": "mother",
     "hospitalName": "Kilifi County Hospital",
     "clinicName": "Outpatient Medical Follow-up Clinic",
-    "date": "2026-03-05",
+    "date": "2026-03-06",
     "reasonForAttendance": "Post-admission malaria review and baseline hematology screen",
     "dischargeDiagnosis": "Completely resolved malaria, Hb 12.6 g/dL (normal)",
     "drugsGiven": "Oral Hematinics (iron + folic acid)",
     "notes": "General physical examination unremarkable. Discharged from follow-up in excellent health.",
-    "createdAt": "2026-03-05",
+    "createdAt": "2026-03-06",
     "demoDataset": "defense-demo-v1",
     "_path": "specialClinicalAttendances/att-demo-mother-christine-amani-1"
   },
@@ -4676,8 +4712,8 @@
       "emergencyContacts": true,
       "moodSignal": true
     },
-    "createdAt": "2026-06-13",
-    "connectedAt": "2026-06-20",
+    "createdAt": "2026-06-14",
+    "connectedAt": "2026-06-21",
     "demoDataset": "defense-demo-v1",
     "_path": "partnerRelationships/demo-mother-christine-amani_demo-partner-partner-christine"
   },
@@ -4687,7 +4723,7 @@
     "motherName": "Christine Amani",
     "status": "used",
     "usedBy": "demo-partner-partner-christine",
-    "createdAt": "2026-09-05T08:07:14.154Z",
+    "createdAt": "2026-09-06T04:02:42.266Z",
     "demoDataset": "defense-demo-v1",
     "_path": "partnerConnections/MH-CHRIST1"
   },
@@ -4695,7 +4731,7 @@
     "motherId": "demo-mother-christine-amani",
     "coarseMood": "good",
     "coarseEnergy": "normal",
-    "updatedAt": "2026-09-03",
+    "updatedAt": "2026-09-04",
     "demoDataset": "defense-demo-v1",
     "_path": "partnerShares/demo-mother-christine-amani"
   },
@@ -4706,8 +4742,8 @@
     "displayName": "Esther Furaha",
     "email": "esther.furaha@momhaven-demo.co.ke",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:14.915Z",
-    "updatedAt": "2026-09-05T08:07:14.915Z",
+    "createdAt": "2026-09-06T04:02:42.762Z",
+    "updatedAt": "2026-09-06T04:02:42.762Z",
     "_path": "users/demo-mother-esther-furaha"
   },
   "motherProfiles/demo-mother-esther-furaha": {
@@ -4715,8 +4751,8 @@
     "userId": "demo-mother-esther-furaha",
     "county": "Trans Nzoia",
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:14.926Z",
-    "updatedAt": "2026-09-05T08:07:14.926Z",
+    "createdAt": "2026-09-06T04:02:42.770Z",
+    "updatedAt": "2026-09-06T04:02:42.770Z",
     "_path": "motherProfiles/demo-mother-esther-furaha"
   },
   "healthContexts/demo-mother-esther-furaha": {
@@ -4731,27 +4767,27 @@
       "reproductive_health"
     ],
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:14.937Z",
-    "updatedAt": "2026-09-05T08:07:14.937Z",
+    "createdAt": "2026-09-06T04:02:42.778Z",
+    "updatedAt": "2026-09-06T04:02:42.778Z",
     "_path": "healthContexts/demo-mother-esther-furaha"
   },
   "dailyHealthLogs/log-demo-mother-esther-furaha-1": {
     "id": "log-demo-mother-esther-furaha-1",
     "userId": "demo-mother-esther-furaha",
-    "date": "2026-09-04",
+    "date": "2026-09-05",
     "type": "mood",
     "values": {
       "mood": "calm",
       "notes": "Feeling rested and balanced."
     },
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:14.948Z",
+    "createdAt": "2026-09-06T04:02:42.787Z",
     "_path": "dailyHealthLogs/log-demo-mother-esther-furaha-1"
   },
   "dailyHealthLogs/log-demo-mother-esther-furaha-2": {
     "id": "log-demo-mother-esther-furaha-2",
     "userId": "demo-mother-esther-furaha",
-    "date": "2026-09-01",
+    "date": "2026-09-02",
     "type": "symptoms",
     "values": {
       "symptoms": [
@@ -4761,13 +4797,13 @@
       "notes": "Rest and hydration helped."
     },
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:14.959Z",
+    "createdAt": "2026-09-06T04:02:42.797Z",
     "_path": "dailyHealthLogs/log-demo-mother-esther-furaha-2"
   },
   "dailyHealthLogs/log-demo-mother-esther-furaha-3": {
     "id": "log-demo-mother-esther-furaha-3",
     "userId": "demo-mother-esther-furaha",
-    "date": "2026-08-29",
+    "date": "2026-08-30",
     "type": "wellness",
     "values": {
       "waterGlasses": 8,
@@ -4775,7 +4811,38 @@
       "exerciseMinutes": 30
     },
     "demoDataset": "defense-demo-v1",
-    "createdAt": "2026-09-05T08:07:14.971Z",
+    "createdAt": "2026-09-06T04:02:42.807Z",
     "_path": "dailyHealthLogs/log-demo-mother-esther-furaha-3"
+  },
+  "reminders/rem-demo-mother-diana-zawadi-fp": {
+    "id": "rem-demo-mother-diana-zawadi-fp",
+    "userId": "demo-mother-diana-zawadi",
+    "title": "Family Planning Consultation & Review (Handbook p.22)",
+    "description": "Routine follow-up review for contraceptive choice, side effect counseling, and contraceptive refill.",
+    "dueDate": "2026-09-27",
+    "category": "custom",
+    "completed": false,
+    "demoDataset": "defense-demo-v1",
+    "createdAt": "2026-09-06T04:02:40.385Z",
+    "_path": "reminders/rem-demo-mother-diana-zawadi-fp"
+  },
+  "referrals/ref-demo-mother-winnie-rehema-1": {
+    "id": "ref-demo-mother-winnie-rehema-1",
+    "motherId": "demo-mother-winnie-rehema",
+    "childId": "child-demo-mother-winnie-rehema-1",
+    "pregnancyId": "preg-demo-mother-winnie-rehema",
+    "sourceModule": "postnatal",
+    "sourceRecordId": "note-demo-mother-winnie-rehema-1",
+    "reason": "Pediatric Specialist Consultation (Post-AEFI Follow-up)",
+    "urgency": "urgent",
+    "status": "open",
+    "createdBy": "w8cCU0OC0JcaHc1IqbGLgKI69kg2",
+    "facilityId": "13800",
+    "facilityName": "Nyeri County Referral Hospital",
+    "targetFacility": "Kenyatta National Hospital Pediatric Specialty Clinic",
+    "notes": "Follow-up assessment after mild 10-week vaccination reaction before scheduling next immunization series.",
+    "createdAt": "2026-08-27",
+    "demoDataset": "defense-demo-v1",
+    "_path": "referrals/ref-demo-mother-winnie-rehema-1"
   }
 }
