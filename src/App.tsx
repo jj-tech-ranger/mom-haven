@@ -50,9 +50,6 @@ export default function App() {
       if (requestId !== fetchRequestRef.current) return;
       let data = userDoc.exists() ? userDoc.data() : {};
 
-      // Initialize a missing profile, then re-read it. The second read is
-      // important after email verification and anonymous-partner sign-in because
-      // another auth callback may have created the profile while this read was in flight.
       if (!userDoc.exists()) {
         try {
           await ensureUserProfile(user);
@@ -123,9 +120,41 @@ export default function App() {
       if (requestId !== fetchRequestRef.current) return;
       setUserRole('MOTHER');
       setClinicianData(null);
+
       const isDismissed = sessionStorage.getItem(`onboarding_dismissed_${user.uid}`) === 'true';
       const localCompletion = localStorage.getItem(`momhaven_onboarding_complete_${user.uid}`) === 'true';
       const firestoreCompletion = data?.onboardingVersion === 1 || Boolean(data?.onboardingCompletedAt);
+
+      // A user with an existing MomHaven clinical/social profile is already an
+      // established user. Do not send seeded/demo users (or returning mothers
+      // whose records predate onboardingVersion) through the first-time setup.
+      // Their existing profile/health context remains the source of truth for
+      // personalization in the mother experience.
+      let existingMotherProfile = false;
+      let existingHealthContext = false;
+      if (!hydrated && !firestoreCompletion && !isDismissed && !localCompletion) {
+        try {
+          const [motherProfileSnap, healthContextSnap] = await Promise.all([
+            getDoc(doc(db, 'motherProfiles', user.uid)),
+            getDoc(doc(db, 'healthContexts', user.uid)),
+          ]);
+          existingMotherProfile = motherProfileSnap.exists();
+          existingHealthContext = healthContextSnap.exists();
+        } catch (err) {
+          console.warn('Could not check existing mother profile/context', err);
+        }
+      }
+
+      const isExistingProfiledUser =
+        data?.demoDataset === 'defense-demo-v1' ||
+        existingMotherProfile ||
+        existingHealthContext;
+
+      if (isExistingProfiledUser) {
+        setNeedsOnboarding(false);
+        return;
+      }
+
       setNeedsOnboarding(!isDismissed && !localCompletion && !firestoreCompletion && !hydrated);
     } catch (err) {
       if (requestId !== fetchRequestRef.current) return;
