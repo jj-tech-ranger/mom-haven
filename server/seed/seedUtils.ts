@@ -1,12 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { adminAuth, adminDb } from '../clinicianAccess.js';
-import { firebaseConfig } from '../../src/lib/firebaseConfig.js';
-import {
-  DEMO_DATASET_ID,
-  DEMO_DOMAIN,
-  DEMO_PASSWORD,
-} from './demoData.js';
+import { DEMO_DATASET_ID, DEMO_DOMAIN, DEMO_PASSWORD } from './demoData.js';
 
 export interface SeedManifest {
   dataset: string;
@@ -45,7 +40,8 @@ export interface SeedManifest {
 const MANIFEST_PATH = path.join(process.cwd(), 'server', 'seed', 'seed-manifest.json');
 const LOCAL_STORE_PATH = path.join(process.cwd(), 'server', 'seed', '.demo-local-store.json');
 
-// In-memory or file-backed snapshot for sandbox/emulator/mock verification
+// Local state is retained only as a diagnostic snapshot. It is never a substitute
+// for live Firebase during seeding or verification.
 let localDemoStore: Record<string, any> = {};
 if (fs.existsSync(LOCAL_STORE_PATH)) {
   try {
@@ -81,20 +77,15 @@ export function getAllLocalStoreDocs(collectionName: string) {
   const prefix = `${collectionName}/`;
   const result: any[] = [];
   for (const [k, v] of Object.entries(localDemoStore)) {
-    if (k.startsWith(prefix)) {
-      result.push(v);
-    }
+    if (k.startsWith(prefix)) result.push(v);
   }
   return result;
 }
 
 /**
- * Idempotently reconciles or creates a Firebase Auth account.
- * Enforces safety rules:
- * 1. Checks if user exists.
- * 2. If exists and is a demo account (matches demo domain/dataset), reuses/reconciles.
- * 3. If exists and NOT a demo account, fails safely rather than modifying real user.
- * 4. If does not exist, creates account.
+ * Idempotently reconciles or creates a Firebase Auth account in the live project.
+ * Existing demo users are reset to the deterministic demo password so repeated
+ * seed runs produce credentials that actually work.
  */
 export async function reconcileAuthUser(
   email: string,
@@ -103,31 +94,29 @@ export async function reconcileAuthUser(
 ): Promise<{ uid: string; status: 'created' | 'reconciled' }> {
   const normalizedEmail = email.trim().toLowerCase();
 
-  // 1. Try Firebase Admin Auth
+  if (!normalizedEmail.endsWith(DEMO_DOMAIN)) {
+    throw new Error(
+      `SECURITY REFUSAL: Demo seed may only manage accounts in ${DEMO_DOMAIN}; received ${normalizedEmail}.`
+    );
+  }
+
   try {
     let existingUser = null;
     try {
       existingUser = await adminAuth.getUserByEmail(normalizedEmail);
     } catch (err: any) {
-      if (err?.code !== 'auth/user-not-found') {
-        throw err;
-      }
+      if (err?.code !== 'auth/user-not-found') throw err;
     }
 
     if (existingUser) {
-      // Safety check: is this demonstrably a demo account?
-      if (!normalizedEmail.endsWith(DEMO_DOMAIN)) {
-        throw new Error(
-          `SECURITY REFUSAL: Existing account ${normalizedEmail} does not belong to demo domain ${DEMO_DOMAIN}. Halting demo seeding.`
-        );
-      }
       await adminAuth.updateUser(existingUser.uid, {
         displayName,
+        password: DEMO_PASSWORD,
+        emailVerified: true,
       });
       return { uid: existingUser.uid, status: 'reconciled' };
     }
 
-    // Create via Admin Auth
     const newUser = await adminAuth.createUser({
       email: normalizedEmail,
       displayName,
@@ -135,136 +124,75 @@ export async function reconcileAuthUser(
       emailVerified: true,
     });
     return { uid: newUser.uid, status: 'created' };
-  } catch (adminErr: any) {
-    // If Admin SDK threw due to lack of service account / ADC in sandbox, try Firebase Auth REST API
-    return await reconcileAuthUserViaRest(normalizedEmail, displayName, role);
+  } catch (err: any) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `LIVE FIREBASE AUTH REQUIRED: Could not reconcile ${normalizedEmail} as ${role}. ` +
+      `Refusing to use a synthetic UID or local fallback. Check Application Default Credentials / ` +
+      `FIREBASE_SERVICE_ACCOUNT_JSON and project mom-haven. Original error: ${detail}`
+    );
   }
 }
 
-async function reconcileAuthUserViaRest(
-  email: string,
-  displayName: string,
-  role: string
-): Promise<{ uid: string; status: 'created' | 'reconciled' }> {
-  const apiKey = firebaseConfig.apiKey;
-  const signUpUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`;
-  const signInUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`;
+function removeUndefined(value: any): any {
+  if (Array.isArray(value)) {
+    return value.filter((item) => item !== undefined).map(removeUndefined);
+  }
 
-  // Try sign in first
-  const signInRes = await fetch(signInUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email,
-      password: DEMO_PASSWORD,
-      returnSecureToken: true,
-    }),
-  });
-
-  const signInData = await signInRes.json();
-  if (signInData.localId) {
-    // Account exists! Verify it is a demo account
-    if (!email.endsWith(DEMO_DOMAIN)) {
-      throw new Error(
-        `SECURITY REFUSAL: Existing account ${email} does not belong to demo domain ${DEMO_DOMAIN}. Halting demo seeding.`
-      );
+  if (value && typeof value === 'object') {
+    const cleaned: Record<string, any> = {};
+    for (const [key, item] of Object.entries(value)) {
+      if (item !== undefined) cleaned[key] = removeUndefined(item);
     }
-    // Update display name
-    await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        idToken: signInData.idToken,
-        displayName,
-        returnSecureToken: true,
-      }),
-    });
-    return { uid: signInData.localId, status: 'reconciled' };
+    return cleaned;
   }
 
-  // If login failed because user not found or email doesn't exist, create it
-  const signUpRes = await fetch(signUpUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email,
-      password: DEMO_PASSWORD,
-      returnSecureToken: true,
-    }),
-  });
-
-  const signUpData = await signUpRes.json();
-  if (signUpData.localId) {
-    // Update display name
-    await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        idToken: signUpData.idToken,
-        displayName,
-        returnSecureToken: true,
-      }),
-    });
-    return { uid: signUpData.localId, status: 'created' };
-  }
-
-  // If REST also fails (e.g. offline/isolated environment), generate deterministic demo UID
-  console.warn(`Auth API unreachable for ${email}. Using deterministic demo UID.`);
-  const deterministicUid = `demo-${role.toLowerCase()}-${email.split('@')[0].replace(/[^a-z0-9]/gi, '-')}`;
-  return { uid: deterministicUid, status: 'created' };
+  return value;
 }
 
 /**
- * Safely writes a document to Firestore using Admin SDK,
- * while mirroring to localDemoStore for offline validation and backup.
+ * Writes only to the live named Firestore database. Undefined fields are stripped
+ * because Firestore rejects undefined values. Failed live writes are fatal.
  */
 export async function setFirestoreDocument(docPath: string, data: any): Promise<void> {
-  // Always mirror in local store
-  localDemoStore[docPath] = { ...data, _path: docPath };
-  saveLocalStore();
+  const cleanedData = removeUndefined(data);
 
   try {
-    const docRef = adminDb.doc(docPath);
-    await docRef.set(data, { merge: true });
+    await adminDb.doc(docPath).set(cleanedData, { merge: true });
   } catch (err: any) {
-    // Log if non-permission error, otherwise local store has mirrored the data
-    if (!err?.message?.includes('PERMISSION_DENIED') && !err?.message?.includes('Cloud Firestore API')) {
-      console.warn(`Notice writing ${docPath} to Firestore:`, err.message);
-    }
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(`LIVE FIRESTORE WRITE FAILED for ${docPath} in database mom-haven: ${detail}`);
   }
+
+  localDemoStore[docPath] = { ...cleanedData, _path: docPath };
+  saveLocalStore();
 }
 
-/**
- * Reads a document from Firestore, falling back to local demo store if Admin SDK cannot reach.
- */
+/** Reads only from live Firestore. */
 export async function getFirestoreDocument(docPath: string): Promise<any | null> {
   try {
     const snap = await adminDb.doc(docPath).get();
-    if (snap.exists) {
-      return snap.data();
-    }
-  } catch {}
-  return getLocalStoreDoc(docPath);
+    return snap.exists ? snap.data() : null;
+  } catch (err: any) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(`LIVE FIRESTORE READ FAILED for ${docPath} in database mom-haven: ${detail}`);
+  }
 }
 
-/**
- * Queries documents with demoDataset === DEMO_DATASET_ID
- */
+/** Queries only live Firestore for demo documents. */
 export async function queryDemoDocuments(collectionName: string): Promise<any[]> {
-  const docs: any[] = [];
   try {
     const snap = await adminDb.collection(collectionName).where('demoDataset', '==', DEMO_DATASET_ID).get();
+    const docs: any[] = [];
     snap.forEach((d) => docs.push({ id: d.id, ...d.data() }));
-    if (docs.length > 0) return docs;
-  } catch {}
-
-  // Fallback to local store
-  return getAllLocalStoreDocs(collectionName).filter((d) => d.demoDataset === DEMO_DATASET_ID);
+    return docs;
+  } catch (err: any) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(`LIVE FIRESTORE QUERY FAILED for ${collectionName} in database mom-haven: ${detail}`);
+  }
 }
 
-/**
- * Deletes a Firestore document safely (only if marked with demoDataset).
- */
+/** Deletes a Firestore document safely (only if marked with demoDataset). */
 export async function deleteFirestoreDocument(docPath: string): Promise<boolean> {
   const existing = await getFirestoreDocument(docPath);
   if (existing && existing.demoDataset !== DEMO_DATASET_ID) {
@@ -272,54 +200,33 @@ export async function deleteFirestoreDocument(docPath: string): Promise<boolean>
     return false;
   }
 
-  delete localDemoStore[docPath];
-  saveLocalStore();
-
   try {
     await adminDb.doc(docPath).delete();
-  } catch {}
+  } catch (err: any) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(`LIVE FIRESTORE DELETE FAILED for ${docPath}: ${detail}`);
+  }
+
+  delete localDemoStore[docPath];
+  saveLocalStore();
   return true;
 }
 
-/**
- * Deletes a demo user account from Firebase Auth.
- */
+/** Deletes a demo user account from Firebase Auth. */
 export async function deleteDemoAuthUser(uid: string, email: string): Promise<void> {
-  if (!email.endsWith(DEMO_DOMAIN)) {
+  if (!email.trim().toLowerCase().endsWith(DEMO_DOMAIN)) {
     throw new Error(`SECURITY REFUSAL: Refusing to delete non-demo user account: ${email}`);
   }
 
   try {
     await adminAuth.deleteUser(uid);
-  } catch {
-    // Attempt REST sign-in and delete
-    try {
-      const signInRes = await fetch(
-        `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseConfig.apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password: DEMO_PASSWORD, returnSecureToken: true }),
-        }
-      );
-      const data = await signInRes.json();
-      if (data.idToken) {
-        await fetch(
-          `https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${firebaseConfig.apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken: data.idToken }),
-          }
-        );
-      }
-    } catch {}
+  } catch (err: any) {
+    if (err?.code === 'auth/user-not-found') return;
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(`LIVE FIREBASE AUTH DELETE FAILED for ${email} (${uid}): ${detail}`);
   }
 }
 
-/**
- * Manifest Management
- */
 export function saveManifest(manifest: SeedManifest): void {
   fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2), 'utf-8');
 }
