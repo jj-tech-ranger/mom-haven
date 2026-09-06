@@ -340,6 +340,19 @@ const STAGE_TITLES: Record<LifecycleStage, { en: string; sw: string }> = {
 };
 
 /**
+ * Pure evaluation: A reminder is overdue IF AND ONLY IF it is not completed and its dueDate is strictly before today.
+ * Title string-matching is strictly forbidden as titles can contain arbitrary clinical or descriptive text.
+ */
+export function isReminderOverdue(
+  rem: { dueDate?: string | null; completed?: boolean },
+  todayStr?: string
+): boolean {
+  if (rem.completed) return false;
+  const currentToday = todayStr || new Date().toISOString().split('T')[0];
+  return Boolean(rem.dueDate && rem.dueDate < currentToday);
+}
+
+/**
  * Main Pure Derivation Function
  */
 export function deriveTodayContext({
@@ -546,8 +559,8 @@ export function deriveTodayContext({
   const uncompletedReminders = [...reminders]
     .filter((r) => !r.completed)
     .sort((a, b) => {
-      const aOverdue = (a.title && a.title.toUpperCase().includes('OVERDUE')) || (a.dueDate && a.dueDate < todayStr);
-      const bOverdue = (b.title && b.title.toUpperCase().includes('OVERDUE')) || (b.dueDate && b.dueDate < todayStr);
+      const aOverdue = isReminderOverdue(a, todayStr);
+      const bOverdue = isReminderOverdue(b, todayStr);
       if (aOverdue && !bOverdue) return -1;
       if (!aOverdue && bOverdue) return 1;
       if (a.careTeamMessageId && !b.careTeamMessageId) return -1;
@@ -556,7 +569,7 @@ export function deriveTodayContext({
     });
 
   for (const rem of uncompletedReminders.slice(0, 3)) {
-    const isOverdue = (rem.title && rem.title.toUpperCase().includes('OVERDUE')) || (rem.dueDate && rem.dueDate < todayStr);
+    const isOverdue = isReminderOverdue(rem, todayStr);
     const isCareTeam = Boolean(rem.careTeamMessageId || rem.type === 'care_team_message');
 
     let badge = 'Reminder';

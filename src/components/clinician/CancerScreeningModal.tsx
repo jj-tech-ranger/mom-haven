@@ -138,12 +138,12 @@ export const CancerScreeningModal: React.FC<CancerScreeningModalProps> = ({
         )}
 
         {hasAlert && (
-          <div className="mt-4 p-3.5 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-900 flex items-start gap-2.5">
-            <ShieldAlert className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
+          <div className="mt-4 p-3.5 bg-red-50 border border-red-300 rounded-xl text-xs text-red-900 flex items-start gap-2.5">
+            <ShieldAlert className="w-5 h-5 shrink-0 text-red-600 mt-0.5" />
             <div>
-              <p className="font-bold">Referral Flag Activated</p>
-              <p className="mt-0.5 text-amber-800 leading-relaxed">
-                A positive or suspicious result will trigger an alert in the clinician workspace and a sensitive, supportive follow-up recommendation in the mother's record.
+              <p className="font-bold">Clinical Referral Trigger Activated</p>
+              <p className="mt-0.5 text-red-800 leading-relaxed">
+                A suspicious or positive result will automatically generate an authoritative clinical referral document in the facility roster for specialist follow-up, biopsy/colposcopy linkage, and oncology coordination.
               </p>
             </div>
           </div>

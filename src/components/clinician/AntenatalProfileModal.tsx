@@ -1,9 +1,18 @@
 // src/components/clinician/AntenatalProfileModal.tsx
 // Antenatal Profile & Maternal Serology Tracking (Kenya MOH 216 Handbook pp.7, 11)
 
-import React, { useState } from 'react';
-import { Activity, X, Check, AlertCircle, Calendar, ShieldCheck, FileCheck, Stethoscope } from 'lucide-react';
-import { AntenatalProfile, BloodGroup, RhesusFactor, SerologyRepeatScheduleItem, UltrasoundExam } from '../../types';
+import React, { useState, useMemo } from 'react';
+import { Activity, X, Check, AlertCircle, Calendar, ShieldCheck, FileCheck, Stethoscope, Syringe } from 'lucide-react';
+import {
+  AntenatalProfile,
+  BloodGroup,
+  RhesusFactor,
+  SerologyRepeatScheduleItem,
+  UltrasoundExam,
+  MaternalTdDose,
+  MaternalTdScheduleResult,
+} from '../../types';
+import { calculateMaternalTdSchedule } from '../../utils/maternalTdSchedule';
 import Button from '../Button';
 import { auth } from '../../lib/firebase';
 

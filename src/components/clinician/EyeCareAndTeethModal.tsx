@@ -243,7 +243,7 @@ export const EyeCareAndTeethModal: React.FC<EyeCareAndTeethModalProps> = ({
                 <div>
                   <p className="font-bold">CRITICAL CLINICAL ALERT: White Pupil (Leukocoria)</p>
                   <p className="mt-0.5 text-red-800 leading-relaxed">
-                    A white reflex or white pupil is an urgent danger sign for congenital cataract or retinoblastoma. Immediate referral to an ophthalmology specialist is required under MOH clinical guidelines.
+                    A white reflex or white pupil is an urgent danger sign for congenital cataract or retinoblastoma. An urgent clinical referral document will be automatically generated and logged to the facility roster for emergency pediatric ophthalmology evaluation.
                   </p>
                 </div>
               </div>

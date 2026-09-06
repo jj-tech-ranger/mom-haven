@@ -1,12 +1,13 @@
 // src/services/facilityRosterService.ts
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
-import type { FacilityRosterEntry } from '../types';
+import type { FacilityRosterEntry, Referral, ReferralStatus } from '../types';
 
 export interface FacilityRosterResponse {
   facilityId: string;
   facilityName: string;
   items: FacilityRosterEntry[];
+  openReferrals?: Referral[];
 }
 
 async function getAuthHeader() {
@@ -20,7 +21,7 @@ async function getAuthHeader() {
 }
 
 /**
- * Fetches facility roster entries for the logged-in clinician's facility.
+ * Fetches facility roster entries and open referrals for the logged-in clinician's facility.
  * Uses the API endpoint first (which enriches names and recomputes if empty),
  * with fallback to client Firestore if needed.
  */
@@ -38,6 +39,7 @@ export async function fetchFacilityRoster(facilityId?: string): Promise<Facility
         facilityId: data.facilityId || facilityId || '',
         facilityName: data.facilityName || 'Facility Clinic',
         items: data.items || [],
+        openReferrals: data.openReferrals || [],
       };
     }
   } catch (err) {
@@ -51,17 +53,87 @@ export async function fetchFacilityRoster(facilityId?: string): Promise<Facility
       const snap = await getDocs(q);
       const items = snap.docs.map((d) => ({ ...d.data(), id: d.id } as FacilityRosterEntry));
       items.sort((a, b) => new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime());
+
+      // Try reading open referrals from Firestore
+      let openReferrals: Referral[] = [];
+      try {
+        const refQuery = query(
+          collection(db, 'referrals'),
+          where('facilityId', '==', facilityId),
+          where('status', 'in', ['open', 'acknowledged'])
+        );
+        const refSnap = await getDocs(refQuery);
+        openReferrals = refSnap.docs.map((d) => ({ ...d.data(), id: d.id } as Referral));
+      } catch {
+        // Clinician fallback may be denied if missing rules/token
+      }
+
       return {
         facilityId,
         facilityName: 'Facility Clinic',
         items,
+        openReferrals,
       };
     } catch (err) {
       console.error('[FacilityRosterService] Direct Firestore read error:', err);
     }
   }
 
-  return { facilityId: facilityId || '', facilityName: 'Facility Clinic', items: [] };
+  return { facilityId: facilityId || '', facilityName: 'Facility Clinic', items: [], openReferrals: [] };
+}
+
+/**
+ * Fetches referrals for a facility or patient
+ */
+export async function fetchReferrals(facilityId?: string, motherId?: string): Promise<Referral[]> {
+  try {
+    const headers = await getAuthHeader();
+    const params = new URLSearchParams();
+    if (facilityId) params.set('facilityId', facilityId);
+    if (motherId) params.set('motherId', motherId);
+
+    let res = await fetch(`/api/v1/clinician/referrals?${params.toString()}`, { headers });
+    if (!res.ok) {
+      res = await fetch(`/api/clinician/referrals?${params.toString()}`, { headers });
+    }
+    if (res.ok) {
+      const data = await res.json();
+      return data.referrals || [];
+    }
+  } catch (err) {
+    console.warn('[FacilityRosterService] fetchReferrals API error:', err);
+  }
+
+  return [];
+}
+
+/**
+ * Updates status of a clinical referral
+ */
+export async function updateReferralStatusApi(
+  referralId: string,
+  status: ReferralStatus,
+  notes?: string
+): Promise<Referral | null> {
+  const headers = await getAuthHeader();
+  let res = await fetch(`/api/v1/clinician/referrals/${encodeURIComponent(referralId)}/status`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ status, notes }),
+  });
+  if (!res.ok) {
+    res = await fetch(`/api/clinician/referrals/${encodeURIComponent(referralId)}/status`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ status, notes }),
+    });
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update referral status.');
+  }
+  const data = await res.json();
+  return data.referral || null;
 }
 
 /**

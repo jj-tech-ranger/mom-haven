@@ -61,8 +61,26 @@ export default function NewEncounterModal({
   const [childHeight, setChildHeight] = useState('');
   const [muacCm, setMuacCm] = useState('');
 
-  // PNC Form Fields - Neutral defaults
+  // PNC Form Fields - Structured Kenya MOH 216 Handbook p.20 Table
   const [pncTiming, setPncTiming] = useState('48h');
+  const [pncDate, setPncDate] = useState(new Date().toISOString().split('T')[0]);
+  const [pncBpSystolic, setPncBpSystolic] = useState('120');
+  const [pncBpDiastolic, setPncBpDiastolic] = useState('80');
+  const [pncTemperature, setPncTemperature] = useState('36.8');
+  const [pncPulse, setPncPulse] = useState('76');
+  const [pncRespiratoryRate, setPncRespiratoryRate] = useState('18');
+  const [pncUterineInvolution, setPncUterineInvolution] = useState('Contracted');
+  const [pncLochiaAmount, setPncLochiaAmount] = useState('normal');
+  const [pncLochiaColour, setPncLochiaColour] = useState('rubra');
+  const [pncLochiaSmell, setPncLochiaSmell] = useState('normal');
+  const [pncHaemoglobin, setPncHaemoglobin] = useState('');
+  const [pncHivRetestDone, setPncHivRetestDone] = useState(false);
+  const [pncHivRetestResult, setPncHivRetestResult] = useState('non-reactive');
+  const [pncOnHaart, setPncOnHaart] = useState(false);
+  const [pncFamilyPlanningCounselled, setPncFamilyPlanningCounselled] = useState(true);
+  const [pncFpMethodChoice, setPncFpMethodChoice] = useState('Exclusive Breastfeeding (LAM)');
+  const [pncMentalHealthScreenDone, setPncMentalHealthScreenDone] = useState(true);
+  const [pncMentalHealthScreenResult, setPncMentalHealthScreenResult] = useState<'no_concerns' | 'concerns_noted' | 'referred'>('no_concerns');
   const [pncNotes, setPncNotes] = useState('');
 
   // Congenital Exam Fields (Kenya MOH Handbook p.17)
@@ -144,9 +162,29 @@ export default function NewEncounterModal({
           childId,
           visit: pncTiming,
           timing: pncTiming,
+          date: pncDate || new Date().toISOString().split('T')[0],
+          bloodPressure: pncBpSystolic && pncBpDiastolic ? `${pncBpSystolic}/${pncBpDiastolic}` : undefined,
+          systolicBp: pncBpSystolic ? Number(pncBpSystolic) : undefined,
+          diastolicBp: pncBpDiastolic ? Number(pncBpDiastolic) : undefined,
+          temperature: pncTemperature ? Number(pncTemperature) : undefined,
+          pulse: pncPulse ? Number(pncPulse) : undefined,
+          respiratoryRate: pncRespiratoryRate ? Number(pncRespiratoryRate) : undefined,
+          uterineInvolution: pncUterineInvolution,
+          lochiaAmount: pncLochiaAmount,
+          lochiaColour: pncLochiaColour,
+          lochiaSmell: pncLochiaSmell,
+          haemoglobin: pncHaemoglobin.trim() ? Number(pncHaemoglobin) : undefined,
+          hivRetestDone: pncHivRetestDone,
+          hivRetestResult: pncHivRetestDone ? pncHivRetestResult : undefined,
+          onHaart: pncOnHaart,
+          familyPlanningCounselled: pncFamilyPlanningCounselled,
+          fpMethod: pncFamilyPlanningCounselled ? pncFpMethodChoice : undefined,
+          mentalHealthScreenDone: pncMentalHealthScreenDone,
+          mentalHealthScreenResult: pncMentalHealthScreenResult,
           clinicalNotes: pncNotes.trim(),
           motherFindings: pncNotes.trim(),
           summary: pncNotes.trim() || `PNC Contact (${pncTiming})`,
+          facilityName,
         };
       } else if (encounterType === 'immunization') {
         endpoint = '/api/v1/clinician/encounters/immunization';
@@ -627,27 +665,275 @@ export default function NewEncounterModal({
           )}
 
           {encounterType === 'pnc' && (
-            <div className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-semibold text-gray-600 mb-1">PNC Visit Timing</label>
-                <select
-                  value={pncTiming}
-                  onChange={(e) => setPncTiming(e.target.value)}
-                  className="w-full p-2.5 border border-gray-200 rounded-[12px] bg-white text-xs font-bold"
-                >
-                  <option value="48h">Contact 1: Within 48 Hours Post-Delivery</option>
-                  <option value="1-2w">Contact 2: Day 7 - 14 (1 - 2 Weeks)</option>
-                  <option value="4-6w">Contact 3: Week 4 - 6 (Postpartum Checkup)</option>
-                  <option value="4-6mo">Contact 4: Month 4 - 6 (Weaning Evaluation)</option>
-                </select>
+            <div className="space-y-3.5">
+              {/* Timing & Date */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">PNC Contact Schedule (p.20)</label>
+                  <select
+                    value={pncTiming}
+                    onChange={(e) => setPncTiming(e.target.value)}
+                    className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
+                  >
+                    <option value="48h">Contact 1: Within 48 Hours Post-Delivery</option>
+                    <option value="1-2w">Contact 2: Day 7 - 14 (1 - 2 Weeks)</option>
+                    <option value="4-6w">Contact 3: Week 4 - 6 (Postpartum Check)</option>
+                    <option value="4-6mo">Contact 4: Month 4 - 6 (Weaning Evaluation)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 mb-1">Encounter Date</label>
+                  <input
+                    type="date"
+                    value={pncDate}
+                    onChange={(e) => setPncDate(e.target.value)}
+                    className="w-full p-2 border border-gray-200 rounded-[10px] bg-white text-xs font-bold"
+                  />
+                </div>
               </div>
+
+              {/* Maternal Vitals Grid */}
+              <div className="bg-[var(--lavender-50)]/60 p-3 rounded-[12px] border border-gray-100 space-y-2">
+                <span className="text-[11px] font-display font-bold text-gray-700 block">Maternal Vitals</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-600 mb-0.5">BP (mmHg)</label>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={pncBpSystolic}
+                        onChange={(e) => setPncBpSystolic(e.target.value)}
+                        placeholder="120"
+                        className="w-1/2 p-1.5 border border-gray-200 rounded-[8px] bg-white text-xs text-center font-bold"
+                      />
+                      <span>/</span>
+                      <input
+                        type="text"
+                        value={pncBpDiastolic}
+                        onChange={(e) => setPncBpDiastolic(e.target.value)}
+                        placeholder="80"
+                        className="w-1/2 p-1.5 border border-gray-200 rounded-[8px] bg-white text-xs text-center font-bold"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Temp (°C)</label>
+                    <input
+                      type="text"
+                      value={pncTemperature}
+                      onChange={(e) => setPncTemperature(e.target.value)}
+                      placeholder="36.8"
+                      className="w-full p-1.5 border border-gray-200 rounded-[8px] bg-white text-xs text-center font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Pulse (bpm)</label>
+                    <input
+                      type="text"
+                      value={pncPulse}
+                      onChange={(e) => setPncPulse(e.target.value)}
+                      placeholder="76"
+                      className="w-full p-1.5 border border-gray-200 rounded-[8px] bg-white text-xs text-center font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Resp Rate (/min)</label>
+                    <input
+                      type="text"
+                      value={pncRespiratoryRate}
+                      onChange={(e) => setPncRespiratoryRate(e.target.value)}
+                      placeholder="18"
+                      className="w-full p-1.5 border border-gray-200 rounded-[8px] bg-white text-xs text-center font-bold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Uterine Involution & Lochia */}
+              <div className="bg-white p-3 rounded-[12px] border border-gray-200 space-y-2">
+                <span className="text-[11px] font-display font-bold text-gray-700 block">Uterine Involution &amp; Lochia (Handbook p.20)</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Uterine Involution</label>
+                    <select
+                      value={pncUterineInvolution}
+                      onChange={(e) => setPncUterineInvolution(e.target.value)}
+                      className="w-full p-1.5 border border-gray-200 rounded-[8px] bg-white text-xs font-semibold"
+                    >
+                      <option value="Contracted">Contracted (Normal)</option>
+                      <option value="Well Involuted">Well Involuted</option>
+                      <option value="Subinvoluted">Subinvoluted (Delayed)</option>
+                      <option value="Tender">Tender (Infection Risk)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Lochia Amount</label>
+                    <select
+                      value={pncLochiaAmount}
+                      onChange={(e) => setPncLochiaAmount(e.target.value)}
+                      className="w-full p-1.5 border border-gray-200 rounded-[8px] bg-white text-xs font-semibold"
+                    >
+                      <option value="normal">Normal (Moderate)</option>
+                      <option value="scant">Scant / Minimal</option>
+                      <option value="excessive">Excessive (Heavy)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Lochia Colour</label>
+                    <select
+                      value={pncLochiaColour}
+                      onChange={(e) => setPncLochiaColour(e.target.value)}
+                      className="w-full p-1.5 border border-gray-200 rounded-[8px] bg-white text-xs font-semibold"
+                    >
+                      <option value="rubra">Rubra (Red - Day 1-4)</option>
+                      <option value="serosa">Serosa (Pink/Brown - Day 5-10)</option>
+                      <option value="alba">Alba (Yellow/White - Day 10+)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Lochia Smell</label>
+                    <select
+                      value={pncLochiaSmell}
+                      onChange={(e) => setPncLochiaSmell(e.target.value)}
+                      className="w-full p-1.5 border border-gray-200 rounded-[8px] bg-white text-xs font-semibold"
+                    >
+                      <option value="normal">Normal (Fleshy/Non-offensive)</option>
+                      <option value="foul">Foul-smelling (Sepsis Sign)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lab, HIV & Family Planning */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-gray-50/70 p-2.5 rounded-[10px] border border-gray-200 space-y-1.5">
+                  <label className="block text-[10px] font-bold text-gray-700">Haemoglobin (Hb g/dL)</label>
+                  <input
+                    type="text"
+                    value={pncHaemoglobin}
+                    onChange={(e) => setPncHaemoglobin(e.target.value)}
+                    placeholder="e.g. 11.5"
+                    className="w-full p-1.5 border border-gray-200 rounded-[8px] bg-white text-xs font-bold"
+                  />
+                  <label className="flex items-center gap-1.5 pt-1 text-[11px] text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={pncOnHaart}
+                      onChange={(e) => setPncOnHaart(e.target.checked)}
+                      className="w-3.5 h-3.5 accent-[var(--haven-deep)]"
+                    />
+                    <span>Mother on HAART</span>
+                  </label>
+                </div>
+
+                <div className="bg-gray-50/70 p-2.5 rounded-[10px] border border-gray-200 space-y-1.5">
+                  <label className="flex items-center gap-1.5 text-[10px] font-bold text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={pncHivRetestDone}
+                      onChange={(e) => setPncHivRetestDone(e.target.checked)}
+                      className="w-3.5 h-3.5 accent-[var(--haven-deep)]"
+                    />
+                    <span>HIV Retest Administered</span>
+                  </label>
+                  {pncHivRetestDone && (
+                    <select
+                      value={pncHivRetestResult}
+                      onChange={(e) => setPncHivRetestResult(e.target.value)}
+                      className="w-full p-1.5 border border-gray-200 rounded-[8px] bg-white text-xs font-semibold"
+                    >
+                      <option value="non-reactive">Non-Reactive (Negative)</option>
+                      <option value="reactive">Reactive (Positive - HAART Linkage)</option>
+                    </select>
+                  )}
+                </div>
+
+                <div className="bg-gray-50/70 p-2.5 rounded-[10px] border border-gray-200 space-y-1.5">
+                  <label className="flex items-center gap-1.5 text-[10px] font-bold text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={pncFamilyPlanningCounselled}
+                      onChange={(e) => setPncFamilyPlanningCounselled(e.target.checked)}
+                      className="w-3.5 h-3.5 accent-[var(--haven-deep)]"
+                    />
+                    <span>FP Counselled (p.22)</span>
+                  </label>
+                  {pncFamilyPlanningCounselled && (
+                    <select
+                      value={pncFpMethodChoice}
+                      onChange={(e) => setPncFpMethodChoice(e.target.value)}
+                      className="w-full p-1.5 border border-gray-200 rounded-[8px] bg-white text-xs font-semibold"
+                    >
+                      <option value="Exclusive Breastfeeding (LAM)">Exclusive Breastfeeding (LAM)</option>
+                      <option value="Progestin-only Pills (POPs)">POPs (Microlut)</option>
+                      <option value="Implants (Jadelle/Implanon)">Implants (Jadelle/Implanon)</option>
+                      <option value="Depo-Provera (DMPA)">Injectable (DMPA)</option>
+                      <option value="IUCD (Copper T)">Postpartum IUCD</option>
+                      <option value="Barrier / Condoms">Condoms</option>
+                      <option value="Bilateral Tubal Ligation (BTL)">BTL (Permanent)</option>
+                      <option value="None / Undecided">Undecided / Declined</option>
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              {/* Maternal Mental Health Screening (Handbook p.20 Requirement) */}
+              <div className="p-3 bg-amber-50/60 rounded-[12px] border border-amber-200/70 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-display font-bold text-amber-900">Maternal Mental Health Screening (Handbook p.20)</span>
+                  </div>
+                  <label className="flex items-center gap-1.5 text-[11px] text-amber-900 font-medium cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={pncMentalHealthScreenDone}
+                      onChange={(e) => setPncMentalHealthScreenDone(e.target.checked)}
+                      className="w-3.5 h-3.5 accent-amber-600"
+                    />
+                    <span>Screening Completed</span>
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {[
+                    { id: 'no_concerns', label: 'No Concerns Noted', desc: 'Positive mood, bonding well' },
+                    { id: 'concerns_noted', label: 'Concerns Noted', desc: 'Postpartum distress / anxiety' },
+                    { id: 'referred', label: 'Referred for Care', desc: 'Immediate psychological support' },
+                  ].map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setPncMentalHealthScreenResult(option.id as any)}
+                      className={`p-2 rounded-[10px] text-left border transition-all cursor-pointer ${
+                        pncMentalHealthScreenResult === option.id
+                          ? option.id === 'no_concerns'
+                            ? 'bg-emerald-50 border-emerald-400 text-emerald-950 font-bold'
+                            : 'bg-red-50 border-red-400 text-red-950 font-bold'
+                          : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="text-[11px] leading-tight">{option.label}</div>
+                      <div className="text-[9px] text-gray-500 font-normal mt-0.5">{option.desc}</div>
+                    </button>
+                  ))}
+                </div>
+
+                {(pncMentalHealthScreenResult === 'concerns_noted' || pncMentalHealthScreenResult === 'referred') && (
+                  <div className="p-2 bg-red-100/70 border border-red-300 rounded-[8px] text-[11px] text-red-900 flex items-start gap-1.5">
+                    <span className="font-bold">Urgent Referral Trigger:</span>
+                    <span>Saving this encounter will automatically generate an authoritative clinical referral document on the facility roster for mental health counseling and follow-up.</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Preserved Narrative Notes */}
               <div>
-                <label className="block text-[11px] font-semibold text-gray-600 mb-1">Clinical Observations &amp; Regimen</label>
+                <label className="block text-[11px] font-semibold text-gray-600 mb-1">Clinical Observations &amp; Management Notes</label>
                 <textarea
                   rows={2}
                   value={pncNotes}
                   onChange={(e) => setPncNotes(e.target.value)}
-                  placeholder="Maternal involution, lochia check, wound healing, infant feeding & mental wellbeing..."
+                  placeholder="Wound healing, lochia check, breastfeeding technique, infant progress, and maternal counsel..."
                   className="w-full p-2.5 border border-gray-200 rounded-[12px] bg-white text-xs focus:outline-none"
                 />
               </div>

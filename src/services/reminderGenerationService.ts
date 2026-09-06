@@ -1,7 +1,16 @@
 // src/services/reminderGenerationService.ts
 import { collection, getDocs, query, where, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { Reminder, Pregnancy, Child, FamilyPlanningRecord } from '../types';
+import {
+  Reminder,
+  Pregnancy,
+  Child,
+  FamilyPlanningRecord,
+  CancerScreeningRecord,
+  PmtctHeiRecord,
+  HeiTestMilestone,
+  MaternalTdScheduleResult,
+} from '../types';
 import { KEPI_VACCINES, calculateDoseDates } from '../utils/kepiSchedule';
 import { VITAMIN_A_SCHEDULE, DEWORMING_SCHEDULE, MNP_SCHEDULE } from '../utils/supplementSchedule';
 import { calculateLmpFromEdd, computeMOH216Schedule } from '../utils/clinicalCalculations';
@@ -291,40 +300,268 @@ export function computePncContactReminders(
 }
 
 /**
- * Derives Family Planning reminders (Handbook p.22) for appointments or removal
+ * Derives Family Planning reminders (Handbook p.22) for appointments, revisit intervals, or removal
  */
 export function computeFamilyPlanningReminders(
   userId: string,
   fp: FamilyPlanningRecord
 ): DesiredReminder[] {
   const reminders: DesiredReminder[] = [];
+  const baseDate = fp.dateStarted || fp.counselingDate;
+
+  // 1. Explicit next appointment date entered by clinician
   if (fp.nextAppointmentDate) {
     reminders.push({
       userId,
       title: `Family Planning Follow-up (${fp.methodChosen})`,
       description: `Scheduled family planning review and method check per MOH Handbook p.22. Facility: ${fp.facilityName || 'Clinic'}.`,
       dueDate: fp.nextAppointmentDate,
-      category: 'pnc' as const,
+      category: 'custom' as const,
       completed: false,
       sharedWithPartner: false,
       sourceEventId: `fp-${fp.id}-next-appt`,
       deepLink: 'records' as const,
     });
+  } else if (baseDate) {
+    // 2. Method-specific re-visit interval calculations per Handbook p.22
+    const methodLower = (fp.methodChosen || '').toLowerCase();
+    if (methodLower.includes('injectable') || methodLower.includes('dmpa')) {
+      // 12 weeks / 84 days (~3 months)
+      reminders.push({
+        userId,
+        title: `Family Planning Due: Next Injectable (DMPA) Dose`,
+        description: `Scheduled 12-week injectable contraceptive repeat dose per Kenya MOH Handbook p.22.`,
+        dueDate: addDaysToDate(baseDate, 84),
+        category: 'custom' as const,
+        completed: false,
+        sharedWithPartner: false,
+        sourceEventId: `fp-${fp.id}-revisit-injectable`,
+        deepLink: 'records' as const,
+      });
+    } else if (fp.methodChosen === 'POPs' || fp.methodChosen === 'COCs') {
+      // 12 weeks / 84 days (~3 months refill)
+      reminders.push({
+        userId,
+        title: `Family Planning Refill: ${fp.methodChosen}`,
+        description: `Quarterly oral contraceptive resupply and blood pressure review per Kenya MOH Handbook p.22.`,
+        dueDate: addDaysToDate(baseDate, 84),
+        category: 'custom' as const,
+        completed: false,
+        sharedWithPartner: false,
+        sourceEventId: `fp-${fp.id}-refill-pills`,
+        deepLink: 'records' as const,
+      });
+    }
   }
+
+  // 3. Removal / renewal date
   if (fp.removalDate) {
     reminders.push({
       userId,
       title: `Family Planning Method Removal/Renewal (${fp.methodChosen})`,
       description: `Recommended removal or replacement date for ${fp.methodChosen}. Consult your healthcare provider.`,
       dueDate: fp.removalDate,
-      category: 'pnc' as const,
+      category: 'custom' as const,
       completed: false,
       sharedWithPartner: false,
       sourceEventId: `fp-${fp.id}-removal`,
       deepLink: 'records' as const,
     });
+  } else if (baseDate) {
+    const methodLower = (fp.methodChosen || '').toLowerCase();
+    if (methodLower.includes('implant')) {
+      // 3 years (1095 days) for Implanon
+      reminders.push({
+        userId,
+        title: `Family Planning Implants Renewal/Removal Assessment`,
+        description: `Scheduled 3-year contraceptive implant evaluation/removal per Kenya MOH Handbook p.22.`,
+        dueDate: addDaysToDate(baseDate, 1095),
+        category: 'custom' as const,
+        completed: false,
+        sharedWithPartner: false,
+        sourceEventId: `fp-${fp.id}-removal-implants`,
+        deepLink: 'records' as const,
+      });
+    } else if (methodLower.includes('iucd')) {
+      // 10 years (3652 days) for IUCD
+      reminders.push({
+        userId,
+        title: `Family Planning IUCD Long-Term Review/Removal`,
+        description: `Scheduled intrauterine device 10-year lifespan evaluation per Kenya MOH Handbook p.22.`,
+        dueDate: addDaysToDate(baseDate, 3652),
+        category: 'custom' as const,
+        completed: false,
+        sharedWithPartner: false,
+        sourceEventId: `fp-${fp.id}-removal-iucd`,
+        deepLink: 'records' as const,
+      });
+    }
   }
+
   return reminders;
+}
+
+/**
+ * Derives HEI (HIV-Exposed Infant) sequential testing reminders per Kenya MOH Handbook p.36.
+ * Four-test / five-stage schedule:
+ * 1. 1st DNA PCR (at birth / 6 weeks)
+ * 2. 2nd DNA PCR (at 6 months / 24 weeks)
+ * 3. 3rd DNA PCR (at 12 months / 52 weeks)
+ * 4. Rapid Antibody (at 18 months / 78 weeks)
+ * 5. Rapid Antibody (at 24 months / post-weaning)
+ */
+export function computeHeiFollowupReminders(
+  userId: string,
+  pmtct: PmtctHeiRecord,
+  childDob?: string
+): DesiredReminder[] {
+  if (!pmtct.isHivExposed) return [];
+
+  const reminders: DesiredReminder[] = [];
+  const childId = pmtct.childId;
+  const tests = pmtct.infantDbsTests || [];
+
+  const STAGES: {
+    milestone: HeiTestMilestone;
+    name: string;
+    targetAgeDays: number;
+    description: string;
+  }[] = [
+    {
+      milestone: '1st_dna_pcr_6wk',
+      name: 'HEI 1st DNA-PCR Test (6 Weeks)',
+      targetAgeDays: 42,
+      description: 'MOH Handbook p.36 protocol: 6-week infant DBS collection for 1st HIV DNA-PCR test.',
+    },
+    {
+      milestone: '2nd_dna_pcr_6mo',
+      name: 'HEI 2nd DNA-PCR Test (6 Months)',
+      targetAgeDays: 182,
+      description: 'MOH Handbook p.36 protocol: 6-month infant DBS collection for 2nd HIV DNA-PCR test.',
+    },
+    {
+      milestone: '3rd_dna_pcr_12mo',
+      name: 'HEI 3rd DNA-PCR Test (12 Months)',
+      targetAgeDays: 365,
+      description: 'MOH Handbook p.36 protocol: 12-month infant DBS collection for 3rd HIV DNA-PCR test.',
+    },
+    {
+      milestone: 'antibody_18mo',
+      name: 'HEI Rapid Antibody Test (18 Months)',
+      targetAgeDays: 548,
+      description: 'MOH Handbook p.36 protocol: 18-month rapid antibody test for final infant HIV status confirmation.',
+    },
+    {
+      milestone: 'antibody_24mo',
+      name: 'HEI Rapid Antibody Test (24 Months)',
+      targetAgeDays: 730,
+      description: 'MOH Handbook p.36 protocol: 24-month rapid antibody test for breastfed infants.',
+    },
+  ];
+
+  // Find completed stages (where valid result or received date exists)
+  const completedMilestones = new Set(
+    tests
+      .filter((t) => t.result && t.result !== 'pending' && t.result !== 'not_done')
+      .map((t) => t.milestone)
+  );
+
+  // Find next uncompleted milestone
+  const nextStage = STAGES.find((s) => !completedMilestones.has(s.milestone));
+  if (!nextStage) return reminders;
+
+  let dueDate: string;
+  if (childDob) {
+    dueDate = addDaysToDate(childDob, nextStage.targetAgeDays);
+  } else {
+    // If no DOB provided, derive from the latest recorded test date or fallback to today
+    const lastDone = tests
+      .filter((t) => t.dateSampleCollected || t.dateResultReceived)
+      .sort((a, b) => {
+        const da = a.dateSampleCollected || a.dateResultReceived || '';
+        const db = b.dateSampleCollected || b.dateResultReceived || '';
+        return db.localeCompare(da);
+      })[0];
+
+    const fallbackBase = lastDone?.dateSampleCollected || lastDone?.dateResultReceived || formatDate(new Date());
+    dueDate = addDaysToDate(fallbackBase, 140);
+  }
+
+  reminders.push({
+    userId,
+    title: nextStage.name,
+    description: nextStage.description,
+    dueDate,
+    category: 'custom' as const,
+    completed: false,
+    sharedWithPartner: false,
+    sourceEventId: `hei-${childId || pmtct.id}-${nextStage.milestone}`,
+    deepLink: 'records' as const,
+    childId: childId || undefined,
+  });
+
+  return reminders;
+}
+
+/**
+ * Generates follow-up reminder for abnormal cancer screening results per Handbook p.22
+ */
+export function computeCancerScreeningReminders(
+  userId: string,
+  cs: CancerScreeningRecord
+): DesiredReminder[] {
+  const isSuspicious =
+    cs.hasPositiveOrSuspicious ||
+    cs.cervicalResult === 'suspicious' ||
+    cs.cervicalResult === 'positive' ||
+    cs.breastResult === 'suspicious lump';
+
+  if (!isSuspicious) return [];
+
+  // Urgent clinical re-check / specialist review in 14 days (2 weeks)
+  const dueDate = addDaysToDate(cs.date, 14);
+
+  return [
+    {
+      userId,
+      title: 'URGENT: Cancer Screening Clinical Follow-up',
+      description: `Urgent 2-week clinical review and specialist consultation following abnormal screening result per Kenya MOH Handbook p.22.`,
+      dueDate,
+      category: 'custom' as const,
+      completed: false,
+      sharedWithPartner: false,
+      sourceEventId: `cancer-${cs.id}-followup`,
+      deepLink: 'records' as const,
+    },
+  ];
+}
+
+/**
+ * Generates maternal Tetanus-Diphtheria reminder per Kenya MOH Handbook pp.10-11
+ */
+export function computeMaternalTdReminders(
+  userId: string,
+  pregnancyId: string,
+  tdSchedule: MaternalTdScheduleResult
+): DesiredReminder[] {
+  if (!tdSchedule.nextDoseNumber || !tdSchedule.nextDoseScheduledDate) {
+    return [];
+  }
+
+  return [
+    {
+      userId,
+      title: `Upcoming: Maternal Td Immunization (Dose ${tdSchedule.nextDoseNumber})`,
+      description: `Maternal Tetanus-Diphtheria Dose ${tdSchedule.nextDoseNumber} due per Kenya MOH Handbook pp.10-11. ${tdSchedule.protectionStatus}.`,
+      dueDate: tdSchedule.nextDoseScheduledDate,
+      category: 'anc' as const,
+      completed: false,
+      sharedWithPartner: true,
+      sourceEventId: `td-preg-${pregnancyId}-dose-${tdSchedule.nextDoseNumber}`,
+      deepLink: 'records' as const,
+      pregnancyId,
+    },
+  ];
 }
 
 /**
@@ -373,6 +610,9 @@ export async function reconcileMotherClinicalReminders(
     children?: Child[];
     newOutcome?: { deliveryDate: string; pregnancyId: string; childId?: string };
     familyPlanningRecords?: FamilyPlanningRecord[];
+    cancerScreeningRecords?: CancerScreeningRecord[];
+    pmtctRecords?: PmtctHeiRecord[];
+    tdScheduleResult?: { pregnancyId: string; result: MaternalTdScheduleResult };
     immunizationRecords?: any[];
   } = {}
 ): Promise<{ createdCount: number; createdIds: string[] }> {
@@ -434,14 +674,40 @@ export async function reconcileMotherClinicalReminders(
       );
     }
 
-    // 5. Family Planning Reminders (Prompt 5.6)
+    // 5. Family Planning Reminders (Handbook p.22)
     if (options.familyPlanningRecords && options.familyPlanningRecords.length > 0) {
       for (const fp of options.familyPlanningRecords) {
         desired.push(...computeFamilyPlanningReminders(userId, fp));
       }
     }
 
-    // 6. Filter for deduplication
+    // 6. Cancer Screening Follow-up Reminders (Handbook p.22)
+    if (options.cancerScreeningRecords && options.cancerScreeningRecords.length > 0) {
+      for (const cs of options.cancerScreeningRecords) {
+        desired.push(...computeCancerScreeningReminders(userId, cs));
+      }
+    }
+
+    // 7. PMTCT / HEI Sequential Testing Reminders (Handbook p.36)
+    if (options.pmtctRecords && options.pmtctRecords.length > 0) {
+      for (const pmtct of options.pmtctRecords) {
+        const matchingChild = options.children?.find((c) => c.id === pmtct.childId);
+        desired.push(...computeHeiFollowupReminders(userId, pmtct, matchingChild?.dateOfBirth));
+      }
+    }
+
+    // 8. Maternal Td Immunization Reminders (Handbook pp.10-11)
+    if (options.tdScheduleResult && options.tdScheduleResult.result) {
+      desired.push(
+        ...computeMaternalTdReminders(
+          userId,
+          options.tdScheduleResult.pregnancyId,
+          options.tdScheduleResult.result
+        )
+      );
+    }
+
+    // 9. Filter for deduplication
     const remindersToCreate = filterNewReminders(existingReminders, desired);
 
     if (remindersToCreate.length === 0) {

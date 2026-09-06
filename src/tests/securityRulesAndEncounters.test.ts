@@ -304,6 +304,59 @@ async function runSecurityTests() {
     assert.ok(!('sentByRole' in privateNote), 'ClinicianPrivateNote does not have sentByRole');
   });
 
+  // --- Suite 5: P0/P1 Clinician Write Route Security Verification Sweep ---
+  console.log('\n--- Suite 5: P0/P1 Clinician Write Route Security Verification Sweep ---');
+
+  const clinicianRoutesPath = path.resolve(process.cwd(), 'server/routes/clinician.ts');
+  const clinicianRoutesContent = fs.readFileSync(clinicianRoutesPath, 'utf-8');
+
+  const requiredWriteHandlers = [
+    'handleVerifyRecord',
+    'handleAncEncounter',
+    'handlePncEncounter',
+    'handleImmunizationEncounter',
+    'handleGrowthEncounter',
+    'handleCongenitalExam',
+    'handleFamilyPlanning',
+    'handleCancerScreening',
+    'handleAntenatalProfile',
+    'handleAefiReport',
+    'handleHospitalAdmission',
+    'handleSpecialClinicalAttendance',
+    'handleEyeCareAssessment',
+    'handleToothEruption',
+    'handlePmtctHeiEncounter',
+    'handlePrivateNote',
+    'handleCareTeamMessage',
+  ];
+
+  for (const handlerName of requiredWriteHandlers) {
+    await test(`Write Route Guard: ${handlerName} enforces requireClinician, requireActiveSession, and logAudit`, () => {
+      // Find the function body
+      const funcIndex = clinicianRoutesContent.indexOf(`function ${handlerName}`);
+      assert.ok(funcIndex !== -1, `Function ${handlerName} must exist in server/routes/clinician.ts`);
+
+      // Extract the function body up to the next handler or 8000 characters
+      const nextFuncIndex = clinicianRoutesContent.indexOf('function handle', funcIndex + 20);
+      const funcSlice = nextFuncIndex !== -1 
+        ? clinicianRoutesContent.slice(funcIndex, nextFuncIndex) 
+        : clinicianRoutesContent.slice(funcIndex, funcIndex + 8000);
+
+      assert.ok(
+        funcSlice.includes('requireClinician('),
+        `${handlerName} must enforce requireClinician(token.uid)`
+      );
+      assert.ok(
+        funcSlice.includes('requireActiveSession('),
+        `${handlerName} must enforce requireActiveSession(token.uid, motherId)`
+      );
+      assert.ok(
+        funcSlice.includes('logAudit('),
+        `${handlerName} must record an audit entry via logAudit(...)`
+      );
+    });
+  }
+
   console.log('\n======================================================');
   console.log('  All Security & Clinical Encounter Tests Passed!    ');
   console.log('======================================================\n');

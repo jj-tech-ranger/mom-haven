@@ -1,6 +1,7 @@
 import { adminDb, document } from '../clinicianAccess.js';
 import { CLINICAL_RECORD_GROUPS } from './patientRecordService.js';
-import type { FacilityRosterEntry } from '../../src/types.js';
+import type { FacilityRosterEntry, Referral } from '../../src/types.js';
+import { getOpenReferralsForFacility } from './referralService.js';
 
 /**
  * Recomputes facility roster entries from authoritative clinical data:
@@ -386,3 +387,13 @@ export async function getFacilityRoster(facilityId: string): Promise<FacilityRos
   computed.sort((a, b) => new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime());
   return computed;
 }
+
+/**
+ * Returns open referrals scoped to the clinician's facility
+ */
+export async function getFacilityOpenReferrals(facilityId: string): Promise<Referral[]> {
+  const cleanId = String(facilityId || '').trim();
+  if (!cleanId) return [];
+  return getOpenReferralsForFacility(cleanId);
+}
+

@@ -222,13 +222,87 @@ export interface NewbornRecord {
 
 export interface PostnatalEncounter {
   id: string;
-  childId: string;
+  childId?: string;
   motherId: string;
-  visit: '48h' | '1-2w' | '4-6w' | '4-6mo';
+  pregnancyId?: string;
+  visit: '48h' | '1-2w' | '4-6w' | '4-6mo' | string;
+  visitTiming?: string;
   date: string;
+  visitDate?: string;
+  facilityId?: string;
+  facilityName?: string;
+  
+  // Structured PNC Clinical Fields (Kenya MOH 216 Handbook p.20 Table)
+  bloodPressure?: string;
+  systolicBp?: number | string;
+  diastolicBp?: number | string;
+  temperature?: number | string;
+  pulse?: number | string;
+  respiratoryRate?: number | string;
+  uterineInvolution?: 'Contracted' | 'Normal' | 'Subinvoluted' | 'Tender' | string;
+  lochia?: { amount?: string; colour?: string; smell?: string } | string;
+  lochiaAmount?: 'normal' | 'scant' | 'moderate' | 'excessive' | string;
+  lochiaColour?: 'rubra' | 'serosa' | 'alba' | string;
+  lochiaSmell?: 'normal' | 'foul' | string;
+  haemoglobin?: number | string;
+  hivRetestDone?: boolean;
+  hivRetestResult?: 'negative' | 'positive' | 'reactive' | 'non-reactive' | 'not_done' | string;
+  onHaart?: boolean;
+  familyPlanningCounselled?: boolean;
+  fpMethod?: string;
+  mentalHealthScreenDone?: boolean;
+  mentalHealthScreenResult?: 'no_concerns' | 'concerns_noted' | 'referred';
+
+  // Free text observations & summary (preserved alongside structured fields)
   motherFindings?: string;
   babyFindings?: string;
-  provenance: Provenance;
+  clinicalNotes?: string;
+  notes?: string;
+  summary?: string;
+  provenance?: Provenance;
+  createdAt?: string;
+}
+
+// First-Class Clinical Referral Lifecycle (MOH Handbook pp. 17, 20, 22, 25)
+export type ReferralSourceModule =
+  | 'cancer_screening'
+  | 'eye_care'
+  | 'congenital_exam'
+  | 'danger_sign'
+  | 'pnc'
+  | 'pnc_mental_health'
+  | 'anc'
+  | 'other';
+
+export type ReferralUrgency = 'routine' | 'urgent' | 'emergency';
+export type ReferralStatus = 'open' | 'acknowledged' | 'completed' | 'cancelled';
+
+export interface Referral {
+  id: string;
+  motherId: string;
+  childId?: string | null;
+  pregnancyId?: string | null;
+  sourceModule: ReferralSourceModule;
+  sourceRecordId: string;
+  reason: string;
+  urgency: ReferralUrgency;
+  status: ReferralStatus;
+  createdBy: string;
+  createdAt: string;
+  facilityId?: string | null;
+  facilityName?: string | null;
+  targetFacility?: string | null;
+  notes?: string | null;
+  motherName?: string;
+  childName?: string;
+  acknowledgedAt?: string | null;
+  acknowledgedBy?: string | null;
+  completedAt?: string | null;
+  completedBy?: string | null;
+  cancelledAt?: string | null;
+  cancelledBy?: string | null;
+  resolvedAt?: string | null;
+  outcomeNotes?: string | null;
 }
 
 export type MOH216Antigen =
@@ -768,6 +842,25 @@ export interface ObstetricUltrasoundScan {
 
 export type UltrasoundExam = ObstetricUltrasoundScan;
 
+// Maternal Tetanus-Diphtheria (TD) Immunization (Kenya MOH Handbook pp.10-11)
+export interface MaternalTdDose {
+  doseNumber: 1 | 2 | 3 | 4 | 5;
+  dateGiven: string;
+  facilityName?: string;
+  batchNumber?: string;
+  administeredBy?: string;
+  comments?: string;
+}
+
+export interface MaternalTdScheduleResult {
+  completedDoses: MaternalTdDose[];
+  nextDoseNumber: 1 | 2 | 3 | 4 | 5 | null;
+  nextDoseScheduledDate: string | null;
+  protectionStatus: string;
+  restartedDueTo10YearGap: boolean;
+  notes: string[];
+}
+
 export interface AntenatalProfile {
   id: string;
   pregnancyId: string;
@@ -789,6 +882,9 @@ export interface AntenatalProfile {
   hepatitisBStatus?: SerologyResult | string;
   // Repeat serology schedule
   serologyRepeatSchedule: SerologyRepeatRow[];
+  // Maternal Tetanus Diphtheria (TD) Schedule (pp.10-11)
+  tdDoses?: MaternalTdDose[];
+  tdScheduleResult?: MaternalTdScheduleResult;
   // Obstetric Ultrasounds
   ultrasound1?: ObstetricUltrasoundScan;
   ultrasound2?: ObstetricUltrasoundScan;
