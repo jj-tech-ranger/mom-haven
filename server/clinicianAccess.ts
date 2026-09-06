@@ -3,14 +3,19 @@ import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { getMessaging, type Messaging } from 'firebase-admin/messaging';
 
+const FIREBASE_PROJECT_ID = 'mom-haven';
+
 function adminReady() {
   if (getApps().length) return;
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   if (raw) {
-    initializeApp({ credential: cert(JSON.parse(raw)) });
+    initializeApp({ credential: cert(JSON.parse(raw)), projectId: FIREBASE_PROJECT_ID });
     return;
   }
-  initializeApp();
+  // Explicit projectId prevents Admin SDK from depending on ambient gcloud
+  // project configuration. Credentials still come from ADC in the local
+  // environment or the service account supplied above in CI/production.
+  initializeApp({ projectId: FIREBASE_PROJECT_ID });
 }
 
 adminReady();
@@ -69,10 +74,11 @@ export async function logAudit(actorId: string, actorRole: string, action: strin
 
 export function serialize(value: any): any {
   if (value instanceof Timestamp) return value.toDate().toISOString();
-  if (value?.toDate instanceof Function) return value.toDate().toISOString();
   if (Array.isArray(value)) return value.map(serialize);
-  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, serialize(v)]));
+  if (value && typeof value === 'object') {
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(value)) out[k] = serialize(v);
+    return out;
+  }
   return value;
 }
-
-export function document(id: string, data: any) { return serialize({ id, ...data }); }
