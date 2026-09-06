@@ -249,26 +249,3 @@ npm run clean:demo
 The application is containerized and deployed to Google Cloud Run. GitHub Actions handles validation and deployment, with Google Cloud Workload Identity Federation used for keyless authentication.
 
 The CI pipeline runs the test suite and production build before deployment.
-
-## Project status
-
-MomHaven is under active development. The main product areas are implemented, but this is still a software project rather than a finished clinical product or certified medical device.
-
-Some areas—particularly the anonymous/guest experience, offline synchronization, and parts of the background-job architecture—are still being refined.
-
-If you are evaluating the project, the code and tests are the best source of truth for what is currently implemented.
-
-## Contributing
-
-If you're working on MomHaven, keep a few principles in mind:
-
-1. Keep clinical calculations deterministic and centralized.
-2. Don't put authoritative clinical writes directly in the client.
-3. Preserve provenance when adding or transforming health information.
-4. Treat offline and emergency flows as safety-critical paths.
-5. Keep Haven grounded in application data and out of diagnosis/prescribing.
-6. Prefer small, testable services over duplicating clinical logic in UI components.
-
-## License
-
-See the repository for the current licensing terms.
