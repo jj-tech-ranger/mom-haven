@@ -118,24 +118,18 @@ export default function PartnerSupportHub() {
 
   return (
     <div className="space-y-4">
-      {/* Header Banner */}
       <div className="bg-white border border-[var(--border-hairline)] p-4 sm:p-5 rounded-[22px] shadow-card-1">
         <div className="flex items-center gap-2.5 mb-1.5">
           <div className="w-8 h-8 rounded-xl bg-[var(--lavender-100)] text-[var(--haven-deep)] flex items-center justify-center">
             <HeartHandshake className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="font-display font-bold text-[16px] text-[var(--ink-900)] leading-tight">
-              Kenyan Partner Support Guides
-            </h2>
-            <p className="text-[11px] text-[var(--ink-600)]">
-              Evidence-based, practical actions for maternal companionship and fatherhood.
-            </p>
+            <h2 className="font-display font-bold text-[16px] text-[var(--ink-900)] leading-tight">Kenyan Partner Support Guides</h2>
+            <p className="text-[11px] text-[var(--ink-600)]">Evidence-based, practical actions for maternal companionship and fatherhood.</p>
           </div>
         </div>
       </div>
 
-      {/* Guide Modules List */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         {PARTNER_GUIDES.map(guide => {
           const isSelected = guide.id === selectedGuideId;
@@ -144,46 +138,37 @@ export default function PartnerSupportHub() {
               key={guide.id}
               type="button"
               onClick={() => setSelectedGuideId(guide.id)}
-              className={`text-left p-3.5 rounded-[18px] border transition-all cursor-pointer ${
+              aria-pressed={isSelected}
+              className={`text-left p-3.5 rounded-[18px] border transition-all cursor-pointer bg-white text-[var(--ink-900)] shadow-xs ${
                 isSelected
-                  ? 'bg-[var(--haven-deep)] text-white border-[var(--haven-deep)] shadow-card-1'
-                  : 'bg-white text-[var(--ink-900)] border-[var(--border-hairline)] hover:border-[var(--haven-orchid)] shadow-xs'
+                  ? 'border-[var(--haven-orchid)] ring-1 ring-[var(--haven-orchid)]/25 shadow-card-1'
+                  : 'border-[var(--border-hairline)] hover:border-[var(--haven-orchid)]'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                  isSelected ? 'bg-white/20 text-white' : 'bg-[var(--lavender-100)] text-[var(--haven-deep)]'
-                }`}>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[var(--lavender-100)] text-[var(--haven-deep)]">
                   {guide.category}
                 </span>
-                <span className={`text-[10px] ${isSelected ? 'text-purple-200' : 'text-gray-400'}`}>
+                <span className="text-[10px] text-gray-400">
                   {guide.trimester.split(' ')[0]} {guide.trimester.split(' ')[1]}
                 </span>
               </div>
-              <h4 className="font-display font-bold text-[13px] leading-snug line-clamp-2">
-                {guide.title}
-              </h4>
+              <h4 className="font-display font-bold text-[13px] leading-snug line-clamp-2">{guide.title}</h4>
             </button>
           );
         })}
       </div>
 
-      {/* Selected Guide Details & Action Checklist */}
       <div className="bg-white border border-[var(--border-hairline)] p-5 rounded-[22px] shadow-card-1 space-y-4">
         <div className="border-b border-[var(--border-hairline)] pb-3">
           <div className="flex items-center gap-2 text-[11px] font-semibold text-[var(--haven-orchid)] mb-1">
             <BookOpen className="w-3.5 h-3.5" />
             <span>{activeGuide.trimester}</span>
           </div>
-          <h3 className="font-display font-bold text-[17px] text-[var(--ink-900)]">
-            {activeGuide.title}
-          </h3>
-          <p className="text-[12px] text-[var(--ink-600)] mt-1 font-body">
-            {activeGuide.summary}
-          </p>
+          <h3 className="font-display font-bold text-[17px] text-[var(--ink-900)]">{activeGuide.title}</h3>
+          <p className="text-[12px] text-[var(--ink-600)] mt-1 font-body">{activeGuide.summary}</p>
         </div>
 
-        {/* Clinical Knowledge Points */}
         <div className="space-y-2.5">
           <h4 className="font-display font-bold text-[13px] text-[var(--ink-900)] flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-[var(--haven-orchid)]" />
@@ -192,16 +177,13 @@ export default function PartnerSupportHub() {
           <div className="space-y-2 text-[12px] text-[var(--ink-700)] leading-relaxed">
             {activeGuide.content.map((point, idx) => (
               <div key={idx} className="flex items-start gap-2 bg-[var(--lavender-50)] p-2.5 rounded-[12px]">
-                <span className="w-5 h-5 rounded-full bg-[var(--lavender-200)] text-[var(--haven-deep)] font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
-                  {idx + 1}
-                </span>
+                <span className="w-5 h-5 rounded-full bg-[var(--lavender-200)] text-[var(--haven-deep)] font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">{idx + 1}</span>
                 <p>{point}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Actionable Partner Checklist */}
         <div className="space-y-2.5 pt-2 border-t border-[var(--border-hairline)]">
           <h4 className="font-display font-bold text-[13px] text-[var(--ink-900)] flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -212,23 +194,13 @@ export default function PartnerSupportHub() {
               const taskId = `${activeGuide.id}-${idx}`;
               const isChecked = !!completedItems[taskId];
               return (
-                <label
-                  key={idx}
-                  className={`flex items-center gap-2.5 p-2.5 rounded-[12px] border transition-all cursor-pointer ${
-                    isChecked
-                      ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
-                      : 'bg-white border-[var(--border-hairline)] hover:border-[var(--haven-orchid)] text-[var(--ink-800)]'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={() => toggleItem(taskId)}
-                    className="w-4 h-4 accent-emerald-600 rounded cursor-pointer"
-                  />
-                  <span className={`text-[12px] font-body ${isChecked ? 'line-through text-emerald-700/70' : 'font-medium'}`}>
-                    {task}
-                  </span>
+                <label key={idx} className={`flex items-center gap-2.5 p-2.5 rounded-[12px] border transition-all cursor-pointer ${
+                  isChecked
+                    ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
+                    : 'bg-white border-[var(--border-hairline)] hover:border-[var(--haven-orchid)] text-[var(--ink-800)]'
+                }`}>
+                  <input type="checkbox" checked={isChecked} onChange={() => toggleItem(taskId)} className="w-4 h-4 accent-emerald-600 rounded cursor-pointer" />
+                  <span className={`text-[12px] font-body ${isChecked ? 'line-through text-emerald-700/70' : 'font-medium'}`}>{task}</span>
                 </label>
               );
             })}
