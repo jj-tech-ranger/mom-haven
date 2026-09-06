@@ -60,3 +60,18 @@ Clinical status colors communicate clinical status only; they are not interchang
 ## Clinical Provenance
 
 MOH Kenya handbook (MOH 216) material is our content and clinical-governance source. Clinical alerts, screening pathways, and triage protocols directly reflect the national handbook guidelines.
+
+## Production Deployment & Firestore Index Checklist
+
+Before deploying MomHaven to production or spinning up a new Firebase environment:
+
+1. **Deploy Firestore Security Rules & Composite Indexes:**
+   ```bash
+   firebase deploy --only firestore:rules,firestore:indexes --project mom-haven
+   ```
+   - **Referrals Query Index:** The facility roster service (`server/services/referralService.ts` -> `getOpenReferralsForFacility`) requires a composite index on top-level collection `referrals` (`facilityId` ASCENDING, `status` ASCENDING, queryScope: `COLLECTION`). This index is configured in `firestore.indexes.json` and must be deployed prior to clinician roster triage in production.
+   - Note that mother-facing queries (`getReferralsForMother`) execute single-field equality checks with in-memory ordering and do not require composite indexing.
+
+2. **Automated CI Checks:**
+   All 17 test suites (clinical, immunization schedules, context synchronization, security rules, and seed verification) run automatically in CI via `npm test` and `verifyDemoData`.
+

@@ -16,7 +16,12 @@ jobs:
           node-version: 20
       - run: npm install
       - run: npm run lint
-      - run: npm run test:clinical
+      - run: npm test
+      - name: Verify demo dataset integrity if credentials or emulator available
+        run: |
+          if [ -n "$FIRESTORE_EMULATOR_HOST" ] || [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ] || [ -n "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            npm run verify:demo
+          fi
       - run: npm run build
       - name: Build production container
         run: docker build --tag momhaven-api:ci .
