@@ -350,11 +350,371 @@ export function computeMOH216Schedule(
 
 // Re-export WHO Growth Standard utilities from dedicated engine
 export {
-  calculateZScore,
   interpretZScore,
   calculateValueForZScore,
   generateGrowthCurveBands,
   type ZScoreInterpretation,
   type GrowthCurveBandPoint,
 } from './whoGrowthStandards';
+
+import {
+  WHO_WEIGHT_FOR_AGE_BOYS,
+  WHO_WEIGHT_FOR_AGE_GIRLS,
+  WHO_LENGTH_FOR_AGE_BOYS,
+  WHO_LENGTH_FOR_AGE_GIRLS,
+  LmsEntry,
+} from '../data/whoGrowthData';
+import { calculateZScore as calculateZScoreStandard } from './whoGrowthStandards';
+
+/**
+ * Reversible LMS calculation for exact percentile/z-score curves
+ */
+export function calculateMeasurementForZ(
+  z: number,
+  month: number,
+  table: LmsEntry[]
+): number {
+  const entry = table.find((e) => e.month === month) || table[0];
+  const { l, m, s } = entry;
+  if (Math.abs(l) < 0.0001) {
+    return m * Math.exp(s * z);
+  }
+  return m * Math.pow(1 + l * s * z, 1 / l);
+}
+
+/**
+ * Polymorphic Z-Score calculator supporting both table-based and metric-based calls
+ */
+export function calculateZScore(
+  valOrY: number,
+  monthOrAge: number,
+  tableOrSex: LmsEntry[] | 'male' | 'female',
+  metric?: 'wfa' | 'lhfa'
+): number {
+  if (Array.isArray(tableOrSex)) {
+    const table = tableOrSex;
+    const entry = table.find((e) => e.month === monthOrAge) || table[0];
+    const { l, m, s } = entry;
+    if (Math.abs(l) < 0.0001) {
+      return Math.log(valOrY / m) / s;
+    }
+    return (Math.pow(valOrY / m, l) - 1) / (l * s);
+  }
+  return calculateZScoreStandard(valOrY, monthOrAge, tableOrSex, metric || 'wfa');
+}
+
+export interface GrowthZResult {
+  zScore: number;
+  zScoreRounded: number;
+  classification: string;
+  isFlagged: boolean;
+  alertLevel: 'none' | 'warning' | 'severe';
+}
+
+export function calculateWeightForAgeZScore(
+  weightKg: number,
+  ageMonths: number,
+  sex: 'male' | 'female'
+): GrowthZResult {
+  const table = sex === 'male' ? WHO_WEIGHT_FOR_AGE_BOYS : WHO_WEIGHT_FOR_AGE_GIRLS;
+  const z = calculateZScore(weightKg, Math.round(ageMonths), table);
+  const zScoreRounded = Math.round(z * 100) / 100;
+
+  let classification = 'normal';
+  let isFlagged = false;
+  let alertLevel: 'none' | 'warning' | 'severe' = 'none';
+
+  if (z < -3.0) {
+    classification = 'severely_underweight';
+    isFlagged = true;
+    alertLevel = 'severe';
+  } else if (z < -2.0) {
+    classification = 'underweight';
+    isFlagged = true;
+    alertLevel = 'warning';
+  } else if (z > 3.0) {
+    classification = 'severely_overweight';
+    isFlagged = true;
+    alertLevel = 'severe';
+  } else if (z > 2.0) {
+    classification = 'overweight';
+    isFlagged = true;
+    alertLevel = 'warning';
+  }
+
+  return {
+    zScore: z,
+    zScoreRounded,
+    classification,
+    isFlagged,
+    alertLevel,
+  };
+}
+
+export function calculateLengthForAgeZScore(
+  lengthCm: number,
+  ageMonths: number,
+  sex: 'male' | 'female'
+): GrowthZResult {
+  const table = sex === 'male' ? WHO_LENGTH_FOR_AGE_BOYS : WHO_LENGTH_FOR_AGE_GIRLS;
+  const z = calculateZScore(lengthCm, Math.round(ageMonths), table);
+  const zScoreRounded = Math.round(z * 100) / 100;
+
+  let classification = 'normal';
+  let isFlagged = false;
+  let alertLevel: 'none' | 'warning' | 'severe' = 'none';
+
+  if (z < -3.0) {
+    classification = 'severely_stunted';
+    isFlagged = true;
+    alertLevel = 'severe';
+  } else if (z < -2.0) {
+    classification = 'stunted';
+    isFlagged = true;
+    alertLevel = 'warning';
+  } else if (z > 3.0) {
+    classification = 'very_tall';
+    isFlagged = false;
+    alertLevel = 'none';
+  } else if (z > 2.0) {
+    classification = 'tall';
+    isFlagged = false;
+    alertLevel = 'none';
+  }
+
+  return {
+    zScore: z,
+    zScoreRounded,
+    classification,
+    isFlagged,
+    alertLevel,
+  };
+}
+
+export interface MOH216ImmunizationScheduleItem {
+  vaccineId: string;
+  vaccineName: string;
+  dose: string;
+  targetAgeBracket: string;
+  targetAgeWeeks: number;
+  scheduledDate: string;
+  status: 'given' | 'due' | 'overdue' | 'scheduled';
+  dateGiven?: string | null;
+}
+
+export const MOH216_VACCINES: Array<{
+  vaccineId: string;
+  vaccineName: string;
+  dose: string;
+  targetAgeBracket: string;
+  targetAgeWeeks: number;
+}> = [
+  { vaccineId: 'bcg', vaccineName: 'BCG', dose: 'Birth', targetAgeBracket: 'At Birth', targetAgeWeeks: 0 },
+  { vaccineId: 'opv-0', vaccineName: 'OPV', dose: 'Birth', targetAgeBracket: 'At Birth', targetAgeWeeks: 0 },
+  { vaccineId: 'opv-1', vaccineName: 'OPV', dose: 'Dose 1', targetAgeBracket: '6 Weeks', targetAgeWeeks: 6 },
+  { vaccineId: 'penta-1', vaccineName: 'DPT-HepB-Hib (Pentavalent)', dose: 'Dose 1', targetAgeBracket: '6 Weeks', targetAgeWeeks: 6 },
+  { vaccineId: 'pcv-1', vaccineName: 'PCV (Pneumococcal)', dose: 'Dose 1', targetAgeBracket: '6 Weeks', targetAgeWeeks: 6 },
+  { vaccineId: 'rota-1', vaccineName: 'Rotavirus', dose: 'Dose 1', targetAgeBracket: '6 Weeks', targetAgeWeeks: 6 },
+  { vaccineId: 'opv-2', vaccineName: 'OPV', dose: 'Dose 2', targetAgeBracket: '10 Weeks', targetAgeWeeks: 10 },
+  { vaccineId: 'penta-2', vaccineName: 'DPT-HepB-Hib (Pentavalent)', dose: 'Dose 2', targetAgeBracket: '10 Weeks', targetAgeWeeks: 10 },
+  { vaccineId: 'pcv-2', vaccineName: 'PCV (Pneumococcal)', dose: 'Dose 2', targetAgeBracket: '10 Weeks', targetAgeWeeks: 10 },
+  { vaccineId: 'rota-2', vaccineName: 'Rotavirus', dose: 'Dose 2', targetAgeBracket: '10 Weeks', targetAgeWeeks: 10 },
+  { vaccineId: 'opv-3', vaccineName: 'OPV', dose: 'Dose 3', targetAgeBracket: '14 Weeks', targetAgeWeeks: 14 },
+  { vaccineId: 'penta-3', vaccineName: 'DPT-HepB-Hib (Pentavalent)', dose: 'Dose 3', targetAgeBracket: '14 Weeks', targetAgeWeeks: 14 },
+  { vaccineId: 'pcv-3', vaccineName: 'PCV (Pneumococcal)', dose: 'Dose 3', targetAgeBracket: '14 Weeks', targetAgeWeeks: 14 },
+  { vaccineId: 'ipv', vaccineName: 'IPV (Inactivated Polio)', dose: 'Dose 1', targetAgeBracket: '14 Weeks', targetAgeWeeks: 14 },
+  { vaccineId: 'mr-6mo', vaccineName: 'Measles-Rubella (Special)', dose: '6 Months', targetAgeBracket: '6 Months', targetAgeWeeks: 26 },
+  { vaccineId: 'mr-9mo', vaccineName: 'Measles-Rubella', dose: 'Dose 1', targetAgeBracket: '9 Months', targetAgeWeeks: 39 },
+  { vaccineId: 'yellow-fever', vaccineName: 'Yellow Fever', dose: 'Dose 1', targetAgeBracket: '9 Months', targetAgeWeeks: 39 },
+  { vaccineId: 'mr-18mo', vaccineName: 'Measles-Rubella', dose: 'Dose 2', targetAgeBracket: '18 Months', targetAgeWeeks: 78 },
+];
+
+export function computeMOH216ImmunizationSchedule(
+  birthDate: string,
+  administered: Array<{
+    vaccineId?: string;
+    vaccineName?: string;
+    antigen?: string;
+    dose?: string;
+    dateAdministered?: string | null;
+    dateGiven?: string | null;
+    givenDate?: string | null;
+    status?: string;
+  }> = [],
+  asOf: Date = new Date()
+): MOH216ImmunizationScheduleItem[] {
+  const dob = new Date(birthDate);
+  if (isNaN(dob.getTime())) {
+    throw new Error('Invalid birth date');
+  }
+
+  const asOfDateOnly = new Date(toDateOnly(asOf));
+
+  return MOH216_VACCINES.map((v) => {
+    const schedTime = dob.getTime() + v.targetAgeWeeks * 7 * DAY_MS;
+    const scheduledDate = toDateOnly(new Date(schedTime));
+    const schedDateOnly = new Date(scheduledDate);
+
+    // Matching logic for administered
+    const match = administered.find((a) => {
+      if (a.vaccineId && a.vaccineId.toLowerCase() === v.vaccineId.toLowerCase()) return true;
+      const vName = (a.vaccineName || a.antigen || '').toLowerCase();
+      if (!vName) return false;
+
+      if (v.vaccineId === 'bcg' && vName.includes('bcg')) return true;
+      if (v.vaccineId === 'ipv' && vName.includes('ipv')) return true;
+      if (v.vaccineId === 'yellow-fever' && vName.includes('yellow')) return true;
+
+      // Match OPV doses
+      if (vName.includes('opv') || vName.includes('polio')) {
+        if (v.vaccineId === 'opv-0' && (a.dose === 'Birth' || a.dose === '0' || a.dose === 'Dose 0' || vName.includes('0'))) return true;
+        if (v.vaccineId === 'opv-1' && (a.dose === 'Dose 1' || a.dose === '1' || vName.includes('1'))) return true;
+        if (v.vaccineId === 'opv-2' && (a.dose === 'Dose 2' || a.dose === '2' || vName.includes('2'))) return true;
+        if (v.vaccineId === 'opv-3' && (a.dose === 'Dose 3' || a.dose === '3' || vName.includes('3'))) return true;
+      }
+
+      // Match Penta
+      if (vName.includes('penta') || vName.includes('dpt')) {
+        if (v.vaccineId === 'penta-1' && (a.dose === 'Dose 1' || a.dose === '1' || vName.includes('1'))) return true;
+        if (v.vaccineId === 'penta-2' && (a.dose === 'Dose 2' || a.dose === '2' || vName.includes('2'))) return true;
+        if (v.vaccineId === 'penta-3' && (a.dose === 'Dose 3' || a.dose === '3' || vName.includes('3'))) return true;
+      }
+
+      // Match PCV
+      if (vName.includes('pcv')) {
+        if (v.vaccineId === 'pcv-1' && (a.dose === 'Dose 1' || a.dose === '1' || vName.includes('1'))) return true;
+        if (v.vaccineId === 'pcv-2' && (a.dose === 'Dose 2' || a.dose === '2' || vName.includes('2'))) return true;
+        if (v.vaccineId === 'pcv-3' && (a.dose === 'Dose 3' || a.dose === '3' || vName.includes('3'))) return true;
+      }
+
+      // Match Rota
+      if (vName.includes('rota')) {
+        if (v.vaccineId === 'rota-1' && (a.dose === 'Dose 1' || a.dose === '1' || vName.includes('1'))) return true;
+        if (v.vaccineId === 'rota-2' && (a.dose === 'Dose 2' || a.dose === '2' || vName.includes('2'))) return true;
+      }
+
+      // Match MR
+      if (vName.includes('mr') || vName.includes('measles')) {
+        if (v.vaccineId === 'mr-6mo' && (a.dose === '6 Months' || vName.includes('6'))) return true;
+        if (v.vaccineId === 'mr-9mo' && (a.dose === 'Dose 1' || a.dose === '1' || vName.includes('9'))) return true;
+        if (v.vaccineId === 'mr-18mo' && (a.dose === 'Dose 2' || a.dose === '2' || vName.includes('18'))) return true;
+      }
+
+      return false;
+    });
+
+    const isGiven = match && (match.status === 'given' || match.status === 'GIVEN' || !!match.dateAdministered || !!match.dateGiven || !!match.givenDate);
+
+    if (isGiven) {
+      return {
+        ...v,
+        scheduledDate,
+        status: 'given',
+        dateGiven: match.dateAdministered || match.dateGiven || match.givenDate || toDateOnly(asOf),
+      };
+    }
+
+    const diffDays = Math.round((asOfDateOnly.getTime() - schedDateOnly.getTime()) / DAY_MS);
+
+    let status: 'given' | 'due' | 'overdue' | 'scheduled';
+    if (diffDays < 0) {
+      status = 'scheduled';
+    } else if (diffDays <= 14) {
+      status = 'due';
+    } else {
+      status = 'overdue';
+    }
+
+    return {
+      ...v,
+      scheduledDate,
+      status,
+      dateGiven: null,
+    };
+  });
+}
+
+export interface GeneratedReminderItem {
+  id?: string;
+  userId: string;
+  category: 'anc' | 'immunization' | 'pnc' | 'supplement' | 'action';
+  title: string;
+  description?: string;
+  dueDate: string;
+  sharedWithPartner?: boolean;
+  pushEligible?: boolean;
+  completed?: boolean;
+  sourceEventId?: string;
+}
+
+export function generateNextReminders(params: {
+  motherId: string;
+  pregnancy?: { id: string; status?: string; lmp?: string; edd?: string } | null;
+  ancEncounters?: Array<{ id: string; visitNumber?: number; date?: string; nextAppointmentDate?: string; nextVisitDate?: string }>;
+  children?: Array<{ id: string; name?: string; dateOfBirth: string; sex?: string }>;
+  childRecords?: Record<string, any>;
+  asOf?: Date;
+}): GeneratedReminderItem[] {
+  const reminders: GeneratedReminderItem[] = [];
+  const asOf = params.asOf || new Date();
+
+  // 1. ANC appointment from clinical encounter
+  if (params.ancEncounters && params.ancEncounters.length > 0) {
+    for (const enc of params.ancEncounters) {
+      const targetDate = enc.nextAppointmentDate || enc.nextVisitDate;
+      if (targetDate) {
+        reminders.push({
+          id: `anc_${enc.id}`,
+          userId: params.motherId,
+          category: 'anc',
+          title: 'Upcoming ANC Visit',
+          description: 'Scheduled antenatal care visit with your healthcare provider.',
+          dueDate: targetDate,
+          sharedWithPartner: true,
+          pushEligible: true,
+          completed: false,
+          sourceEventId: `anc_enc_${enc.id}`,
+        });
+      }
+    }
+  }
+
+  // 2. Child immunizations & growth monitoring
+  if (params.children && params.children.length > 0) {
+    for (const child of params.children) {
+      const schedule = computeMOH216ImmunizationSchedule(child.dateOfBirth, [], asOf);
+      const nextVac = schedule.find((s) => s.status === 'due' || s.status === 'overdue') || schedule.find((s) => s.status === 'scheduled');
+      if (nextVac) {
+        reminders.push({
+          id: `imm_${child.id}_${nextVac.vaccineId}`,
+          userId: params.motherId,
+          category: 'immunization',
+          title: `${child.name || 'Child'}'s Immunization: ${nextVac.vaccineName} (${nextVac.dose})`,
+          description: `Scheduled ${nextVac.vaccineName} immunization.`,
+          dueDate: nextVac.scheduledDate,
+          sharedWithPartner: true,
+          pushEligible: true,
+          completed: false,
+          sourceEventId: `kepi_${child.id}_${nextVac.vaccineId}`,
+        });
+      }
+
+      reminders.push({
+        id: `growth_${child.id}`,
+        userId: params.motherId,
+        category: 'pnc',
+        title: `${child.name || 'Child'}'s Monthly Growth Monitoring`,
+        description: `Track your child's weight, length, and nutritional development.`,
+        dueDate: toDateOnly(asOf),
+        sharedWithPartner: true,
+        pushEligible: true,
+        completed: false,
+        sourceEventId: `growth_monthly_${child.id}`,
+      });
+    }
+  }
+
+  return reminders;
+}
+
 

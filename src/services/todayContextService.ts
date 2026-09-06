@@ -472,7 +472,7 @@ export function deriveTodayContext({
     const primaryChild = children[0];
     if (primaryChild?.dateOfBirth) {
       hasAuthoritativeClinicalData = true;
-      const ageCalc = calculateChildAge(primaryChild.dateOfBirth);
+      const ageCalc = calculateChildAge(primaryChild.dateOfBirth, now);
       let milestone = 'Active play, language development & nutritious meals';
       if (ageCalc.months < 6) {
         milestone = 'Exclusive breastfeeding & foundational infant motor reflexes';
@@ -560,7 +560,7 @@ export function deriveTodayContext({
     const isCareTeam = Boolean(rem.careTeamMessageId || rem.type === 'care_team_message');
 
     let badge = 'Reminder';
-    let accentColor: 'purple' | 'emerald' | 'blue' | 'rose' | 'teal' = 'blue';
+    let accentColor: 'purple' | 'emerald' | 'blue' | 'rose' | 'amber' = 'blue';
     let iconType: 'calendar' | 'baby' | 'syringe' | 'alert' | 'shield' = 'calendar';
 
     if (isOverdue) {
@@ -569,7 +569,7 @@ export function deriveTodayContext({
       iconType = 'alert';
     } else if (isCareTeam) {
       badge = 'Care Team';
-      accentColor = 'teal';
+      accentColor = 'blue';
       iconType = 'shield';
     } else if (rem.category === 'anc') {
       badge = 'ANC Visit';

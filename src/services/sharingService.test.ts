@@ -152,6 +152,7 @@ async function runTests() {
       emergencyContacts: true,
       moodSignal: false, // Must be strictly opt-in by default
       sharedReminders: true,
+      careTeamPrompts: true,
     });
   });
 

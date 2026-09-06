@@ -41,6 +41,8 @@ service cloud.firestore {
   match /careTeamMessages/{id}{allow read:if signed()&&resource.data.motherId==request.auth.uid;allow create:if false;allow update:if signed()&&resource.data.motherId==request.auth.uid&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt','readByMother'])&&request.resource.data.readAt is string;allow delete:if false;}
   match /facilityRosters/{id}{allow read:if isAdmin()||(isClinician()&&exists(/databases/$(database)/documents/clinicians/$(request.auth.uid))&&get(/databases/$(database)/documents/clinicians/$(request.auth.uid)).data.facilityId==resource.data.facilityId);allow write:if false;}
   match /clinicianPrivateNotes/{id}{allow read,write:if false;}
+  match /reportGenerationAudit/{id}{allow read:if signed()&&resource.data.motherId==request.auth.uid;allow write:if false;}
+  match /careTeamMessages/{id}{allow read:if signed()&&(resource.data.motherId==request.auth.uid||resource.data.clinicianId==request.auth.uid);allow write:if false;}
   match /auditEvents/{id}{allow read:if isAdmin();allow write:if false;}
   match /facilities/{id}{allow read:if signed();allow write:if isAdmin();}
   match /clinicians/{id}{allow read,write:if isAdmin();}

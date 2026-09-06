@@ -20,6 +20,7 @@ export interface PartnerSharingScopes {
   emergencyContacts: boolean;
   moodSignal: boolean;
   sharedReminders: boolean;
+  careTeamPrompts?: boolean;
 }
 
 export const DEFAULT_SHARING_SCOPES: PartnerSharingScopes = {
@@ -27,6 +28,7 @@ export const DEFAULT_SHARING_SCOPES: PartnerSharingScopes = {
   emergencyContacts: true,
   moodSignal: false, // strictly opt-in by default
   sharedReminders: true,
+  careTeamPrompts: true,
 };
 
 export interface PartnerRelationship {

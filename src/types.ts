@@ -62,6 +62,7 @@ export interface Pregnancy {
   lmp?: string;
   edd?: string;
   gestationalAgeWeeks?: number;
+  nextVisitDate?: string;
   status: 'active' | 'completed';
   createdAt: string;
   updatedAt?: string;
@@ -388,11 +389,15 @@ export interface CareTeamMessage {
   id: string;
   motherId: string;
   clinicianId: string;
+  clinicianName?: string;
+  facilityName?: string;
   childId?: string | null;
   sentByRole: 'CLINICIAN' | 'MOTHER';
+  subject?: string;
   body?: string;
   text: string;
   category: CareTeamMessageCategory;
+  isConcerning?: boolean;
   relatedRecordId?: string | null;
   readByMother: boolean;
   readAt?: string | null;
@@ -418,16 +423,20 @@ export interface Reminder {
   title: string;
   description?: string;
   dueDate: string;
-  category: 'anc' | 'pnc' | 'immunization' | 'custom';
+  category: 'anc' | 'pnc' | 'immunization' | 'custom' | 'care_team' | 'action' | 'supplement';
+  type?: string;
   completed: boolean;
   sharedWithPartner?: boolean;
+  pushEligible?: boolean;
+  pushedAt?: string;
+  sourceRefId?: string;
+  careTeamMessageId?: string;
   createdAt: string;
   notifiedAt?: string | null;
   sourceEventId?: string;
   deepLink?: string;
   childId?: string;
   pregnancyId?: string;
-  careTeamMessageId?: string;
 }
 
 export interface PregnancySummary {
@@ -443,14 +452,25 @@ export interface PregnancySummary {
   trimester: 1 | 2 | 3;
   daysRemaining: number;
   weeksRemaining: number;
-  status: 'active' | 'completed' | 'none';
+  nextAppointmentDate?: string;
   nextVisitDate?: string | null;
+  status: 'active' | 'completed' | 'none';
   babyMilestone?: {
     size: string;
     emoji: string;
     fact: string;
   };
   updatedAt: string;
+}
+
+export interface ReportGenerationAudit {
+  id: string;
+  motherId: string;
+  childId?: string;
+  reportType: 'IMMUNIZATION_CERTIFICATE' | 'ANC_SUMMARY' | 'CHILD_HEALTH_SUMMARY';
+  generatedAt: string;
+  generatedBy: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface EmergencyContact {
