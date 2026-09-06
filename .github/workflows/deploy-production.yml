@@ -43,15 +43,6 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Enable Vertex AI and grant Haven runtime access
-        run: |
-          set -euo pipefail
-          gcloud services enable aiplatform.googleapis.com --project "$PROJECT_ID"
-          gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-            --member="serviceAccount:${RUNTIME_SERVICE_ACCOUNT}" \
-            --role="roles/aiplatform.user" \
-            --condition=None
-
       - name: Build and push production container
         run: |
           set -euo pipefail
