@@ -62,3 +62,18 @@
 .shadow-emergency {
   box-shadow: var(--sh-emergency);
 }
+
+/* Keep secondary informational cards visually consistent. Safety/emergency
+   surfaces intentionally retain their semantic warning colours. */
+[class~="bg-purple-50/90"] {
+  background-color: var(--surface-1) !important;
+  border-color: var(--border-hairline) !important;
+}
+
+#aggregate-peer-insight-card {
+  border-color: var(--border-hairline) !important;
+}
+
+#aggregate-peer-insight-card [class~="bg-purple-50"] {
+  background-color: var(--lavender-50) !important;
+}
