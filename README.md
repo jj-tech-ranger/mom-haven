@@ -1,298 +1,274 @@
-# MomHaven (MOH 216 MCH Companion)
+# MomHaven
 
-> **Production-grade Kenyan Maternal & Child Health Companion Application**  
-> Digitizing and extending the **Kenya Ministry of Health (MOH 216) Mother and Child Health Handbook**, the **Kenya Expanded Programme on Immunization (KEPI)** schedule, and WHO clinical protocols for maternal, newborn, and child health (MNCH).
+A maternal and child health companion built around the Kenyan MOH 216 Mother & Child Health Handbook.
 
----
+MomHaven is designed for the reality of care in Kenya: paper records, missed appointments, limited connectivity, movement between facilities, and the need to share the right information with a clinician without handing over everything.
 
-## Table of Contents
-1. [Overview & Problem Statement](#overview--problem-statement)
-2. [Clinical Foundation & MOH 216 Alignment](#clinical-foundation--moh-216-alignment)
-3. [System Architecture](#system-architecture)
-4. [Tech Stack](#tech-stack)
-5. [Security & Access Control Model](#security--access-control-model)
-6. [Repository Structure](#repository-structure)
-7. [Getting Started (Local Development)](#getting-started-local-development)
-8. [Environment Variables](#environment-variables)
-9. [Automated Testing & Verification](#automated-testing--verification)
-10. [CI/CD & Deployment](#cicd--deployment)
-11. [Production Status](#production-status)
+The project brings pregnancy, postnatal care, child health, immunization, growth tracking, reminders, referrals, clinician access, and an AI companion into one system.
 
----
+> **Important:** MomHaven is a software project and does not replace a qualified healthcare professional or emergency services.
 
-## Overview & Problem Statement
+## What it does
 
-In Kenya and across Sub-Saharan Africa, maternal and infant health relies heavily on physical paper records—primarily the **MOH 216 Mother and Child Health Handbook (MCH Booklet)**. While physical booklets are standard across clinics, paper-only tracking introduces significant vulnerabilities:
+### For mothers
 
-- **Lost or Damaged Booklets**: Mothers traveling between counties or losing physical booklets forfeit historical immunization records and risk-stratified antenatal findings.
-- **Missed Immunization & ANC Windows**: Without automated scheduling or proactive notifications, critical milestone contacts (such as BCG at birth, Pentavalent/Rotavirus/PCV at 6, 10, 14 weeks, Measles-Rubella at 9 & 18 months, and 8 WHO-recommended ANC contacts) are frequently missed.
-- **Delayed High-Risk Identification**: Dangerous complications (preeclampsia, maternal hypertension, anemia, severe postpartum hemorrhage signs, neonatal jaundice, or faltering growth) often go undetected between clinic visits.
-- **Lack of Continuity Between Providers**: When a mother is referred to a higher-level county referral or national hospital (KMHFL Levels 4–6), clinicians lack rapid, verifiable access to primary care encounter history.
+- Track pregnancy and antenatal care milestones.
+- Keep maternal and child health records in one place.
+- Track immunizations against the Kenyan KEPI schedule.
+- Record and follow child growth measurements.
+- Get reminders for upcoming care and vaccinations.
+- Access trusted health resources.
+- Use the app when connectivity is unreliable, with local/offline support for key flows.
+- Generate health records and reports for use during care.
 
-**MomHaven** bridges this gap by providing an offline-first, mobile-optimized progressive web application for mothers, partners, and clinicians, paired with a cloud-native backend enforcing zero-trust access controls, clinical determinism, and end-to-end data provenance.
+### For partners
 
----
+- Connect to a pregnancy with explicitly shared access.
+- See the information needed to provide practical support.
+- Send support signals and check-ins without getting access to private clinical notes.
 
-## Clinical Foundation & MOH 216 Alignment
+### For clinicians
 
-MomHaven implements deterministic clinical logic adhering to Kenya Ministry of Health guidelines:
+- Access a mother's records through a temporary, mother-generated access session.
+- Review pregnancy, postnatal, newborn, immunization, growth, and referral information.
+- Verify reported records and preserve their provenance.
+- Record clinical encounters through server-authorized routes.
+- Work with facility rosters and referrals.
 
-- **Antenatal Care (ANC)**: Computes 8 focused WHO/Kenya ANC contacts from Last Menstrual Period (LMP) or Estimated Delivery Date (EDD). Flags maternal risk categories including hypertension ($\ge 140/90\text{ mmHg}$) and anemia ($\text{Hb} < 11.0\text{ g/dL}$ moderate, $< 8.0\text{ g/dL}$ severe).
-- **KEPI Immunization Engine**: Strict tracking of all antigens per national guidelines:
-  - *Birth*: BCG, OPV 0
-  - *6 Weeks*: OPV 1, Pentavalent 1 (DTP-HepB-Hib), PCV 10 1, Rotavirus 1
-  - *10 Weeks*: OPV 2, Pentavalent 2, PCV 10 2, Rotavirus 2
-  - *14 Weeks*: OPV 3, Pentavalent 3, PCV 10 3, IPV
-  - *6 Months*: Vitamin A (Dose 1)
-  - *9 Months*: Measles-Rubella 1, Yellow Fever (endemic counties), Vitamin A (Dose 2)
-  - *12 Months*: Deworming (Mebendazole/Albendazole), Vitamin A (Dose 3)
-  - *18 Months*: Measles-Rubella 2, Vitamin A (Dose 4)
-  - *24–59 Months*: Semi-annual Vitamin A & Deworming
-- **Maternal Tetanus-Diphtheria (Td) Engine**: 5-dose schedule with automated calculation of protection duration and gap-restart rules.
-- **Postnatal Care (PNC)**: Four standardized MOH contact windows (within 48 hours, 1–2 weeks, 4–6 weeks, 4–6 months) including Edinburgh/PHQ-style maternal mental health triage.
-- **Growth & Anthropometrics**: WHO Child Growth Standards (2006) calculating Weight-for-Age (WAZ), Length/Height-for-Age (HAZ), and Weight-for-Length (WHZ) Z-scores alongside Mid-Upper Arm Circumference (MUAC) color-coded nutrition triage.
-- **Clinical Referrals**: Direct inter-facility electronic referrals across Kenya Master Health Facility List (KMHFL) facilities with status workflows (`open` $\to$ `acknowledged` $\to$ `completed`/`cancelled`).
+### Haven
 
----
+Haven is MomHaven's AI health companion. It is deliberately kept behind the clinical system rather than being treated as the source of clinical truth.
 
-## System Architecture
+The server builds a minimized context for Haven and labels information by provenance. Verified and authoritative clinical information is kept distinct from user-reported information and system-derived calculations. Safety checks run before and after the model call, including a server-side block on dose-like medication advice.
 
-MomHaven utilizes a layered, privacy-preserving architecture:
+Haven is there to explain, guide, and help users find the next appropriate step—not to diagnose or prescribe.
 
+## Clinical foundation
+
+MomHaven's deterministic clinical logic currently covers:
+
+- **ANC:** pregnancy dating and the 8-contact ANC schedule.
+- **Maternal Td:** the Kenyan 5-dose tetanus-diphtheria schedule and protection logic.
+- **PNC:** postnatal contact windows and maternal/newborn follow-up.
+- **KEPI:** routine childhood immunization scheduling and status calculation.
+- **Growth:** WHO growth-standard calculations including WAZ, HAZ, and WHZ, plus MUAC-based nutrition triage.
+- **Referrals:** inter-facility referral workflows with explicit status changes.
+
+Clinical calculations live in reusable TypeScript modules rather than being embedded in individual UI screens. Dates can be supplied explicitly to the calculation engines, which keeps the logic deterministic and testable.
+
+## Architecture
+
+At a high level, the application is split into a few clear layers:
+
+```text
+┌──────────────────────────────────────────────┐
+│ Identity                                     │
+│ Firebase Authentication + role-based access │
+└──────────────────────┬───────────────────────┘
+                       │
+┌──────────────────────▼───────────────────────┐
+│ User context                                 │
+│ Preferences, profile, language, local state  │
+└──────────────────────┬───────────────────────┘
+                       │
+┌──────────────────────▼───────────────────────┐
+│ Clinical records                             │
+│ MOH 216, immunization, growth, referrals     │
+│ Server-authorized writes                     │
+└──────────────────────┬───────────────────────┘
+                       │
+┌──────────────────────▼───────────────────────┐
+│ Deterministic engines                        │
+│ Pregnancy, immunization, Td, growth, etc.    │
+└──────────────────────┬───────────────────────┘
+                       │
+              ┌────────┴────────┐
+              ▼                 ▼
+        Mother/Clinician       Haven
+        experiences            AI companion
 ```
-┌────────────────────────────────────────────────────────┐
-│                   Layer 1: Identity                    │
-│      Firebase Authentication (Mother / Clinician /     │
-│             Partner / Admin Multi-Role RBAC)           │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│      Layer 2: Personalization & Preferences Context    │
-│  User-Reported Preferences, Language (EN/SW), Profile  │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│           Layer 3: Authoritative Clinical Records      │
-│  MOH 216 Encounters, KEPI Records, Growth Measures     │
-│   (Write-locked to Server API & Authorized Clinicians) │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│      Layer 4: Derived Engine (Today & Summary Context) │
-│ Deterministic Stage/Week Math, Milestone Calculations  │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│        Layer 5: AI Companion (Haven Assistant)         │
-│ Grounded Server-Side Gemini API with Safety Guardrails │
-└────────────────────────────────────────────────────────┘
-```
 
-### Components
+### Frontend
 
-1. **Frontend (Vite / React 19 / Tailwind CSS)**:
-   - Client-side Progressive Web App (PWA) with service worker caching.
-   - Offline-capable outbox queue (`syncEngine.ts`) enabling remote rural use with automatic replay upon reconnection.
-   - Role-tailored experiences: Mother Dashboard, Partner View, Clinician Portal, and Facility Roster.
-2. **Backend (Node.js / Express on Google Cloud Run)**:
-   - Server-authoritative REST endpoints for clinical encounters, verifiable records, PDF report generation, and automated cron jobs.
-   - Zero-Trust access token validation via `firebase-admin`.
-   - Google Cloud Secret Manager integration and non-root execution.
-3. **Database & Storage (Firebase Firestore)**:
-   - Granular Firestore security rules (`firestore.rules`) forbidding client-side writes to clinical encounters and private notes.
-   - Composite indexes supporting multi-attribute queries (e.g., facility referrals, scheduled immunization rosters).
+React 19 + TypeScript + Vite + Tailwind CSS. The frontend is a mobile-first PWA with role-specific experiences for mothers, partners, clinicians, and administrators.
 
----
+### Backend
 
-## Tech Stack
+Node.js + Express running on Google Cloud Run. The backend handles authentication checks, clinical writes, clinician access sessions, reports, reminders, synchronization, and the server-side Haven integration.
 
-| Domain | Technologies |
-|---|---|
-| **Frontend Framework** | React 19, TypeScript 5, Vite 6 |
-| **Styling & UI** | Tailwind CSS v4, Motion (Framer Motion), Lucide React |
-| **Backend & Runtime** | Node.js (ESM/CJS bundle via esbuild), Express 4, `tsx` |
-| **Database & Auth** | Firebase Firestore, Firebase Authentication, Firebase Admin SDK |
-| **AI Integration** | Google GenAI SDK (`@google/genai`) with server-side proxying |
-| **Clinical Documents** | PDFKit (server-side MOH-compliant immunization & encounter PDFs) |
-| **Scheduling & Jobs** | `node-cron` (automated reminder push, weekly facility reports) |
-| **Hosting & CI/CD** | Google Cloud Run, Docker (multi-stage build), GitHub Actions |
+### Data
 
----
+Firebase Firestore is used for application and clinical data. Client-side writes to authoritative clinical collections are locked down in Firestore rules; those mutations go through the server where authorization and audit logging can be applied consistently.
 
-## Security & Access Control Model
+### Offline support
 
-### Zero-Trust Clinician Access Sessions
-Clinicians cannot arbitrarily view patient data. To inspect records:
-1. The mother generates a time-limited 6-digit session code (`clinicianAccessSessions`).
-2. The clinician claims the session using their verified credential.
-3. The server validates clinician active status, verifies session expiry, and logs immutable audit trails (`auditLogs`).
-4. Upon consultation end, the session is revoked immediately.
+The app includes an offline/outbox layer for unreliable connectivity and a separate deterministic emergency path. The emergency flow is intentionally not dependent on the AI service being available.
 
-### Firestore Rules Invariants
-- **Client Write Lockdown**: Top-level collections `ancEncounters`, `newbornRecords`, `postnatalEncounters`, `immunizationRecords`, `growthMeasurements`, and subcollections under `pregnancies/{id}/...` and `children/{id}/...` have `allow write: if false;` for client SDKs. All writes must pass through validated server-side routes.
-- **Clinician Private Notes**: Kept in a dedicated collection `clinicianPrivateNotes` locked with `allow read, write: if false;` on client, accessible only via authorized clinician backend handlers.
-- **Audit Logging**: Every read and mutation of patient clinical records generates an unmodifiable audit log entry containing timestamp, actor UID, role, action, and facility ID.
+## Security model
 
----
+Clinical data is treated differently from ordinary application state.
 
-## Repository Structure
+### Clinician access
 
-```
-├── .github/
-│   └── workflows/
-│       ├── cloud-run-deploy.yml    # Workload Identity Federation Cloud Run CI/CD
-│       └── phase-6-checks.yml      # CI lint, full test suite (17 suites), and build
-├── firestore.rules                 # Authoritative security rules enforcing zero-trust
-├── firestore.indexes.json          # Composite indexes for referrals and rosters
-├── Dockerfile                      # Multi-stage production container build
-├── server.ts                       # Express server entry point & API route orchestration
-├── server/
-│   ├── clinicianAccess.ts          # Zero-Trust auth, token verification & audit logger
-│   ├── jobs/                       # Background cron jobs (reminders, weekly reports)
-│   ├── routes/                     # Express routers (clinician, PDF export, sync, etc.)
-│   ├── seed/                       # Demo dataset generators, validators, and CLI utilities
-│   └── services/                   # Backend services (health summary, referrals, roster)
+A clinician does not get blanket access to every mother in the system. A mother creates a short-lived access session and shares the generated code with the clinician. The backend verifies the clinician's status, validates the session, scopes access to that mother, and records the relevant access events.
+
+### Clinical writes
+
+Important clinical collections are not writable directly from the browser. The server is responsible for validating and recording changes to clinical encounters, immunizations, growth measurements, referrals, and other protected records.
+
+### Provenance
+
+MomHaven keeps track of where important information came from. In practice, that means distinguishing between information a mother reported, information derived by the system, and information that a clinician has verified.
+
+This provenance is also used when building Haven's context.
+
+## Repository layout
+
+```text
+.
+├── .github/workflows/       # CI and Cloud Run deployment
 ├── src/
-│   ├── components/                 # UI components modularized by domain:
-│   │   ├── auth/                   # Authentication, registration & MFA modal
-│   │   ├── child/                  # Growth charts, milestones, immunization cards
-│   │   ├── clinician/              # Clinician portal, encounter entry, roster views
-│   │   ├── haven/                  # AI health companion interface & prompts
-│   │   ├── partner/                # Partner support & encouragement signals
-│   │   ├── records/                # Health record vault, sharing codes & export
-│   │   ├── resources/              # Verified educational library & filter chips
-│   │   └── today/                  # Daily dashboard, pregnancy tracker, action plans
-│   ├── data/                       # WHO growth tables, KEPI schedule, educational content
-│   ├── lib/                        # Firebase client SDK initialization & helpers
-│   ├── services/                   # Client-side service layer (offline sync, today context)
-│   ├── types/                      # Canonical TypeScript type definitions
-│   └── utils/                      # Pure clinical calculation engines (MOH, KEPI, Z-scores)
-└── package.json                    # Dependencies, scripts, and build pipeline
+│   ├── components/          # UI grouped by product/clinical domain
+│   ├── data/                # KEPI, WHO growth data, resources
+│   ├── lib/                 # Firebase client setup and helpers
+│   ├── services/            # Client services, sync, Today context
+│   ├── types/               # Shared TypeScript types
+│   └── utils/               # Clinical calculation engines
+├── server.ts                # Express application entry point
+├── server/
+│   ├── jobs/                # Background jobs
+│   ├── routes/              # API routes
+│   ├── seed/                # Demo data tooling
+│   ├── services/             # Backend services
+│   └── clinicianAccess.ts   # Clinician authorization/session logic
+├── functions/               # Firebase functions used by the project
+├── firestore.rules          # Firestore access rules
+├── firestore.indexes.json  # Firestore indexes
+├── Dockerfile               # Production container
+└── package.json             # Scripts and dependencies
 ```
 
----
+## Running locally
 
-## Getting Started (Local Development)
+### Requirements
 
-### Prerequisites
-- Node.js 20+ (LTS recommended)
+- Node.js 20+
 - npm 10+
-- (Optional) Docker for containerized verification
+- Firebase project/credentials for features that require the backend
+- Docker is optional
 
-### Installation
+### Install
+
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/mom-haven.git
+git clone https://github.com/jj-tech-ranger/mom-haven.git
 cd mom-haven
-
-# Install dependencies
 npm install
 ```
 
-### Starting the Development Server
-```bash
-# Boots full-stack Vite + Express server on port 3000
-npm run dev
-```
-Visit `http://localhost:3000` in your browser.
+### Environment
 
----
-
-## Environment Variables
-
-Copy `.env.example` to `.env` and configure credentials:
+Start from the example file:
 
 ```bash
 cp .env.example .env
 ```
 
-| Variable | Required | Description |
-|---|---|---|
-| `FIREBASE_API_KEY` | Yes (Client) | Firebase Web API key |
-| `FIREBASE_PROJECT_ID` | Yes (Both) | Google Cloud / Firebase Project ID |
-| `FIREBASE_SERVICE_ACCOUNT_JSON` | Production | Service account JSON string for Admin SDK on Cloud Run |
-| `FIRESTORE_DATABASE_ID` | Optional | Custom database ID (defaults to `(default)`) |
-| `GEMINI_API_KEY` | Optional | Google Gemini API key for server-side Haven AI companion |
-| `GEMINI_MODEL` | Optional | Gemini model identifier (defaults to `gemini-2.5-flash`) |
-| `GOOGLE_CLOUD_LOCATION` | Optional | Cloud Run deployment region (e.g., `europe-west1`) |
-| `INTERNAL_JOB_SECRET` | Production | Shared bearer secret for triggering background cron tasks |
-| `VITE_FIREBASE_VAPID_KEY` | Optional | VAPID key for web push notifications |
+The exact environment used depends on which parts of the application you are running. Common variables include:
 
----
+| Variable | Purpose |
+|---|---|
+| `FIREBASE_API_KEY` | Firebase client configuration |
+| `FIREBASE_PROJECT_ID` | Firebase/Google Cloud project |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Server-side Firebase Admin credentials |
+| `FIRESTORE_DATABASE_ID` | Firestore database ID when using a non-default database |
+| `GEMINI_API_KEY` | Server-side Haven access |
+| `GEMINI_MODEL` | Haven model identifier |
+| `GOOGLE_CLOUD_LOCATION` | Google Cloud deployment location |
+| `INTERNAL_JOB_SECRET` | Protection for internal job endpoints |
+| `VITE_FIREBASE_VAPID_KEY` | Web push notifications |
 
-## Automated Testing & Verification
+Never commit service-account credentials or other secrets to the repository.
 
-MomHaven includes an extensive automated test pipeline covering 17 distinct test suites spanning clinical calculations, security rules, encounter schemas, and demo dataset integrity.
+### Development server
 
 ```bash
-# Run all 17 test suites
-npm test
-
-# Run individual test suites
-npm run test:clinical      # WHO growth Z-scores & MOH 216 immunization calculations
-npm run test:td            # Kenya MOH Maternal Td 5-dose schedule logic
-npm run test:context       # Personalization context sanitization & privacy boundaries
-npm run test:anonymous     # Anonymous onboarding session drafting & sync
-npm run test:haven-context # AI prompt context preparation & guardrails
-npm run test:today         # Gestational milestone math & today action plans
-npm run test:resources     # Educational resource ranking & language filtering
-npm run test:summary       # Health summary aggregation & provenance enforcement
-npm run test:sharing       # Temporary sharing codes & clinician access grants
-npm run test:partner-signal# Partner support signals & check-ins
-npm run test:child         # Child service security invariants & modal write paths
-npm run test:reminders     # Deterministic clinical reminder generation
-npm run test:demo          # Demo dataset schema conformance & clinician roster
-npm run test:messages      # Care team messaging & private notes isolation
-npm run test:roster        # Facility roster queries & overdue risk calculations
-npm run test:encounters    # Comprehensive MOH 216 clinical encounters & Firestore rules
-npm run test:referrals     # Inter-facility clinical referral lifecycle & status flows
-
-# Run type checker / linter
-npm run lint
-
-# Run production build
-npm run build
+npm run dev
 ```
 
-### Demo Dataset Management
+The development server runs on port 3000 by default.
+
+### Build
+
 ```bash
-# Seed realistic demo dataset (6 clinicians, 3 partners, 6 scenario mothers)
-npm run seed:demo
-
-# Verify database seed integrity against 100% of acceptance criteria
-npm run verify:demo
-
-# Safely purge demo dataset without affecting real users
-npm run clean:demo
-```
-
----
-
-## CI/CD & Deployment
-
-### Automated Workflows
-- **Validation Pipeline (`.github/workflows/phase-6-checks.yml`)**: Triggered on every pull request and push to `main`. Executes `npm run lint`, all 17 unit/integration test suites (`npm test`), production frontend and server bundling (`npm run build`), and multi-stage Docker build validation.
-- **Continuous Deployment (`.github/workflows/cloud-run-deploy.yml`)**: Deploys the application directly to Google Cloud Run using Workload Identity Federation (keyless OIDC authentication).
-
-### Production Build
-The project compiles into a single, optimized container image:
-```bash
-# Build production bundle
 npm run build
-
-# Start production server
 npm run start
 ```
 
----
+## Testing
 
-## Production Status
+The repository has separate test suites for the clinical engines, security-sensitive services, AI context, reminders, sharing, referrals, demo data, and other core flows.
 
-| System Attribute | Status | Notes |
-|---|---|---|
-| **MOH 216 Compliance** | **Verified** | Standardized ANC, PNC, KEPI, and Growth tracking |
-| **Security Rules** | **Hardened** | Zero-trust client lockdown, server-only clinical writes |
-| **Audit Logging** | **Active** | Non-repudiable logs for clinical access & record mutations |
-| **Offline Resilience** | **Operational** | IndexedDB outbox queue with auto-retry and rehydration |
-| **Test Coverage** | **17/17 Passing** | 100% green test suites across all core services |
-| **Cloud Deployment** | **Ready** | Containerized for Google Cloud Run with Secret Manager |
+Run the full suite with:
+
+```bash
+npm test
+```
+
+Useful targeted suites include:
+
+```bash
+npm run test:clinical
+npm run test:td
+npm run test:today
+npm run test:haven-context
+npm run test:context
+npm run test:summary
+npm run test:sharing
+npm run test:reminders
+npm run test:encounters
+npm run test:referrals
+```
+
+Before opening a PR, also run:
+
+```bash
+npm run lint
+npm run build
+```
+
+Demo data can be managed with:
+
+```bash
+npm run seed:demo
+npm run verify:demo
+npm run clean:demo
+```
+
+## Deployment
+
+The application is containerized and deployed to Google Cloud Run. GitHub Actions handles validation and deployment, with Google Cloud Workload Identity Federation used for keyless authentication.
+
+The CI pipeline runs the test suite and production build before deployment.
+
+## Project status
+
+MomHaven is under active development. The main product areas are implemented, but this is still a software project rather than a finished clinical product or certified medical device.
+
+Some areas—particularly the anonymous/guest experience, offline synchronization, and parts of the background-job architecture—are still being refined.
+
+If you are evaluating the project, the code and tests are the best source of truth for what is currently implemented.
+
+## Contributing
+
+If you're working on MomHaven, keep a few principles in mind:
+
+1. Keep clinical calculations deterministic and centralized.
+2. Don't put authoritative clinical writes directly in the client.
+3. Preserve provenance when adding or transforming health information.
+4. Treat offline and emergency flows as safety-critical paths.
+5. Keep Haven grounded in application data and out of diagnosis/prescribing.
+6. Prefer small, testable services over duplicating clinical logic in UI components.
+
+## License
+
+See the repository for the current licensing terms.
