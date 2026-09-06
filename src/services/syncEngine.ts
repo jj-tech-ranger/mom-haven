@@ -46,13 +46,11 @@ export class SyncEngine {
     this.lastSyncTime = localStorage.getItem(LAST_SYNC_KEY) || null;
 
     window.addEventListener('online', () => {
-      console.log('⚡ Network restored. Triggering outbox sync...');
       this.notifyListeners();
       this.processQueue();
     });
 
     window.addEventListener('offline', () => {
-      console.log('📶 Device went offline.');
       this.notifyListeners();
     });
   }
@@ -142,7 +140,6 @@ export class SyncEngine {
         // Successfully synced -> Remove from outbox
         this.outbox = this.outbox.filter(a => a.id !== action.id);
         this.persist();
-        console.log(`✅ Synced offline record [${action.collectionName}/${action.data.id}] successfully.`);
       } catch (err: any) {
         console.error(`❌ Error syncing action ${action.id}:`, err);
         action.retryCount += 1;

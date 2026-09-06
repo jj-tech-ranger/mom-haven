@@ -2,9 +2,7 @@
 import assert from 'node:assert';
 import {
   deriveTodayContext,
-  getBabySizeForWeek,
   deriveGreeting,
-  formatShortDate,
 } from './todayContextService';
 import { Pregnancy, Reminder, Child } from '../types';
 import { HealthContext } from '../types/healthContext';

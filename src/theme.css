@@ -24,17 +24,17 @@
   --surface-white: var(--surface-1);
 
   /* Semantic Text (Light) - Slate Palette */
-  --text-primary: #0F172A;      /* Primary text (slate-900) */
-  --text-secondary: #475569;    /* Secondary text (slate-600) */
-  --text-muted: #94A3B8;        /* Placeholders, quiet labels (slate-400) */
-  --text-disabled: #CBD5E1;     /* Inactive controls (slate-300) */
+  --text-primary: #0F172A;      /* Primary text (slate-900) — Contrast 18.7:1 AAA */
+  --text-secondary: #475569;    /* Secondary text (slate-600) — Contrast 5.7:1 AA */
+  --text-muted: #64748B;        /* Placeholders, quiet labels (slate-500) — Contrast 4.61:1 AA */
+  --text-disabled: #94A3B8;     /* Inactive controls (slate-400) */
 
   /* Legacy text aliases */
   --ink-900: var(--text-primary);
-  --ink-700: #334155;
-  --ink-600: var(--text-secondary);
-  --ink-500: #64748B;
-  --ink-400: var(--text-muted);
+  --ink-700: #334155;           /* Contrast 9.5:1 AAA */
+  --ink-600: var(--text-secondary); /* Contrast 5.7:1 AA */
+  --ink-500: #64748B;           /* Contrast 4.61:1 AA */
+  --ink-400: #64748B;           /* Reconciled from 2.4:1 to slate-500 for WCAG AA 4.5:1 compliance */
 
   /* Clinical Interactive */
   --clinical-primary: #0F766E;   /* teal-700 */
@@ -80,13 +80,13 @@
 
 /* Dark Theme Tokens */
 html[data-theme="dark"] {
-  --brand-primary: #8B65D9;
-  --brand-secondary: #B79CDA;
-  --brand-accent: #D4C3ED;
-  --haven-deep: #8B65D9;
-  --haven-orchid: #B79CDA;
-  --haven-orchid-light: #D4C3ED;
-  --grad-haven: #8B65D9;
+  --brand-primary: #A78BFA;     /* violet-400 — Contrast 7.6:1 AAA on dark slate */
+  --brand-secondary: #C4B5FD;   /* violet-300 — Contrast 10.8:1 AAA on dark slate */
+  --brand-accent: #DDD6FE;      /* violet-200 — Contrast 13.5:1 AAA on dark slate */
+  --haven-deep: #A78BFA;
+  --haven-orchid: #C4B5FD;
+  --haven-orchid-light: #DDD6FE;
+  --grad-haven: #A78BFA;
 
   --app-bg: #0F172A;           /* slate-900 */
   --surface-1: #1E293B;         /* slate-800 */

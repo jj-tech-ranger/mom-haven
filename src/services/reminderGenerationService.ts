@@ -11,7 +11,6 @@ import {
   HeiTestMilestone,
   MaternalTdScheduleResult,
 } from '../types';
-import { KEPI_VACCINES, calculateDoseDates } from '../utils/kepiSchedule';
 import { VITAMIN_A_SCHEDULE, DEWORMING_SCHEDULE, MNP_SCHEDULE } from '../utils/supplementSchedule';
 import { calculateLmpFromEdd, computeMOH216Schedule } from '../utils/clinicalCalculations';
 

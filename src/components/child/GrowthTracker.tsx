@@ -160,7 +160,7 @@ export default function GrowthTracker({
           <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
           REPUBLIC OF KENYA · MINISTRY OF HEALTH
         </span>
-        <span className="text-slate-400 font-mono">MOH 216 · WHO GROWTH &amp; NUTRITION</span>
+        <span className="text-slate-300 font-mono">MOH 216 · WHO GROWTH &amp; NUTRITION</span>
       </div>
 
       {/* Header */}
@@ -285,8 +285,8 @@ export default function GrowthTracker({
           {metricTab === 'muac' && (
             <div className="p-3 bg-[var(--lavender-50)] rounded-[16px] space-y-2">
               <div className="flex justify-between text-[11px] font-semibold text-[var(--ink-600)]">
-                <span className="text-red-600 font-bold">Red (&lt;11.5cm SAM)</span>
-                <span className="text-amber-600 font-bold">Yellow (11.5–12.4cm MAM)</span>
+                <span className="text-red-700 font-bold">Red (&lt;11.5cm SAM)</span>
+                <span className="text-amber-800 font-bold">Yellow (11.5–12.4cm MAM)</span>
                 <span className="text-emerald-700 font-bold">Green (&ge;12.5cm Normal)</span>
               </div>
               <div className="h-3.5 rounded-full overflow-hidden flex border border-slate-200">

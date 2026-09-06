@@ -242,12 +242,17 @@ export default function ClinicianShell({
       <div className="min-h-screen flex">
         {/* Desktop Sidebar */}
         <aside className="hidden md:flex w-72 shrink-0 bg-white border-r border-[var(--border-hairline)] flex-col sticky top-0 h-screen">
-          <div className="px-6 py-6 border-b border-[var(--border-hairline)]">
-            <p className="text-[11px] uppercase tracking-[0.18em] font-display font-bold text-[var(--haven-orchid)]">
-              MomHaven Clinical
-            </p>
-            <h1 className="mt-2 font-display font-extrabold text-xl">Clinician Portal</h1>
-            <p className="mt-1 text-xs text-[var(--ink-500)] flex items-center gap-1.5">
+          <div className="px-6 py-5 border-b border-[var(--border-hairline)]">
+            <div className="flex items-center gap-3">
+              <img src="/assets/logo.png" alt="MomHaven" className="w-9 h-9 object-contain shrink-0" referrerPolicy="no-referrer" />
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.18em] font-display font-bold text-[var(--haven-orchid)] leading-tight">
+                  MomHaven Clinical
+                </p>
+                <h1 className="mt-0.5 font-display font-extrabold text-lg leading-tight">Clinician Portal</h1>
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-[var(--ink-600)] flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               Verified clinical workspace
             </p>
@@ -304,6 +309,7 @@ export default function ClinicianShell({
         <div className="flex-1 min-w-0 flex flex-col">
           <header className="sticky top-0 z-20 bg-white border-b border-[var(--border-hairline)] shadow-xs px-5 md:px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
+              <img src="/assets/logo.png" alt="MomHaven" className="md:hidden w-8 h-8 object-contain shrink-0" referrerPolicy="no-referrer" />
               {activeTab !== 'dashboard' && (
                 <button
                   type="button"

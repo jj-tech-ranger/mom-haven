@@ -91,11 +91,14 @@ export default function PrintExportModal({
         {/* Printable preview document */}
         <div className="my-4 p-5 bg-white border border-slate-300 rounded-[16px] text-left text-[12px] space-y-4 shadow-xs">
           <div className="flex justify-between items-start border-b border-slate-200 pb-3">
-            <div>
-              <h3 className="font-display font-black text-[16px] text-slate-900">
-                MomHaven Maternal Health Record
-              </h3>
-              <p className="text-slate-600">Standard MOH 216 Clinical Summary Export</p>
+            <div className="flex items-center gap-3">
+              <img src="/assets/logo.png" alt="MomHaven" className="w-9 h-9 object-contain shrink-0" referrerPolicy="no-referrer" />
+              <div>
+                <h3 className="font-display font-black text-[16px] text-slate-900">
+                  MomHaven Maternal Health Record
+                </h3>
+                <p className="text-slate-600 font-medium">Standard MOH 216 Clinical Summary Export</p>
+              </div>
             </div>
             <div className="text-right">
               <span className="font-mono text-[11px] text-slate-500">Date: {new Date().toLocaleDateString('en-GB')}</span>

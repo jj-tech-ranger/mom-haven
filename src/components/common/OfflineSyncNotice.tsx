@@ -26,7 +26,7 @@ export function OfflineSyncBanner({ className = '', compact = false }: OfflineSy
       } ${className}`}>
         {!isOnline ? (
           <>
-            <WifiOff className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+            <WifiOff className="w-3.5 h-3.5 text-amber-700 shrink-0" />
             <span>Offline · {pendingCount} queued</span>
           </>
         ) : isSyncing ? (
@@ -152,7 +152,7 @@ export function GuestStorageNotice({
         className={`flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 border border-amber-200 text-amber-900 ${className}`}
       >
         <div className="flex items-center gap-1.5 min-w-0">
-          <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+          <AlertCircle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
           <span className="truncate">Saved on this device only — create an account to back this up.</span>
         </div>
         {onCreateAccount && (
@@ -173,7 +173,7 @@ export function GuestStorageNotice({
       className={`p-3 bg-amber-50 border border-amber-200 rounded-[14px] text-xs text-amber-900 flex items-center justify-between gap-3 shadow-xs ${className}`}
     >
       <div className="flex items-center gap-2.5 min-w-0">
-        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+        <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
         <span className="leading-snug">
           Saved on this device only — create an account to back this up.
         </span>

@@ -7,7 +7,6 @@ import {
   verifiedFact,
   LIFECYCLE_STAGES,
   HealthContext,
-  FORBIDDEN_CLINICAL_FIELDS,
 } from '../types/healthContext';
 import {
   mergeHealthContext,

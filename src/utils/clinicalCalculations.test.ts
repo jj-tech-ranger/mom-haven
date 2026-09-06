@@ -77,8 +77,6 @@ import {
 } from './clinicalCalculations';
 import {
   WHO_WEIGHT_FOR_AGE_BOYS,
-  WHO_WEIGHT_FOR_AGE_GIRLS,
-  WHO_LENGTH_FOR_AGE_BOYS,
 } from '../data/whoGrowthData';
 
 test('MOH216: at birth, BCG and OPV 0 are due, 6-week vaccines are scheduled', () => {

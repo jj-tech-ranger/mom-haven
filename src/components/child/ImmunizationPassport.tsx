@@ -77,7 +77,7 @@ export default function ImmunizationPassport({
           <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
           REPUBLIC OF KENYA · MINISTRY OF HEALTH
         </span>
-        <span className="text-slate-400 font-mono">MOH 216 · KEPI PASSPORT</span>
+        <span className="text-slate-300 font-mono">MOH 216 · KEPI PASSPORT</span>
       </div>
 
       {/* Header */}
@@ -208,7 +208,7 @@ export default function ImmunizationPassport({
                           </span>
                         </div>
                       ) : (
-                        <span className="text-[11px] font-mono text-slate-400 block mt-1">
+                        <span className="text-[11px] font-mono text-slate-600 block mt-1 font-medium">
                           Route: {item.route}
                         </span>
                       )}

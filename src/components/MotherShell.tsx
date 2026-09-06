@@ -50,7 +50,7 @@ export default function MotherShell({ userId, userName, userEmail, onSignOut }: 
   return <div className="min-h-screen bg-[var(--lavender-50)] text-[var(--ink-900)] pb-20">
     <header className="sticky top-0 z-20 border-b border-[var(--border-hairline)] bg-white px-4 py-3 shadow-xs">
       <div className="mx-auto flex max-w-lg items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0">
           {activeTab !== 'today' && (
             <button
               type="button"
@@ -62,9 +62,10 @@ export default function MotherShell({ userId, userName, userEmail, onSignOut }: 
               <span className="hidden sm:inline">{language === 'sw' ? 'Leo' : 'Today'}</span>
             </button>
           )}
+          <img src="/assets/logo.png" alt="MomHaven" className="w-8 h-8 object-contain shrink-0" referrerPolicy="no-referrer" />
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wider font-display font-bold text-[var(--haven-orchid)]">MomHaven</p>
-            <h1 className="truncate font-display text-lg font-extrabold">{activeTab === 'today' ? `${greetingPrefix}, ${userName || 'Mama'}` : current.label}</h1>
+            <p className="text-[10px] uppercase tracking-wider font-display font-bold text-[var(--haven-orchid)] leading-tight">MomHaven</p>
+            <h1 className="truncate font-display text-lg font-extrabold leading-tight">{activeTab === 'today' ? `${greetingPrefix}, ${userName || 'Mama'}` : current.label}</h1>
             {userEmail && activeTab !== 'today' && <p className="truncate text-[11px] text-[var(--ink-500)]">{userEmail}</p>}
           </div>
         </div>
@@ -191,6 +192,6 @@ export default function MotherShell({ userId, userName, userEmail, onSignOut }: 
       </div>
     )}
 
-    <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-[var(--border-hairline)] bg-white shadow-xs" aria-label="Main navigation"><div className="mx-auto flex h-16 max-w-lg items-center justify-around">{tabs.map(tab => { const TabIcon = tab.icon; const active = activeTab === tab.id; return <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} aria-current={active ? 'page' : undefined} className={`flex min-w-[56px] flex-col items-center gap-1 rounded-xl px-3 py-2 transition-colors ${active ? 'text-[var(--haven-deep)]' : 'text-[var(--ink-400)] hover:text-[var(--ink-700)]'}`}><TabIcon className="h-5 w-5" /><span className="text-[10px] font-display font-bold">{tab.label}</span></button>; })}</div></nav>
+    <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-[var(--border-hairline)] bg-white shadow-xs" aria-label="Main navigation"><div className="mx-auto flex h-16 max-w-lg items-center justify-around">{tabs.map(tab => { const TabIcon = tab.icon; const active = activeTab === tab.id; return <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} aria-current={active ? 'page' : undefined} className={`flex min-w-[56px] flex-col items-center gap-1 rounded-xl px-3 py-2 transition-colors ${active ? 'text-[var(--haven-deep)] font-extrabold' : 'text-slate-600 hover:text-[var(--ink-900)] font-medium'}`}><TabIcon className={`h-5 w-5 ${active ? 'stroke-[2.5]' : 'stroke-2'}`} /><span className="text-[10px] font-display">{tab.label}</span></button>; })}</div></nav>
   </div>;
 }

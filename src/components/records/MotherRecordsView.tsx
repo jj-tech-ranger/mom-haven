@@ -539,7 +539,7 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
           <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
           REPUBLIC OF KENYA · MINISTRY OF HEALTH
         </span>
-        <span className="text-slate-400 font-mono">MOH 216 · CLINICAL DOSSIER</span>
+        <span className="text-slate-300 font-mono">MOH 216 · CLINICAL DOSSIER</span>
       </div>
 
       {/* Top Action & Sub-Navigation Bar */}
@@ -597,7 +597,7 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
       {summary?.openReferrals && summary.openReferrals.length > 0 && (
         <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl flex items-start justify-between gap-3 text-xs text-amber-950 shadow-2xs">
           <div className="flex items-start gap-2.5 min-w-0">
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-bold text-amber-900 font-display">Active Care Referral:</span>

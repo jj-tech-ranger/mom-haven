@@ -1,21 +1,15 @@
 // src/services/demoDatasetAndOnboarding.test.ts
 import assert from 'node:assert/strict';
-import { KENYA_KMHFL_FACILITIES, type KMHFLFacility } from './clinicianService';
+import { KENYA_KMHFL_FACILITIES } from './clinicianService';
 import {
   DEMO_DATASET_ID,
   DEMO_DOMAIN,
-  DEMO_PASSWORD,
   DEMO_CLINICIANS,
   DEMO_PARTNERS,
   DEMO_MOTHERS,
-  formatDate,
-  weeksAgo,
-  weeksFromNow,
 } from '../../server/seed/demoData';
 import {
   loadManifest,
-  getLocalStoreDoc,
-  getAllLocalStoreDocs,
 } from '../../server/seed/seedUtils';
 
 async function test(name: string, fn: () => void | Promise<void>): Promise<void> {
@@ -128,7 +122,6 @@ export async function runTests() {
   // 4. Mother Profile Persistence & Schema Conformance
   await test('mother profile persistence strictly conforms to production schema and forbids subcounty/city fields', () => {
     for (const m of DEMO_MOTHERS) {
-      const doc = getLocalStoreDoc(`motherProfiles/${m.email}`) || getLocalStoreDoc('motherProfiles');
       // Verify schema rules from specification
       assert.ok(m.county, `${m.name} must have a county`);
       assert.equal((m as any).subcounty, undefined, `${m.name} must not have subcounty`);

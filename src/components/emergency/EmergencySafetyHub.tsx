@@ -59,15 +59,13 @@ export default function EmergencySafetyHub({
         <div className="bg-[#E11D3C] text-white p-5 rounded-[24px] shadow-emergency space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                <ShieldAlert className="w-6 h-6 text-white animate-pulse" />
-              </div>
+              <img src="/assets/logo.png" alt="MomHaven" className="w-10 h-10 object-contain shrink-0 bg-white/15 p-1 rounded-2xl" referrerPolicy="no-referrer" />
               <div>
                 <h1 className="font-display font-extrabold text-[19px] tracking-tight">
                   Emergency Safety Hub
                 </h1>
                 <p className="font-body text-[11px] text-white/90">
-                  100% Offline Clinical Guidance & Dispatch
+                  MomHaven · 100% Offline Clinical Guidance &amp; Dispatch
                 </p>
               </div>
             </div>

@@ -1,8 +1,8 @@
 // src/utils/maternalTdSchedule.test.ts
 // Unit tests for Kenya MOH Maternal Td Immunization Schedule Engine
 
-import { calculateMaternalTdSchedule, TD_SCHEDULE } from './maternalTdSchedule';
-import { MaternalTdDose } from '../types';
+import { calculateMaternalTdSchedule } from './maternalTdSchedule';
+import type { MaternalTdDose } from '../types';
 
 function assert(condition: boolean, message: string) {
   if (!condition) {

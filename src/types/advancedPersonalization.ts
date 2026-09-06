@@ -17,7 +17,6 @@
  */
 
 import { ContextProvenance } from './healthContext';
-import { Reminder } from '../types';
 
 export type DailyPlanCategory =
   | 'milestone'

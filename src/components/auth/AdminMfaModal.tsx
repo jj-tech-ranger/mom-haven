@@ -15,7 +15,7 @@ import {
 import Button from '../Button';
 import { auth } from '../../lib/firebase';
 
-// TODO(PROD-MFA-204): Full self-service QR code enrollment UI, recovery codes, and hardware key (WebAuthn) support (tracked in MOH-SEC-1049).
+// Architecture Note: TOTP MFA verification with server-side token validation.
 // Per security mandate, all hardcoded/any-6-digit bypasses are removed. Every token must be verified server-side against the user's TOTP secret.
 
 interface AdminMfaModalProps {

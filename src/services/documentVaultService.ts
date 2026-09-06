@@ -1,15 +1,13 @@
 // src/services/documentVaultService.ts
 import { 
   collection, 
-  doc, 
   getDocs, 
   query, 
   where, 
-  addDoc,
-  orderBy 
+  addDoc 
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { DocumentRecord, Provenance } from '../types';
+import { DocumentRecord } from '../types';
 
 export interface VaultCategorySummary {
   category: 'PREGNANCY' | 'CHILD' | 'IMMUNIZATION' | 'GROWTH' | 'LABS' | 'CLINICAL_NOTES';

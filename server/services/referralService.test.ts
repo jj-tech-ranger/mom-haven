@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Referral, ReferralStatus, ReferralUrgency, ReferralSourceModule, PostnatalEncounter } from '../../src/types';
+import type { Referral, ReferralUrgency, ReferralSourceModule, PostnatalEncounter } from '../../src/types';
 
 async function test(name: string, fn: () => void | Promise<void>): Promise<void> {
   await fn();

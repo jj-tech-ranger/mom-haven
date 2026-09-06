@@ -198,7 +198,7 @@ export default function CareTeamMessagesMotherCard({
       {isExpanded && (
         <div className="mt-4 pt-4 border-t border-slate-100 space-y-4">
           {loading && messages.length === 0 ? (
-            <div className="p-4 text-center text-xs text-slate-400">
+            <div className="p-4 text-center text-xs text-slate-600 font-medium">
               {language === 'sw' ? 'Inapakia ujumbe...' : 'Loading care team feedback...'}
             </div>
           ) : messages.length === 0 ? (
@@ -207,7 +207,7 @@ export default function CareTeamMessagesMotherCard({
               <p className="font-bold text-[var(--ink-900)]">
                 {language === 'sw' ? 'Bado hakuna ujumbe mpya' : 'No care team messages yet'}
               </p>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-600">
                 {language === 'sw'
                   ? 'Daktari au mkunga wako atakapokagua vipimo au maendeleo yako, maoni yao yataonekana hapa.'
                   : 'When your clinician reviews your ANC visits, lab results, or child growth, their feedback will appear here.'}
@@ -265,8 +265,8 @@ export default function CareTeamMessagesMotherCard({
                               {language === 'sw' ? conf.labelSw : conf.labelEn}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                            <Clock className="w-3 h-3" />
+                          <div className="flex items-center gap-1 text-[10px] text-slate-600 font-medium">
+                            <Clock className="w-3 h-3 text-slate-500" />
                             <span>{new Date(msg.createdAt).toLocaleDateString()} at {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                           </div>
                         </div>
@@ -284,7 +284,7 @@ export default function CareTeamMessagesMotherCard({
                           {language === 'sw' ? 'Nimeliona' : 'Mark as read'}
                         </Button>
                       ) : isFromClinician ? (
-                        <span className="text-[10px] text-slate-400 flex items-center gap-1 shrink-0">
+                        <span className="text-[10px] text-slate-600 font-medium flex items-center gap-1 shrink-0">
                           <CheckCheck className="w-3 h-3 text-emerald-600" />
                           {language === 'sw' ? 'Limesomwa' : 'Read'}
                         </span>
@@ -334,7 +334,7 @@ export default function CareTeamMessagesMotherCard({
                       ? 'Andika swali au taarifa kuhusu maendeleo yako hapa...'
                       : 'Type a question or update about how you are feeling...'
                   }
-                  className="w-full p-2.5 rounded-[12px] bg-white border border-slate-200 text-xs focus:border-[var(--haven-deep)] focus:ring-1 focus:ring-[var(--haven-deep)] outline-hidden transition-all placeholder:text-slate-400"
+                  className="w-full p-2.5 rounded-[12px] bg-white border border-slate-200 text-xs focus:border-[var(--haven-deep)] focus:ring-1 focus:ring-[var(--haven-deep)] outline-hidden transition-all placeholder:text-slate-500"
                 />
                 <div className="flex justify-end gap-2">
                   <Button

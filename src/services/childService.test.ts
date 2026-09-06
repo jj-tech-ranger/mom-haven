@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { GrowthMeasurement, ChildVaccineRecord, Provenance } from '../types';
+import type { GrowthMeasurement, Provenance } from '../types';
 
 function test(name: string, fn: () => void | Promise<void>): Promise<void> {
   return Promise.resolve(fn()).then(() => {

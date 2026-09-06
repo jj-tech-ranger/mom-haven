@@ -4,13 +4,11 @@ import {
   doc, 
   getDocs, 
   getDoc, 
-  setDoc, 
   updateDoc, 
   query, 
   where, 
   orderBy, 
-  addDoc,
-  serverTimestamp 
+  addDoc 
 } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
 import { 
@@ -19,13 +17,6 @@ import {
   ClinicianPrivateNote, 
   AuditEvent, 
   MotherProfile, 
-  Pregnancy, 
-  AncEncounter, 
-  Child, 
-  ChildVaccineRecord, 
-  GrowthMeasurement, 
-  PostnatalEncounter, 
-  NewbornRecord,
   Provenance
 } from '../types';
 

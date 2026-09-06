@@ -7,7 +7,6 @@ import {
   isAnonymousContextExpired,
   sanitizeAnonymousDraftInput,
   ANONYMOUS_STORAGE_KEY,
-  DEFAULT_ANONYMOUS_TTL_MS,
   type AnonymousContextDraft,
 } from './anonymousContextService';
 import {

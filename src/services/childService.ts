@@ -3,9 +3,7 @@ import {
   collection, 
   doc, 
   getDocs, 
-  getDoc, 
   setDoc, 
-  updateDoc, 
   query, 
   where, 
   orderBy, 
@@ -18,8 +16,7 @@ import {
   PostnatalEncounter, 
   ChildVaccineRecord, 
   GrowthMeasurement, 
-  ChildMilestoneRecord,
-  Provenance
+  ChildMilestoneRecord
 } from '../types';
 import { reconcileMotherClinicalReminders } from './reminderGenerationService';
 

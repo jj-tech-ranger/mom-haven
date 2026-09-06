@@ -298,12 +298,12 @@ export default function ClinicianCareTeamMessagesPanel({
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="e.g. Lab results look reassuring. Please continue taking your iron and folic acid daily..."
-              className="w-full p-3 rounded-[14px] border border-slate-200 text-sm focus:border-[var(--haven-deep)] focus:ring-1 focus:ring-[var(--haven-deep)] outline-hidden transition-all placeholder:text-slate-400"
+              className="w-full p-3 rounded-[14px] border border-slate-200 text-sm focus:border-[var(--haven-deep)] focus:ring-1 focus:ring-[var(--haven-deep)] outline-hidden transition-all placeholder:text-slate-500"
             />
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-slate-600 font-medium">
               Mother will receive a badge notification under "Messages from your care team".
             </p>
             <Button
@@ -368,8 +368,8 @@ export default function ClinicianCareTeamMessagesPanel({
         </div>
 
         {loading && messages.length === 0 ? (
-          <div className="p-8 text-center text-slate-400 text-xs">
-            <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
+          <div className="p-8 text-center text-slate-600 text-xs font-medium">
+            <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-slate-500" />
             Loading messages...
           </div>
         ) : filteredMessages.length === 0 ? (
@@ -419,8 +419,8 @@ export default function ClinicianCareTeamMessagesPanel({
                             {conf.label}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                          <Clock className="w-3 h-3" />
+                        <div className="flex items-center gap-1 text-[10px] text-slate-600 font-medium">
+                          <Clock className="w-3 h-3 text-slate-500" />
                           <span>{new Date(msg.createdAt).toLocaleString()}</span>
                         </div>
                       </div>
@@ -438,8 +438,8 @@ export default function ClinicianCareTeamMessagesPanel({
                             Read by Mother
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                            <Clock className="w-3 h-3 text-amber-600" />
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full">
+                            <Clock className="w-3 h-3 text-amber-700" />
                             Unread by Mother
                           </span>
                         )}

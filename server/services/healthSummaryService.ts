@@ -15,8 +15,8 @@
  */
 
 import { adminDb, requireActiveSession, requireClinician, logAudit, ApiError } from '../clinicianAccess.js';
-import { getHealthContextForUser, ServerHealthContext } from './healthContextService.js';
-import { getPatientRecords, filterClinicianSummaryLogs } from './patientRecordService.js';
+import { getHealthContextForUser, type ServerHealthContext } from './healthContextService.js';
+import { getPatientRecords } from './patientRecordService.js';
 import { calculateGestationFromLmp } from '../../src/utils/clinicalCalculations.js';
 import { calculateChildAge } from './contextSources.js';
 import type {

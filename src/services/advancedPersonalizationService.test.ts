@@ -9,7 +9,7 @@ import {
   enhancePlanWithAi,
 } from './advancedPersonalizationService';
 import { HealthContext } from '../types/healthContext';
-import { Pregnancy, Child, Reminder } from '../types';
+import { Pregnancy, Reminder } from '../types';
 import { DailyHealthLog } from '../types/healthLog';
 
 const MOCK_DATE = new Date('2025-06-01T12:00:00.000Z');

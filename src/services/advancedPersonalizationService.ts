@@ -29,7 +29,6 @@ import { EDUCATIONAL_RESOURCES } from '../data/educationalResources';
 import {
   analyzeBloodPressureTrends,
   analyzeBabyMovementTrends,
-  MIN_DATA_POINTS_FOR_TREND,
 } from './healthTrendService';
 import {
   PersonalizedPlanResult,
@@ -164,7 +163,7 @@ export function generateContextAwareHavenPrompts(
     ...params,
     language: params.healthContext?.language || 'en',
   };
-  const { effectiveStage, gestationalWeeks, primaryChild, childAgeMonths } =
+  const { effectiveStage, gestationalWeeks, primaryChild } =
     resolveStageAndTiming(params);
 
   const prompts: ContextAwareHavenPrompt[] = [];
@@ -324,8 +323,8 @@ export function generateContextAwareHavenPrompts(
 export function generateSuggestedReminders(
   params: DerivePersonalizedPlanParams
 ): SuggestedReminder[] {
-  const { clinicalPregnancy, children = [], reminders = [], now = new Date() } = params;
-  const { effectiveStage, gestationalWeeks, primaryChild, childAgeMonths } =
+  const { reminders = [], now = new Date() } = params;
+  const { effectiveStage, gestationalWeeks, primaryChild } =
     resolveStageAndTiming(params);
 
   const existingTitles = new Set(
@@ -432,7 +431,7 @@ export function generateSuggestedReminders(
 export function generateAppointmentPrepPlan(
   params: DerivePersonalizedPlanParams
 ): AppointmentPrepPlan {
-  const { healthContext, clinicalPregnancy, primaryChild } = {
+  const { healthContext, primaryChild } = {
     ...params,
     ...resolveStageAndTiming(params),
   };
@@ -662,11 +661,9 @@ export function deriveDeterministicDailyPlan(
 ): DailyPlanItem[] {
   const {
     healthContext,
-    clinicalPregnancy,
     reminders = [],
-    now = new Date(),
   } = params;
-  const { effectiveStage, gestationalWeeks, primaryChild, childAgeMonths } =
+  const { effectiveStage, gestationalWeeks, primaryChild } =
     resolveStageAndTiming(params);
 
   const planItems: DailyPlanItem[] = [];

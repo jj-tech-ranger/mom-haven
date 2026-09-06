@@ -8,17 +8,14 @@ import {
   query, 
   where, 
   orderBy, 
-  serverTimestamp,
   addDoc
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { Pregnancy, AncEncounter, Child, Provenance, PregnancySummary, PreviousPregnancyRecord } from '../types';
+import { Pregnancy, AncEncounter, Provenance, PregnancySummary, PreviousPregnancyRecord } from '../types';
 import { reconcileMotherClinicalReminders } from './reminderGenerationService';
 import {
   calculateGestationFromLmp,
-  calculateLmpFromEdd,
   computeGestationalHeroMetrics,
-  type GestationCalculation,
 } from '../utils/clinicalCalculations';
 
 export type { GestationCalculation } from '../utils/clinicalCalculations';

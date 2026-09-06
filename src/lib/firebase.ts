@@ -21,8 +21,6 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
   doc,
-  getDoc,
-  setDoc,
   serverTimestamp,
   getDocFromServer,
   runTransaction,

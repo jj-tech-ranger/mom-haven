@@ -1,5 +1,4 @@
 import { adminDb, document } from '../clinicianAccess.js';
-import { CLINICAL_RECORD_GROUPS } from './patientRecordService.js';
 import type { FacilityRosterEntry, Referral } from '../../src/types.js';
 import { getOpenReferralsForFacility } from './referralService.js';
 
@@ -157,9 +156,6 @@ export async function recomputeFacilityRoster(targetFacilityId?: string): Promis
     if (!facId) continue;
     if (targetFacilityId && facId !== targetFacilityId) continue;
 
-    const motherProfile = data.motherProfilesMap.get(motherId);
-    const motherName = motherProfile?.fullName || motherProfile?.displayName || 'Mother';
-
     const encList = ancByPregnancy.get(preg.id) || [];
     encList.sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
     const latestEnc = encList[0];
@@ -179,8 +175,6 @@ export async function recomputeFacilityRoster(targetFacilityId?: string): Promis
           nextDueDate = formatIsoDate(eddDate);
         }
       } else if (preg.lmp) {
-        const lmpDate = new Date(preg.lmp);
-        const eddEstimate = new Date(lmpDate.getTime() + 280 * 24 * 60 * 60 * 1000);
         nextDueDate = addDays(now, 14);
       } else {
         nextDueDate = addDays(now, 7);

@@ -21,7 +21,6 @@ import { Pregnancy, Reminder, Child } from '../types';
 import { HealthContext, LifecycleStage } from '../types/healthContext';
 import { DailyHealthLog, MoodType, MoodValues } from '../types/healthLog';
 import {
-  calculateGestationFromLmp,
   computeGestationalHeroMetrics,
   getBabySizeForWeek,
   BABY_SIZE_MILESTONES,

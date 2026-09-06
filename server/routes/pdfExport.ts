@@ -1,6 +1,6 @@
 import express from 'express';
 import PDFDocument from 'pdfkit';
-import { adminAuth, adminDb, ApiError } from '../clinicianAccess.js';
+import { adminAuth, adminDb } from '../clinicianAccess.js';
 import {
   computeMOH216ImmunizationSchedule,
   calculateWeightForAgeZScore,

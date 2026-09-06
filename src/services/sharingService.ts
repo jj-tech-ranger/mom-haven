@@ -8,7 +8,6 @@ import {
   updateDoc, 
   query, 
   where, 
-  orderBy, 
   addDoc 
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';

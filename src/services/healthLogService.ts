@@ -12,13 +12,12 @@ import {
   deleteDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, auth } from '../lib/firebase';
 import {
   DailyHealthLog,
   CreateHealthLogInput,
   UpdateHealthLogInput,
   HealthLogType,
-  HealthLogValues,
 } from '../types/healthLog';
 import {
   CATEGORY_BY_TYPE,

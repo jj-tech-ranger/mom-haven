@@ -4,7 +4,7 @@
   "description": "Kenyan Maternal & Child Health Companion App based on the MOH 216 MCH Handbook.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F7F3FC",
+  "background_color": "#F8FAFC",
   "theme_color": "#33178A",
   "icons": [
     {
