@@ -140,7 +140,13 @@ export async function resendEmailVerification(user: User) {
 }
 
 export async function resetPassword(email: string) { return fbSendPasswordResetEmail(auth, email); }
-export async function logoutUser() { return fbSignOut(auth); }
+export async function logoutUser() {
+  try {
+    window.localStorage.removeItem('momhaven-haven-session-id');
+    window.localStorage.removeItem('momhaven-haven-session-owner');
+  } catch { /* storage may be unavailable */ }
+  return fbSignOut(auth);
+}
 
 /** Prevent the anonymous partner flow from racing default profile creation. */
 export async function ensureUserProfile(user: User) {
