@@ -25,14 +25,56 @@ export interface MaternalContext {
 }
 
 const SESSION_STORAGE_KEY = 'momhaven-haven-session-id';
+const SESSION_OWNER_STORAGE_KEY = 'momhaven-haven-session-owner';
 
 function getStoredSessionId() {
   try { return window.localStorage.getItem(SESSION_STORAGE_KEY) || undefined; } catch { return undefined; }
 }
 
-function storeSessionId(sessionId?: string) {
+function clearStoredSession() {
+  try {
+    window.localStorage.removeItem(SESSION_STORAGE_KEY);
+    window.localStorage.removeItem(SESSION_OWNER_STORAGE_KEY);
+  } catch { /* storage may be unavailable */ }
+}
+
+function reconcileStoredSessionOwner(userId?: string | null) {
+  try {
+    const storedOwner = window.localStorage.getItem(SESSION_OWNER_STORAGE_KEY);
+    const storedSessionId = window.localStorage.getItem(SESSION_STORAGE_KEY);
+
+    if (storedSessionId && storedOwner && storedOwner !== userId) {
+      clearStoredSession();
+      return;
+    }
+
+    // Legacy sessions were stored without an owner. Discard them rather than
+    // risking reuse across accounts.
+    if (storedSessionId && !storedOwner) {
+      clearStoredSession();
+    }
+
+    if (userId) window.localStorage.setItem(SESSION_OWNER_STORAGE_KEY, userId);
+  } catch { /* storage may be unavailable */ }
+}
+
+function storeSessionId(sessionId?: string, userId?: string | null) {
   if (!sessionId) return;
-  try { window.localStorage.setItem(SESSION_STORAGE_KEY, sessionId); } catch { /* storage may be unavailable */ }
+  try {
+    window.localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+    if (userId) window.localStorage.setItem(SESSION_OWNER_STORAGE_KEY, userId);
+  } catch { /* storage may be unavailable */ }
+}
+
+function isSessionOwnershipMismatch(response: Response, payload: any) {
+  return response.status === 403 && (
+    payload?.code === 'CHAT_SESSION_OWNERSHIP_MISMATCH' ||
+    /chat session is not yours/i.test(String(payload?.error || payload?.message || ''))
+  );
+}
+
+export function resetHavenChatSession() {
+  clearStoredSession();
 }
 
 export async function askHavenChat(userPrompt: string, _history: ChatMessage[], context: MaternalContext): Promise<ChatMessage> {
@@ -55,16 +97,33 @@ export async function askHavenChat(userPrompt: string, _history: ChatMessage[], 
     const user = auth.currentUser;
     if (!user) throw new Error('Unable to establish a Firebase session.');
 
-    const idToken = await user.getIdToken();
-    const sessionId = getStoredSessionId();
-    const response = await fetch('/api/v1/chat', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${idToken}` },
-      body: JSON.stringify({ sessionId, message: userPrompt, language: preferredLang, contextMode: context.mode }),
-    });
-    const payload = await response.json().catch(() => ({}));
+    reconcileStoredSessionOwner(user.uid);
+
+    const sendChatRequest = async (sessionId?: string) => {
+      const idToken = await user.getIdToken();
+      const response = await fetch('/api/v1/chat', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ sessionId, message: userPrompt, language: preferredLang, contextMode: context.mode }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      return { response, payload };
+    };
+
+    let sessionId = getStoredSessionId();
+    let { response, payload } = await sendChatRequest(sessionId);
+
+    // A stale browser session can legitimately belong to a previously signed-in
+    // account. Preserve backend ownership enforcement, clear only the stale
+    // Haven session, and retry once without a session ID.
+    if (isSessionOwnershipMismatch(response, payload)) {
+      clearStoredSession();
+      sessionId = undefined;
+      ({ response, payload } = await sendChatRequest(sessionId));
+    }
+
     if (!response.ok) throw new Error(payload.error || 'Unable to reach Haven.');
-    storeSessionId(payload.sessionId);
+    storeSessionId(payload.sessionId, user.uid);
 
     if (payload.classification === 'emergency') {
       const emergency: InterceptorResult = {
