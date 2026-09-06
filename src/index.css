@@ -64,8 +64,19 @@
 }
 
 /* Keep secondary informational cards visually consistent. Safety/emergency
-   surfaces intentionally retain their semantic warning colours. */
+   surfaces and small semantic badges intentionally retain their colours. */
 [class~="bg-purple-50/90"] {
+  background-color: var(--surface-1) !important;
+  border-color: var(--border-hairline) !important;
+}
+
+[class~="bg-purple-50"][class~="rounded-[14px]"] {
+  background-color: var(--surface-1) !important;
+  border-color: var(--border-hairline) !important;
+  color: var(--text-primary) !important;
+}
+
+[class~="bg-purple-50/50"][class~="rounded-xl"] {
   background-color: var(--surface-1) !important;
   border-color: var(--border-hairline) !important;
 }
