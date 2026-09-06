@@ -160,6 +160,8 @@ export const CongenitalAbnormalityExam: React.FC<CongenitalAbnormalityExamProps>
         hasAbnormality: result.hasAbnormality,
         abnormalFindingsList: result.abnormalFindingsList,
         referralOrActionTaken,
+        referralId: result.referralId || undefined,
+        followUpReminderId: result.followUpReminderId || undefined,
         notes,
         provenance: {
           status: 'VERIFIED',

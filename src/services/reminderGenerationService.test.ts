@@ -4,9 +4,14 @@ import {
   computeAncVisitReminders,
   computeChildImmunizationReminders,
   computePncContactReminders,
+  computeFamilyPlanningReminders,
+  computeHeiFollowupReminders,
+  computeCancerScreeningReminders,
+  computeMaternalTdReminders,
   filterNewReminders,
   DesiredReminder,
 } from './reminderGenerationService';
+import { calculateMaternalTdSchedule } from '../utils/maternalTdSchedule';
 import { Reminder } from '../types';
 
 console.log('--- Phase 2: Clinical Reminder Auto-Generation Tests ---');
@@ -121,4 +126,91 @@ const afterCompletionNew = filterNewReminders(completedReminders, allDesired);
 assert.strictEqual(afterCompletionNew.length, 0, 'Completed reminders must not be resurrected or duplicated');
 
 console.log('✓ guarantees strict idempotency, prevents duplicates, and preserves completed reminders');
+
+// 5. Family Planning (MOH Handbook p.22)
+const fpRecordInjectable = {
+  id: 'fp-001',
+  motherId,
+  methodChosen: 'Injectables (DMPA)' as const,
+  dateStarted: '2026-06-01',
+  counselingDate: '2026-06-01',
+  provenance: { status: 'VERIFIED' as const, enteredBy: 'Nurse', enteredAt: '2026-06-01', verifiedBy: 'Nurse', verifiedAt: '2026-06-01' },
+};
+const fpReminders = computeFamilyPlanningReminders(motherId, fpRecordInjectable as any);
+assert.strictEqual(fpReminders.length, 1, 'Generates 1 reminder for DMPA');
+assert.strictEqual(fpReminders[0].dueDate, '2026-08-24', '12 weeks (84 days) from 2026-06-01');
+
+// Explicit appointment date overrides default intervals
+const fpRecordAppt = {
+  ...fpRecordInjectable,
+  id: 'fp-002',
+  nextAppointmentDate: '2026-08-15',
+};
+const fpRemindersAppt = computeFamilyPlanningReminders(motherId, fpRecordAppt as any);
+assert.strictEqual(fpRemindersAppt[0].dueDate, '2026-08-15', 'Explicit next appointment date respected');
+console.log('✓ computes family planning reminders adhering to MOH p.22 method intervals');
+
+// 6. PMTCT / HEI Infant Diagnostic Schedule (MOH Handbook p.36)
+const pmtctRecord = {
+  id: 'pmtct-001',
+  motherId,
+  childId: 'child-101',
+  isHivExposed: true,
+  infantDbsTests: [
+    { milestone: '1st_dna_pcr_6wk' as const, result: 'negative' as const },
+  ],
+};
+const heiReminders = computeHeiFollowupReminders(motherId, pmtctRecord as any, '2026-06-01');
+assert.strictEqual(heiReminders.length, 1, 'Generates next scheduled test');
+assert.strictEqual(heiReminders[0].sourceEventId, 'hei-child-101-2nd_dna_pcr_6mo', 'Advances to 2nd PCR at 6 months');
+assert.strictEqual(heiReminders[0].dueDate, '2026-11-30', '6 months (182 days) from 2026-06-01');
+console.log('✓ advances HEI infant testing schedule per MOH p.36 four-test protocol');
+
+// 7. Reproductive Organ Cancer Screening (MOH Handbook p.22)
+const cancerAbnormal = {
+  id: 'cs-001',
+  motherId,
+  date: '2026-06-01',
+  cervicalDone: true,
+  cervicalResult: 'positive' as const,
+  cervicalTreatment: 'referral' as const,
+  breastDone: true,
+  breastResult: 'normal' as const,
+  provenance: { status: 'VERIFIED' as const, enteredBy: 'Clinician', enteredAt: '2026-06-01', verifiedBy: 'Clinician', verifiedAt: '2026-06-01' },
+};
+const cancerReminders = computeCancerScreeningReminders(motherId, cancerAbnormal as any);
+assert.strictEqual(cancerReminders.length, 1, 'Urgent follow-up generated for abnormal cervical screening');
+assert.strictEqual(cancerReminders[0].dueDate, '2026-06-15', '14-day urgent follow-up window');
+
+const cancerNormal = {
+  ...cancerAbnormal,
+  id: 'cs-002',
+  cervicalResult: 'negative' as const,
+};
+const cancerNormalReminders = computeCancerScreeningReminders(motherId, cancerNormal as any);
+assert.strictEqual(cancerNormalReminders.length, 0, 'Normal screening produces no urgent follow-up reminder');
+console.log('✓ schedules 14-day urgent follow-up for abnormal cancer screening results per MOH p.22');
+
+// 8. Maternal Td Immunization 5-Dose Schedule & 10-Year Gap Restart (MOH Handbook pp.10-11)
+const tdDosesNormal = [
+  { doseNumber: 1 as const, dateGiven: '2026-01-01' },
+];
+const tdSched1 = calculateMaternalTdSchedule(tdDosesNormal as any);
+const tdReminders1 = computeMaternalTdReminders(motherId, 'preg-888', tdSched1);
+assert.strictEqual(tdReminders1.length, 1, 'Generates next dose reminder (TD-2)');
+assert.strictEqual(tdReminders1[0].dueDate, '2026-01-29', 'TD-2 due 4 weeks (28 days) after TD-1');
+
+// Test 10-Year Gap Restart Rule
+const tdDosesRestart = [
+  { doseNumber: 1 as const, dateGiven: '2010-01-01' },
+  { doseNumber: 2 as const, dateGiven: '2026-01-01' },
+];
+const tdSchedRestart = calculateMaternalTdSchedule(tdDosesRestart as any);
+assert.strictEqual(tdSchedRestart.restartedDueTo10YearGap, true, '10-year gap restart flag set');
+const tdRemindersRestart = computeMaternalTdReminders(motherId, 'preg-888', tdSchedRestart);
+assert.strictEqual(tdRemindersRestart.length, 1);
+assert.strictEqual(tdRemindersRestart[0].sourceEventId, 'td-preg-preg-888-dose-2', 'Restarted schedule requires TD-2 next');
+assert.strictEqual(tdRemindersRestart[0].dueDate, '2026-01-29', '4 weeks from most recent dose after restart');
+console.log('✓ verifies maternal TD 5-dose engine and MOH p.10 10-year gap restart rule');
+
 console.log('All Phase 2 Clinical Reminder Auto-Generation tests passed successfully!');

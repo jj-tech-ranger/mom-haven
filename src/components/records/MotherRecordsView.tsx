@@ -24,6 +24,7 @@ import { getActivePregnancy, getAncEncounters } from '../../services/pregnancySe
 import { getChildren, getImmunizationRecords, getGrowthMeasurements, calculateChildAge } from '../../services/childService';
 import { getVaultDocuments } from '../../services/documentVaultService';
 import { getUpcomingReminders } from '../../services/reminderService';
+import { calculateMaternalTdSchedule } from '../../utils/maternalTdSchedule';
 import { DailyHealthLog } from '../../types/healthLog';
 import { DocumentRecord } from '../../types';
 import Button from '../Button';
@@ -289,6 +290,44 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
           realAppointments = [];
         }
 
+        // Fetch open referrals for the mother (MOH Referral System)
+        let openReferralsList: any[] = [];
+        try {
+          const refQuery = query(collection(db, 'referrals'), where('motherId', '==', userId));
+          const refSnap = await getDocs(refQuery);
+          refSnap.forEach((d) => {
+            const data = d.data();
+            if (data.status === 'open' || data.status === 'acknowledged') {
+              openReferralsList.push({ id: d.id, ...data });
+            }
+          });
+        } catch {
+          // ignore if collection empty
+        }
+
+        // Fetch postnatal encounters (MOH 216 p. 20)
+        let postnatalEncountersList: any[] = [];
+        if (activePreg?.id) {
+          try {
+            const pncSnap = await getDocs(collection(db, `pregnancies/${activePreg.id}/postnatalEncounters`));
+            pncSnap.forEach((d) => postnatalEncountersList.push({ id: d.id, ...d.data() }));
+          } catch {}
+        }
+        for (const child of (childrenList || [])) {
+          try {
+            const pncSnap = await getDocs(collection(db, `children/${child.id}/postnatalEncounters`));
+            pncSnap.forEach((d) => postnatalEncountersList.push({ id: d.id, ...d.data() }));
+          } catch {}
+        }
+        postnatalEncountersList.sort((a, b) => new Date(b.date || b.visitDate || 0).getTime() - new Date(a.date || a.visitDate || 0).getTime());
+
+        // Calculate Maternal Td Immunization Protection
+        let maternalTdScheduleData: any = undefined;
+        try {
+          const tdDoses = (activePreg as any)?.tdDoses || (activePreg as any)?.tetanusDoses || [];
+          maternalTdScheduleData = calculateMaternalTdSchedule(tdDoses);
+        } catch {}
+
         // Calculate verified clinical stats
         const verifiedAncContactsCount = realEncounters.filter((e) => e.provenance?.status === 'VERIFIED').length;
         const totalVerifiedVaccines = mappedChildren.reduce(
@@ -403,6 +442,14 @@ export default function MotherRecordsView({ userId, userName }: MotherRecordsVie
             alerts,
           } : undefined,
           pmtct: pmtctSummaryData,
+          openReferrals: openReferralsList,
+          postnatalSummary: {
+            totalEncounters: postnatalEncountersList.length,
+            verifiedCount: postnatalEncountersList.filter((e) => e.provenance?.status === 'VERIFIED').length,
+            latestEncounterDate: postnatalEncountersList[0]?.date || postnatalEncountersList[0]?.visitDate,
+            encounters: postnatalEncountersList,
+          },
+          maternalTdSchedule: maternalTdScheduleData,
         };
 
         setSummary(builtSummary);

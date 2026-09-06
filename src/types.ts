@@ -182,6 +182,13 @@ export interface DocumentRecord {
   notes?: string;
   provenance: Provenance;
   createdAt?: string;
+  hasOpenReferral?: boolean;
+  referralStatus?: string;
+  referralReason?: string;
+  referralUrgency?: 'routine' | 'urgent';
+  structuredData?: Record<string, any>;
+  vitals?: Record<string, any>;
+  pncData?: Record<string, any>;
 }
 
 export interface IllnessRecord {
@@ -225,9 +232,10 @@ export interface PostnatalEncounter {
   childId?: string;
   motherId: string;
   pregnancyId?: string;
-  visit: '48h' | '1-2w' | '4-6w' | '4-6mo' | string;
+  visit?: '48h' | '1-2w' | '4-6w' | '4-6mo' | string;
   visitTiming?: string;
-  date: string;
+  timing?: string;
+  date?: string;
   visitDate?: string;
   facilityId?: string;
   facilityName?: string;
@@ -237,14 +245,32 @@ export interface PostnatalEncounter {
   systolicBp?: number | string;
   diastolicBp?: number | string;
   temperature?: number | string;
+  maternalTemp?: number | string;
   pulse?: number | string;
+  pulseRate?: number | string;
   respiratoryRate?: number | string;
   uterineInvolution?: 'Contracted' | 'Normal' | 'Subinvoluted' | 'Tender' | string;
+  uterusInvolution?: string;
+  episiotomyStatus?: string;
+  breastCondition?: string;
+  fistulaScreening?: string;
   lochia?: { amount?: string; colour?: string; smell?: string } | string;
   lochiaAmount?: 'normal' | 'scant' | 'moderate' | 'excessive' | string;
   lochiaColour?: 'rubra' | 'serosa' | 'alba' | string;
   lochiaSmell?: 'normal' | 'foul' | string;
   haemoglobin?: number | string;
+
+  // Infant structured exam fields (p.20 table)
+  infantTemp?: number | string;
+  infantFeedingMethod?: string;
+  umbilicalCordCondition?: string;
+  babyWeightKg?: number;
+  babyImmunizationGiven?: string[];
+
+  // Preventative / Clinical management
+  ironFolicPrescribed?: boolean;
+  vitaminAGiven?: boolean;
+  artDispensed?: boolean;
   hivRetestDone?: boolean;
   hivRetestResult?: 'negative' | 'positive' | 'reactive' | 'non-reactive' | 'not_done' | string;
   onHaart?: boolean;
@@ -626,6 +652,8 @@ export interface CongenitalExamRecord {
   hasAbnormality: boolean;
   abnormalFindingsList?: string[];
   referralOrActionTaken?: string;
+  referralId?: string;
+  followUpReminderId?: string;
   notes?: string;
   provenance: Provenance;
   createdAt?: string;

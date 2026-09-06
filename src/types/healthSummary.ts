@@ -189,6 +189,28 @@ export interface PmtctHeiSummary {
   records: any[];
 }
 
+export interface OpenReferralSummary {
+  id: string;
+  motherId: string;
+  urgency: 'routine' | 'urgent';
+  reason: string;
+  sourceModule?: string;
+  sourceRecordId?: string;
+  targetFacilityId?: string;
+  targetFacilityName?: string;
+  serviceNeeded?: string;
+  status: 'open' | 'acknowledged' | 'completed' | 'cancelled';
+  createdAt: string;
+  clinicalNotes?: string;
+}
+
+export interface PostnatalCareSummary {
+  totalEncounters: number;
+  verifiedCount: number;
+  latestEncounterDate?: string;
+  encounters: any[];
+}
+
 export interface MomHavenHealthSummary {
   summaryId: string;
   generatedAt: string;
@@ -211,4 +233,7 @@ export interface MomHavenHealthSummary {
   questionsForClinician: string[];
   reproductiveScreening?: ReproductiveScreeningSummary;
   pmtct?: PmtctHeiSummary;
+  openReferrals?: OpenReferralSummary[];
+  postnatalSummary?: PostnatalCareSummary;
+  maternalTdSchedule?: any;
 }

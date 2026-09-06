@@ -31,6 +31,7 @@ import {
   updateReferralStatusApi,
 } from '../../services/facilityRosterService';
 import Button from '../Button';
+import { ReferralBadge } from '../common/ProvenanceBadge';
 
 interface FacilityRosterViewProps {
   clinicianId?: string;
@@ -910,7 +911,7 @@ export default function FacilityRosterView({
                 >
                   {/* Patient Info */}
                   <div className="col-span-4 space-y-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <strong className="text-sm font-display font-bold text-[var(--ink-900)]">
                         {motherDisplayName}
                       </strong>
@@ -918,6 +919,11 @@ export default function FacilityRosterView({
                         <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100">
                           Child: {entry.childId.slice(-6)}
                         </span>
+                      )}
+                      {openReferrals.some(
+                        (r) => r.motherId === entry.motherId && (r.status === 'open' || r.status === 'acknowledged')
+                      ) && (
+                        <ReferralBadge label="Referred — awaiting follow-up" />
                       )}
                     </div>
                     <div className="flex items-center gap-2 text-[11px] text-[var(--ink-500)]">

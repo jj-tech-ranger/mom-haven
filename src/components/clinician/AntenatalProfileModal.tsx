@@ -68,6 +68,34 @@ export const AntenatalProfileModal: React.FC<AntenatalProfileModalProps> = ({
   const [us2Gest, setUs2Gest] = useState(String(initialProfile?.ultrasound2?.gestationalAgeWeeks || ''));
   const [us2Findings, setUs2Findings] = useState(initialProfile?.ultrasound2?.findings || 'Normal fetal growth, cephalic presentation, adequate liquor.');
 
+  // Maternal Tetanus-Diphtheria (TD) Immunization Schedule (MOH Handbook pp.10-11)
+  const [tdDoses, setTdDoses] = useState<MaternalTdDose[]>(() => {
+    if (initialProfile?.tdDoses && Array.isArray(initialProfile.tdDoses)) {
+      return [...initialProfile.tdDoses];
+    }
+    return [];
+  });
+
+  const tdSchedule: MaternalTdScheduleResult = useMemo(() => {
+    return calculateMaternalTdSchedule(tdDoses);
+  }, [tdDoses]);
+
+  const handleToggleDose = (doseNum: 1 | 2 | 3 | 4 | 5) => {
+    const exists = tdDoses.find((d) => d.doseNumber === doseNum);
+    if (exists) {
+      setTdDoses(tdDoses.filter((d) => d.doseNumber !== doseNum));
+    } else {
+      const today = new Date().toISOString().split('T')[0];
+      setTdDoses([...tdDoses, { doseNumber: doseNum, dateGiven: today, facilityName: '' }]);
+    }
+  };
+
+  const handleUpdateDose = (doseNum: 1 | 2 | 3 | 4 | 5, field: keyof MaternalTdDose, value: string) => {
+    setTdDoses(
+      tdDoses.map((d) => (d.doseNumber === doseNum ? { ...d, [field]: value } : d))
+    );
+  };
+
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -115,6 +143,7 @@ export const AntenatalProfileModal: React.FC<AntenatalProfileModalProps> = ({
       syphilisStatus,
       hepatitisBStatus,
       serologyRepeatSchedule: repeatSchedule,
+      tdDoses: tdDoses.filter((d) => Boolean(d.dateGiven)),
     };
 
     if (us1Done && us1Date) {
@@ -484,6 +513,137 @@ export const AntenatalProfileModal: React.FC<AntenatalProfileModalProps> = ({
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Maternal Tetanus-Diphtheria (TD) Immunization (MOH Handbook pp.10-11) */}
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-gray-900 flex items-center gap-2">
+                <Syringe className="w-4 h-4 text-indigo-600" />
+                4. Maternal Tetanus-Diphtheria (TD) Immunization (MOH pp.10–11)
+              </h4>
+              <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold ${
+                tdSchedule.completedDoses.length >= 5
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : tdSchedule.completedDoses.length >= 2
+                  ? 'bg-blue-100 text-blue-800'
+                  : 'bg-amber-100 text-amber-800'
+              }`}>
+                {tdSchedule.protectionStatus}
+              </span>
+            </div>
+
+            {/* Restart Warning banner if gap was >= 10 years */}
+            {tdSchedule.restartedDueTo10YearGap && (
+              <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold">MOH Restart Protocol Triggered:</span>
+                  <p className="text-[11px] mt-0.5">The interval between TD-1 and TD-2 is ≥ 10 years. Schedule restarts from TD-1 per MOH Handbook p.10.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Next Due Dose Card */}
+            {tdSchedule.nextDoseNumber && (
+              <div className="p-2.5 bg-indigo-50/70 border border-indigo-200 rounded-lg text-xs flex items-center justify-between">
+                <span className="text-indigo-900 font-medium">
+                  Next Due: <strong className="font-bold">TD Dose {tdSchedule.nextDoseNumber}</strong>
+                </span>
+                <span className="text-indigo-700 text-[11px]">
+                  Scheduled: {tdSchedule.nextDoseScheduledDate || 'At next contact'}
+                </span>
+              </div>
+            )}
+
+            {/* Dose Rows */}
+            <div className="space-y-2 pt-1">
+              {([
+                { num: 1 as const, timing: 'At first ANC contact / early pregnancy', prot: 'Baseline priming' },
+                { num: 2 as const, timing: 'At least 4 weeks after TD-1', prot: '80% protection (3 yrs)' },
+                { num: 3 as const, timing: 'At least 6 months after TD-2', prot: '95% protection (5 yrs)' },
+                { num: 4 as const, timing: 'At least 1 year after TD-3', prot: '99% protection (10 yrs)' },
+                { num: 5 as const, timing: 'At least 1 year after TD-4', prot: '99% protection (childbearing yrs)' },
+              ]).map((doseInfo) => {
+                const doseRecord = tdDoses.find((d) => d.doseNumber === doseInfo.num);
+                const isGiven = Boolean(doseRecord);
+
+                return (
+                  <div
+                    key={doseInfo.num}
+                    className={`p-3 rounded-lg border transition ${
+                      isGiven ? 'bg-white border-indigo-200 shadow-2xs' : 'bg-gray-50/50 border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isGiven}
+                          onChange={() => handleToggleDose(doseInfo.num)}
+                          className="rounded text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="text-xs font-bold text-gray-900">
+                          TD {doseInfo.num}
+                        </span>
+                        <span className="text-[11px] text-gray-500 hidden sm:inline">
+                          — {doseInfo.timing}
+                        </span>
+                      </label>
+                      <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                        {doseInfo.prot}
+                      </span>
+                    </div>
+
+                    {isGiven && doseRecord && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2 pt-2 border-t border-gray-100 text-xs">
+                        <div>
+                          <label className="block text-[10px] text-gray-500 font-medium">Date Given *</label>
+                          <input
+                            type="date"
+                            required
+                            value={doseRecord.dateGiven || ''}
+                            onChange={(e) => handleUpdateDose(doseInfo.num, 'dateGiven', e.target.value)}
+                            className="w-full p-1.5 border rounded-md text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] text-gray-500 font-medium">Facility Name</label>
+                          <input
+                            type="text"
+                            placeholder="Health facility..."
+                            value={doseRecord.facilityName || ''}
+                            onChange={(e) => handleUpdateDose(doseInfo.num, 'facilityName', e.target.value)}
+                            className="w-full p-1.5 border rounded-md text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] text-gray-500 font-medium">Batch No.</label>
+                          <input
+                            type="text"
+                            placeholder="Vaccine batch..."
+                            value={doseRecord.batchNumber || ''}
+                            onChange={(e) => handleUpdateDose(doseInfo.num, 'batchNumber', e.target.value)}
+                            className="w-full p-1.5 border rounded-md text-xs"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {tdSchedule.notes.length > 0 && (
+              <div className="p-2.5 bg-gray-100/70 rounded-lg text-[11px] text-gray-600 space-y-0.5">
+                {tdSchedule.notes.map((note, idx) => (
+                  <p key={idx} className="flex items-start gap-1.5">
+                    <span className="text-gray-400">•</span>
+                    <span>{note}</span>
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">

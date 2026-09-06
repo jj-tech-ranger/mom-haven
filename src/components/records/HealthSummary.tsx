@@ -20,12 +20,14 @@ import {
   Download,
   Loader2,
   BarChart2,
+  ArrowUpRight,
 } from 'lucide-react';
 import type { MomHavenHealthSummary } from '../../types/healthSummary';
 import { auth } from '../../lib/firebase';
 import WhoGrowthChart from '../growth/WhoGrowthChart';
-import ProvenanceBadge from '../common/ProvenanceBadge';
+import ProvenanceBadge, { ReferralBadge } from '../common/ProvenanceBadge';
 import Button from '../Button';
+import { usePreferences } from '../../context/PreferencesContext';
 
 interface HealthSummaryProps {
   summary: MomHavenHealthSummary;
@@ -40,6 +42,7 @@ export default function HealthSummary({
   onRefresh,
   isClinicianView = false,
 }: HealthSummaryProps) {
+  const { t } = usePreferences();
   const {
     mother,
     patientContext,
@@ -51,6 +54,9 @@ export default function HealthSummary({
     sessionContext,
     reproductiveScreening,
     pmtct,
+    openReferrals,
+    postnatalSummary,
+    maternalTdSchedule,
   } = summary;
 
   const [downloadingCertId, setDownloadingCertId] = React.useState<string | null>(null);
@@ -208,6 +214,65 @@ export default function HealthSummary({
           </div>
         </div>
       </div>
+
+      {/* Active Clinical Referral Alert Banner */}
+      {openReferrals && openReferrals.length > 0 && (
+        <section className="bg-amber-50/90 border-2 border-amber-300 rounded-[20px] p-4.5 sm:p-5 shadow-sm space-y-3">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                <ArrowUpRight className="w-5 h-5 text-amber-700" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="font-display font-extrabold text-base text-amber-950">
+                    {t('modules.referrals.openReferralTitle', 'Active Clinical Referral')}
+                  </h2>
+                  <ReferralBadge
+                    label={t('modules.referrals.referredBadge', 'Referred — awaiting follow-up')}
+                    status="open"
+                  />
+                </div>
+                <p className="text-xs text-amber-800/90 mt-0.5">
+                  {t('modules.referrals.motherGuidance', 'Your clinician noted an urgent or specialized follow-up need. Please attend your referral appointment or speak with your clinic team promptly.')}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 text-xs">
+            {openReferrals.map((ref) => (
+              <div key={ref.id} className="p-3 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-bold text-amber-950 flex items-center gap-1.5">
+                    <span className={`w-2 h-2 rounded-full ${ref.urgency === 'urgent' ? 'bg-red-500 animate-ping' : 'bg-amber-500'}`} />
+                    {ref.reason}
+                  </span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
+                    ref.urgency === 'urgent' ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-amber-100 text-amber-800 border border-amber-200'
+                  }`}>
+                    {ref.urgency === 'urgent' ? 'Urgent Priority' : 'Routine'}
+                  </span>
+                </div>
+                {ref.serviceNeeded && (
+                  <p className="text-[11px] text-slate-600">
+                    <strong>Service Needed:</strong> {ref.serviceNeeded}
+                  </p>
+                )}
+                {ref.targetFacilityName && (
+                  <p className="text-[11px] text-slate-600">
+                    <strong>Target Facility:</strong> {ref.targetFacilityName}
+                  </p>
+                )}
+                {ref.clinicalNotes && (
+                  <p className="text-[11px] text-slate-700 italic bg-amber-50/50 p-1.5 rounded">
+                    "{ref.clinicalNotes}"
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Section 1: Questions for Clinician / Visit Preparation */}
       <section className="bg-amber-50/70 border border-amber-200/80 rounded-[20px] p-4.5 sm:p-5">
